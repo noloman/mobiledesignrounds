@@ -90,4 +90,11 @@
 <updated>2026-10-13T00:00:00Z</updated>
 <summary>The official offline-first model applied to chat, feed, upload, booking, analytics and push.</summary>
 </entry>
+<entry>
+<title>Native vs cross-platform: write the decision record</title>
+<link href="https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/"/>
+<id>https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/</id>
+<updated>2026-10-13T00:00:00Z</updated>
+<summary>A staff-level ADR for a framework bet: criteria, the assumption that flips it, migration, parity tests, orphaned libraries, rollback, and a free template.</summary>
+</entry>
 </feed>
