@@ -27,3 +27,4 @@
 
 ## About
 - [About](https://mobiledesignrounds.com/about/): who writes this and how it is checked
+- [Licence and credits](https://mobiledesignrounds.com/license/): text CC BY-NC 4.0, code MIT, diagrams CC BY 4.0, trademark notices
