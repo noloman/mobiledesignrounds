@@ -1,6 +1,6 @@
 # Mobile Design Rounds
 
-> Free mobile system design interview case studies for Android and iOS engineers: failure modes, official-docs alignment, verified code.
+> Free mobile system design interview case studies for Android and iOS engineers: failure modes, checked against official docs where noted.
 
 ## Case studies
 - [Design a chat app](https://mobiledesignrounds.com/mobile-system-design/chat-app/): Outbox, idempotent sends, WebSocket and push sync.
@@ -20,4 +20,4 @@
 - [Native vs cross-platform: write the decision record](https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/): A staff-level ADR for a framework bet: criteria, the assumption that flips it, migration, parity tests, orphaned libraries, rollback, and a free template.
 
 ## About
-- [About](https://mobiledesignrounds.com/about/): who writes this and how it is verified
+- [About](https://mobiledesignrounds.com/about/): who writes this and how it is checked
