@@ -1,23 +1,81 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<meta name="robots" content="noindex">
-<title>Mobile Design Rounds</title>
-<meta name="description" content="Mobile system design case studies for Android and iOS engineers. Launching soon.">
-<style>
-:root{--paper:#F5F7FA;--ink:#0E1A2B;--ink2:#465870;--blue:#2F5BFF}
-@media(prefers-color-scheme:dark){:root{--paper:#0A1020;--ink:#E8EEF8;--ink2:#9FB0C8;--blue:#7C9BFF}}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--paper);color:var(--ink);font:18px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:24px}
-main{max-width:34rem}
-.b{display:flex;align-items:center;gap:10px;font-weight:700;margin-bottom:28px}
-.b svg{width:28px;height:28px}
-h1{font:800 clamp(2rem,6vw,3rem)/1.05 system-ui,sans-serif;letter-spacing:-.02em;margin:0 0 16px}
-p{color:var(--ink2);margin:0 0 12px}
-.s{display:inline-block;margin-top:8px;font:500 .8rem ui-monospace,Menlo,monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
-</style></head><body><main>
-<div class="b"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</div>
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-t3fQY2ocM/Xx1KHsFpKcJZ8/bRLOQX/yUTdA2/+BAME='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https:; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Mobile Design Rounds: System Design Case Studies, Android &amp; iOS</title><meta name="description" content="Practical mobile system design interview case studies for Android and iOS engineers: offline-first chat, sync, caching, background work and more.">
+<link rel="canonical" href="https://mobiledesignrounds.com/"><meta property="og:title" content="Mobile Design Rounds: System Design Case Studies, Android &amp; iOS"><meta property="og:description" content="Practical mobile system design interview case studies for Android and iOS engineers: offline-first chat, sync, caching, background work and more."><meta property="og:type" content="website"><meta property="og:url" content="https://mobiledesignrounds.com/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/home.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Mobile Design Rounds: System Design Case Studies, Android &amp; iOS">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Crect width='26' height='26' rx='7' fill='%232F5BFF'/%3E%3Ccircle cx='8.5' cy='9' r='2.4' fill='white'/%3E%3Ccircle cx='17.5' cy='17' r='2.4' fill='white'/%3E%3Cpath d='M10.4 10.6l5.2 4.8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"></head><body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav"><a href="/mobile-system-design/">Case studies</a><a href="/mobile-system-design/chat-app/">Start here</a></nav></header></div>
+<main id="main"><div class="wrap"><section class="hero"><div class="hero-cols"><div>
+<p class="eyebrow">Mobile system design interviews &middot; Android + iOS</p>
 <h1>What happens when the network drops?</h1>
-<p>Mobile system design case studies for Android and iOS engineers.</p>
-<span class="s">Launching soon</span>
-</main></body></html>
+<p class="lead">That is the question behind every mobile system design round. Our case studies answer it step by step for Android and iOS, with the code and every failure mode.</p>
+<div class="follow"><a class="rss" href="/feed.xml">Follow with RSS</a><p class="fine">New case studies appear in the feed first. Any RSS reader works.</p></div>
+<a class="link-arrow" href="/mobile-system-design/chat-app/">Read the chat app case study &rarr;</a></div>
+<div class="sim" id="sim"><div class="sim-head"><h2>Try it: send a message on a bad connection</h2><p>The design from the chat case study, running live.</p></div>
+<div class="sim-ctl"><button id="sim-send" type="button">Send a message</button><button id="sim-air" type="button" aria-pressed="false">Airplane mode</button><button id="sim-drop" type="button" aria-pressed="false">Lose next ack</button></div>
+<div class="sim-body"><div class="pane"><h3>Chat screen</h3><div id="sim-phone"></div></div>
+<div class="pane"><h3>On the device</h3><table id="sim-db" aria-label="Local database rows"></table><h4>Outbox</h4><ul id="sim-outbox"></ul></div>
+<div class="pane"><h3>Server</h3><ul id="sim-server"></ul><p class="dupes">Duplicates ignored: <b id="sim-dupes">0</b></p></div></div>
+<p class="say" id="sim-say" aria-live="polite"></p></div></div></section></div>
+<section class="section band"><div class="wrap"><h2>A round is a time budget</h2><p class="sub">Most candidates spend it drawing boxes. The strongest answers save the largest block for the hard part and finish with failure and rollout.</p><div class="budget" role="img" aria-label="An example 45-minute round split into five stages"><i class="" style="flex:5"></i><i class="" style="flex:8"></i><i class="" style="flex:10"></i><i class="hard" style="flex:17"></i><i class="" style="flex:5"></i></div><ul class="legend"><li><span>Requirements</span><b>5 min</b></li><li><span>API and data model</span><b>8 min</b></li><li><span>Client architecture</span><b>10 min</b></li><li><span>The hard part</span><b>17 min</b></li><li><span>Failure, offline, rollout</span><b>5 min</b></li></ul></div></section>
+<section class="section"><div class="wrap"><h2>Case studies</h2><p class="sub">Depth over breadth: fewer designs, each taken all the way through.</p><ul class="cases"><li><a class="t" href="/mobile-system-design/chat-app/">Design a chat app</a><span class="b">Outbox, idempotent sends, WebSocket and push sync.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/news-feed/">Design a news feed</a><span class="b">Pagination, optimistic writes, cache invalidation.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/photo-file-sync/">Design photo backup and file sync</a><span class="b">Resumable uploads, block-level sync, conflicts.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/pagination-library/">Design a pagination library</a><span class="b">Library API, generics, request prioritization.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/image-loading/">Design an image loading library</a><span class="b">Memory and disk caches, decoding, cancellation.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/booking-app/">Design a hotel or ride booking app</a><span class="b">Holds, time sync, payments, search.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/live-ticker/">Design a stock ticker app</a><span class="b">Streaming updates, buffered UI, always-online.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/video-app/">Design a video streaming app</a><span class="b">Prefetching, adaptive bitrate, playback state.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/analytics-sdk/">Design an analytics SDK</a><span class="b">Batching, persistence, privacy, versioning.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/mobile-system-design/push-sdk/">Design a push notification SDK</a><span class="b">Token lifecycle, delivery, deep links.</span><span class="s"><span class="pill">Read now</span></span></li></ul></div></section>
+<section class="section band"><div class="wrap"><h2>Guides</h2><p class="sub">Cross-cutting guides that tie the case studies together.</p><ul class="cases"><li><a class="t" href="/guides/staff-mobile-loop-guide/">Staff-level mobile system design: what the round tests</a><span class="b">How staff answers differ from senior ones, what interviewers can observe, and a four-week practice plan.</span><span class="s"><span class="pill">Read now</span></span></li><li><a class="t" href="/guides/offline-first-hub/">Offline-first mobile system design: one model, five case studies</a><span class="b">The official offline-first model applied to chat, feed, upload, booking, analytics and push.</span><span class="s"><span class="pill">Read now</span></span></li></ul></div></section>
+<section class="section band"><div class="wrap"><div class="trio">
+<div><h3>One design, every failure mode</h3><p>Process death, lost acks, duplicate pushes, clock skew. Each case study lists what breaks and the fix.</p></div>
+<div><h3>Android and iOS, side by side</h3><p>The architecture is shared. We show where Room becomes SwiftData, and where WorkManager has no iOS equivalent.</p></div>
+<div><h3>What to say at each level</h3><p>Mid, senior and staff answers spelled out, plus the follow-up questions interviewers ask.</p></div></div></div></section>
+<section class="section"><div class="wrap final"><h2>Follow new case studies.</h2><p class="sub">Requests and corrections welcome: <a href="https://github.com/noloman/mobiledesignrounds/issues">open an issue on GitHub</a>.</p><div class="follow"><a class="rss" href="/feed.xml">Follow with RSS</a><p class="fine">New case studies appear in the feed first. Any RSS reader works.</p></div></div></section></main>
+<div class="wrap"><footer class="foot">&copy; Mobile Design Rounds. Independent; not affiliated with Google or Apple. Written by a professional Android engineer. <a href="/about/">About</a> &middot; <a href="/privacy/">Privacy</a></footer></div>
+<script>
+(()=>{
+const $=s=>document.querySelector(s), sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const st={online:true,drop:false,busy:false,msgs:[],server:[],dupes:0,i:0};
+const lines=["Running late, 10 min","On my way","Did you see the doc?","Call me when you land","Sounds good","Send me the address"];
+const uid=()=>Math.random().toString(16).slice(2,8);
+const say=t=>{$('#sim-say').textContent=t};
+function render(){
+ const phone=$('#sim-phone');
+ phone.innerHTML=st.msgs.map(m=>`<div class="bub ${m.s}"><span>${m.t}</span><small>${m.s==='sent'?'Sent':'Sending…'}</small></div>`).join('');
+ phone.scrollTop=phone.scrollHeight;
+ $('#sim-db').innerHTML=st.msgs.map(m=>`<tr><td>${m.c}</td><td class="${m.s}">${m.s==='sent'?'SENT':'PENDING'}</td></tr>`).join('');
+ const q=st.msgs.filter(m=>m.s==='pending');
+ $('#sim-outbox').innerHTML=q.length?q.map(m=>`<li>${m.c}</li>`).join(''):'<li class="none">Empty</li>';
+ $('#sim-server').innerHTML=st.server.map(c=>`<li>${c}</li>`).join('')||'<li class="none">Nothing yet</li>';
+ $('#sim-dupes').textContent=st.dupes;
+}
+async function pump(){
+ if(st.busy)return; st.busy=true;
+ while(st.online){
+  const m=st.msgs.find(x=>x.s==='pending'); if(!m)break;
+  await sleep(900); if(!st.online)break;
+  if(st.server.includes(m.c)){st.dupes++;say('Server already has '+m.c+'. Duplicate ignored, original ack returned.')}
+  else st.server.push(m.c);
+  render();
+  if(st.drop){st.drop=false;$('#sim-drop').setAttribute('aria-pressed','false');
+   say('Server stored '+m.c+' but the ack was lost. The app retries with the same ID.');await sleep(1200);continue}
+  m.s='sent';say('Ack received. '+m.c+' is marked sent.');render();
+ }
+ st.busy=false;
+}
+$('#sim-send').onclick=()=>{
+ st.msgs.push({c:uid(),t:lines[st.i++%lines.length],s:'pending'});render();
+ say(st.online?'Saved locally first, then sent from the outbox.':'No connection. Saved locally and queued in the outbox. The UI never waits.');
+ pump();
+};
+$('#sim-air').onclick=e=>{
+ st.online=!st.online;e.currentTarget.setAttribute('aria-pressed',String(!st.online));
+ say(st.online?'Back online. Draining the outbox in order.':'Airplane mode on. Reading and composing still work.');
+ if(st.online)pump();
+};
+$('#sim-drop').onclick=e=>{
+ st.drop=!st.drop;e.currentTarget.setAttribute('aria-pressed',String(st.drop));
+ say(st.drop?'Armed: the next ack will be lost after the server stores the message.':'Disarmed.');
+};
+st.msgs.push({c:uid(),t:'Are we still on for 6?',s:'sent'});st.server.push(st.msgs[0].c);
+render();say('Try it: turn on airplane mode, then send a message.');
+})();
+</script></body></html>
