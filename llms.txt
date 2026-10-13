@@ -22,5 +22,8 @@
 - [Offline-first mobile system design: one model, six case studies](https://mobiledesignrounds.com/guides/offline-first-hub/): The official offline-first model applied to chat, feed, upload, booking, analytics and push.
 - [Native vs cross-platform: write the decision record](https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/): A staff-level ADR for a framework bet: criteria, the assumption that flips it, migration, parity tests, orphaned libraries, rollback, and a free template.
 
+## Pack waitlist (not yet a product)
+- [Pack waitlist](https://mobiledesignrounds.com/pack/): a planned paid study pack that does not exist yet; no price, waitlist only
+
 ## About
 - [About](https://mobiledesignrounds.com/about/): who writes this and how it is checked
