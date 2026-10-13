@@ -129,7 +129,8 @@ td.sent{color:var(--green)}td.pending{color:var(--amber)}
 .prose blockquote p{margin:.2em 0}
 .prose hr{border:0;border-top:1.5px solid var(--line);margin:2.4em 0}
 .diagram{margin:1.6em 0;padding:16px;background:var(--panel);border:1.5px solid var(--line);border-radius:14px}
-.diagram svg{width:100%;height:auto;display:block}
+.diagram{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.diagram svg{width:100%;min-width:640px;height:auto;display:block}
 .diagram figcaption{font-size:.82rem;color:var(--ink2);margin-top:8px}
 .diagram .bx{fill:var(--panel);stroke:var(--ink2);stroke-width:1.5}.diagram .bx.hl{fill:var(--blue);stroke:var(--blue)}
 .diagram .bt{font:700 15px var(--display);fill:var(--ink)}.diagram .bt.hl{fill:var(--on-blue)}
