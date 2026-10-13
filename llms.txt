@@ -2,6 +2,9 @@
 
 > Free mobile system design interview case studies for Android and iOS engineers: failure modes, checked against official docs where noted.
 
+## Start here
+- [Reading paths](https://mobiledesignrounds.com/start/): ordered mid-level, senior and staff tracks through the case studies and guides
+
 ## Case studies
 - [Design a chat app](https://mobiledesignrounds.com/mobile-system-design/chat-app/): Outbox, idempotent sends, WebSocket and push sync.
 - [Design a news feed](https://mobiledesignrounds.com/mobile-system-design/news-feed/): Pagination, optimistic writes, cache invalidation.

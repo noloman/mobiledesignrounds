@@ -10,7 +10,7 @@
 --blue:#7C9BFF;--on-blue:#0A1020;--amber:#F2B84B;--amber-bg:#35290D;--green:#5AD18A;--green-bg:#0F3322;
 --code-bg:#070C18;--code-fg:#DCE6F5;--tint:#16224A}}
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:clip}
 body{margin:0;overflow-x:clip;background:var(--paper);color:var(--ink);font:17px/1.65 var(--body);-webkit-font-smoothing:antialiased}
 a{color:var(--blue)}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:4px}
@@ -19,11 +19,11 @@ a{color:var(--blue)}
 .skip{position:absolute;left:-9999px;top:8px;background:var(--blue);color:var(--on-blue);padding:10px 14px;border-radius:8px;z-index:10;font-weight:600}.skip:focus{left:12px}
 .eyebrow{font:500 .78rem/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin:0 0 18px}
 
-.top{display:flex;justify-content:space-between;align-items:center;padding:18px 0}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0 20px;padding:14px 0}
 .brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font:700 1.05rem var(--display)}
 .brand svg{width:26px;height:26px}
-.nav a{color:var(--ink2);text-decoration:none;font-weight:500;font-size:.95rem;margin-left:22px;white-space:nowrap}
-@media(max-width:520px){.nav a+a{display:none}}
+.nav{display:flex;flex-wrap:wrap;gap:0 20px}
+.nav a{color:var(--ink2);text-decoration:none;font-weight:500;font-size:.95rem;padding:10px 0;white-space:nowrap}
 .nav a:hover{color:var(--ink)}
 
 .hero{position:relative;padding:36px 0 56px}
@@ -149,5 +149,39 @@ details.notes p{font-size:.9rem;color:var(--ink2);margin:.8em 0 0}
 .cta-card h2{font:800 1.4rem var(--display);margin:0 0 6px}
 .cta-card p{margin:0;color:var(--ink2)}
 .cta-card .signup{margin-top:16px}
+
+.code{position:relative}
+.code pre{padding-top:40px}
+.copy{position:absolute;top:8px;right:8px;font:500 .75rem var(--mono);padding:6px 12px;min-height:32px;border-radius:8px;border:1.5px solid var(--ink2);background:var(--code-bg);color:var(--code-fg);cursor:pointer}
+.copy:hover{border-color:var(--blue)}
+.pager{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:2.4em 0 0}
+@media(min-width:620px){.pager{grid-template-columns:1fr 1fr}}
+.pager a{display:block;padding:14px 16px;border:1.5px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);text-decoration:none;font:700 1rem var(--display)}
+.pager a:hover{border-color:var(--blue)}
+.pager small{display:block;font:500 .72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:2px}
+.pager .nx{text-align:right}
+.jump{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 8px}
+.jump a{font-weight:600}
+.path{list-style:none;counter-reset:p;padding:0;margin:0;border-top:1.5px solid var(--line)}
+.path li{counter-increment:p;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 16px;padding:16px 4px 16px 0;border-bottom:1.5px solid var(--line)}
+.path .t{font:700 1.08rem var(--display);color:var(--ink);text-decoration:none}.path .t:hover{color:var(--blue);text-decoration:underline}
+.path .t::before{content:counter(p) ". ";color:var(--blue)}
+.path .s{grid-row:1;grid-column:2;font:500 .78rem var(--mono);color:var(--ink2);white-space:nowrap}
+.path .b,.path .will{grid-column:1/-1;font-size:.92rem;color:var(--ink2)}
+.path .will b{color:var(--ink);font-weight:600}
+.log{padding-left:1.2em}.log li{max-width:68ch}
+
+@media print{
+body{background:#fff;color:#000;font-size:11pt}
+.top,.skip,.toc,.cta-card,.sim,.signup,.follow,.pager,.copy,.jump{display:none!important}
+.layout{display:block}
+.prose a[href^="/"]::after{content:" (https://mobiledesignrounds.com" attr(href) ")";font-size:.85em;overflow-wrap:anywhere}
+.prose a[href^="http"]::after{content:" (" attr(href) ")";font-size:.85em;overflow-wrap:anywhere}
+.prose pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#fff;color:#000;border:1px solid #888;break-inside:avoid;padding-top:16px}
+.prose pre code{overflow-wrap:anywhere}
+.prose table,.diagram,blockquote,.tw{break-inside:avoid}
+.tw{overflow:visible}
+h1,h2,h3{break-after:avoid}
+}
 
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}

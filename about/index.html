@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/style.css"></head><body>
 <a class="skip" href="#main">Skip to content</a>
 <div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
-<nav class="nav"><a href="/mobile-system-design/">Case studies</a><a href="/mobile-system-design/chat-app/">Start here</a></nav></header></div>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/guides/">Guides</a></nav></header></div>
 <main id="main"><div class="wrap"><div class="art-head"><div class="chips"><span>About</span></div><h1>About Mobile Design Rounds</h1></div>
 <div class="prose" style="max-width:760px">
 <p>Mobile system design interviews test how you build the client side of an app: storage, networking, background work, offline behavior and failure handling. Most prep material is written for backend engineers. This site covers the mobile version, for Android and iOS engineers.</p>
@@ -17,6 +17,16 @@
 <h2 id="how">How the case studies are made</h2>
 <p>Drafts are written with AI assistance. Many technical claims are then checked against official documentation: the Android developer site for Android and Apple's developer documentation for iOS. Most snippets are compiled (Kotlin) or type-checked (Swift), with stubs for app-specific placeholder types; the exceptions and anything unverified are listed in each page's verification notes, with dates. Where the official guidance is silent, the text says so.</p>
 <p>The Android sections follow the official architecture guidance. The iOS sections are written by an Android developer from Apple's documentation, and have not yet been reviewed by an iOS engineer, so treat them as a careful second opinion, and tell me if something is wrong.</p>
+<h2 id="changelog">Changelog</h2>
+<p>Each page also shows when it was last reviewed. Site-wide changes:</p>
+<ul class="log">
+<li><time datetime="2026-10-13">2026-10-13</time>: Reading paths. A <a href="/start/">Start here</a> page with mid-level, senior and staff tracks, Read first and Next links, copy buttons on code, print styles and a header menu that stays visible on phones.</li>
+<li><time datetime="2026-10-13">2026-10-13</time>: Verification wording. Clearer notes on which code is compiled or type-checked and which is not, with a dated verification note on each page.</li>
+<li><time datetime="2026-10-13">2026-10-13</time>: Named author. Pages credit Manuel Lorenzo, an Android developer, as author and reviewer.</li>
+<li><time datetime="2026-10-13">2026-10-13</time>: Staff track. Added the staff-level guide, the offline-first guide and the native vs cross-platform decision guide.</li>
+<li><time datetime="2026-10-13">2026-10-13</time>: SEO pass. Rewrote titles, descriptions and diagram text descriptions; added a sitemap, social preview images and structured data.</li>
+<li><time datetime="2026-10-13">2026-10-13</time>: Launch. Ten case studies and three guides for Android and iOS.</li>
+</ul>
 <h2 id="contact">Corrections and requests</h2>
 <p>Found a mistake, or want a case study on a specific app? <a href="https://github.com/noloman/mobiledesignrounds/issues">Open an issue on GitHub</a>. Corrections are credited and fixed quickly. You can also follow new case studies with the <a href="/feed.xml">RSS feed</a>.</p>
 <p>This site is independent and is not affiliated with Google, Apple, or any company named in a case study. Android, iOS, Swift and Kotlin are trademarks of their respective owners.</p>
