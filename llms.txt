@@ -30,10 +30,19 @@
 - [Build it: an offline-first travel plans app on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/build/): the schema, API, code and platform limits for the design a travel plans app answer
 - [Design a public transport app](https://mobiledesignrounds.com/mobile-system-design/public-transport-app/): A timetable that works offline, live delays on top, and careful use of location and battery. Free teaser; the full case is planned for the study pack.
 
+## Case studies by topic
+- [Offline and sync](https://mobiledesignrounds.com/mobile-system-design/offline-and-sync/): Apps that keep working with no network, and sync later.
+- [Feeds and media](https://mobiledesignrounds.com/mobile-system-design/feeds-and-media/): Long lists, images and video that load fast and stay fresh.
+- [SDKs and libraries](https://mobiledesignrounds.com/mobile-system-design/sdks-and-libraries/): Code that other developers add to their apps.
+- [Live data and payments](https://mobiledesignrounds.com/mobile-system-design/live-data-and-payments/): Data that changes live, and actions that must happen once.
+
 ## Guides
 - [Staff-level mobile system design: what the round tests](https://mobiledesignrounds.com/guides/staff-mobile-loop-guide/): How staff answers differ from senior answers, what interviewers can see, and a four-week practice plan.
 - [Offline-first mobile system design: one model, six case studies](https://mobiledesignrounds.com/guides/offline-first-hub/): The official offline-first model (the app keeps working without a network) used for chat, feed, upload, booking, analytics and push.
 - [Native vs cross-platform: write the decision record](https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/): A staff-level decision record (ADR) for choosing a framework. It covers criteria, the assumption that would change the choice, migration, parity tests, libraries with no owner, rollback, and a free template.
+
+## Glossary
+- [Glossary](https://mobiledesignrounds.com/glossary/): plain English meanings of 75 hard words from the case studies, such as outbox, idempotent, Doze and WorkManager
 
 ## Pack waitlist (not yet a product)
 - [Pack waitlist](https://mobiledesignrounds.com/pack/): a planned paid study pack. It does not exist yet. There is no price, only a waitlist
