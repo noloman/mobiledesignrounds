@@ -1,0 +1,867 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-WJDm62DDE4MZD9v2EoCFL7mWS2pksWjW0iId/jEDZH4='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Build it: Feature Flags on Android and iOS</title><meta name="description" content="The flag list, contract, rollout bucket, store, saved copy, Firebase adapter, tests and cleanup for mobile feature flags, in Kotlin and Swift.">
+<link rel="canonical" href="https://mobiledesignrounds.com/mobile-system-design/feature-flags/build/"><meta property="og:title" content="Build it: Feature Flags on Android and iOS"><meta property="og:description" content="The flag list, contract, rollout bucket, store, saved copy, Firebase adapter, tests and cleanup for mobile feature flags, in Kotlin and Swift."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/mobile-system-design/feature-flags/build/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/feature-flags.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Build it: Feature Flags on Android and iOS">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Build it: feature flags and remote config on Android and iOS", "description": "The flag list, contract, rollout bucket, store, saved copy, Firebase adapter, tests and cleanup for mobile feature flags, in Kotlin and Swift.", "datePublished": "2026-10-13", "dateModified": "2026-10-14", "mainEntityOfPage": "https://mobiledesignrounds.com/mobile-system-design/feature-flags/build/", "image": ["https://mobiledesignrounds.com/og/feature-flags.png"], "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/", "sameAs": ["https://manulorenzo.me", "https://github.com/noloman"]}, "publisher": {"@type": "Organization", "name": "Mobile Design Rounds", "url": "https://mobiledesignrounds.com/", "logo": {"@type": "ImageObject", "url": "https://mobiledesignrounds.com/icon-512.png"}}, "inLanguage": "en"}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://mobiledesignrounds.com/mobile-system-design/"}, {"@type": "ListItem", "position": 3, "name": "Design feature flags and remote config", "item": "https://mobiledesignrounds.com/mobile-system-design/feature-flags/"}, {"@type": "ListItem", "position": 4, "name": "Build guide", "item": "https://mobiledesignrounds.com/mobile-system-design/feature-flags/build/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/guides/">Guides</a><a href="/simulators/">Practice</a><a href="/glossary/">Glossary</a><a href="/about/">About</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/mobile-system-design/">Case studies</a></li><li><a href="/mobile-system-design/feature-flags/">Design feature flags and remote config</a></li><li aria-current="page">Build guide</li></ol></nav><div class="chips"><span>Build guide</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>Android</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>iOS</span><span>28 min read</span></div>
+<h1>Build it: feature flags and remote config on Android and iOS</h1><p class="meta">Last reviewed <time datetime="2026-10-14">14 Oct 2026</time>. Drafted with AI assistance. Checked against official documentation where noted (<a href="/about/#how">how this is checked</a>). Part of: <a href="/mobile-system-design/feature-flags/">Design feature flags and remote config (Android and iOS)</a> &middot; <a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a> &middot; <a href="/mobile-system-design/#method">The five-step method</a>.</p></div>
+<div class="layout"><aside class="toc"><details open><summary>On this page</summary><ol><li><a href="#1-the-flag-list">1. The flag list</a></li><li><a href="#2-the-contract">2. The contract</a></li><li><a href="#3-rollout-buckets">3. Rollout buckets</a></li><li><a href="#4-the-store">4. The store</a></li><li><a href="#5-the-saved-copy-datastore">5. The saved copy (DataStore)</a></li><li><a href="#6-the-vendor-adapter-firebase">6. The vendor adapter (Firebase)</a></li><li><a href="#7-start-foreground-and-the-splash-screen">7. Start, foreground and the splash screen</a></li><li><a href="#8-privacy-of-targeting-data">8. Privacy of targeting data</a></li><li><a href="#9-testing-flags">9. Testing flags</a></li><li><a href="#10-flag-cleanup">10. Flag cleanup</a></li><li><a href="#11-platform-limits">11. Platform limits</a></li><li><a href="#12-how-to-build-feature-flags-on-ios-swift">12. How to build feature flags on iOS (Swift)</a></li><li><a href="#13-more-practice-prompts">13. More practice prompts</a></li><li><a href="#further-reading-official-docs">Further reading (official docs)</a></li></ol></details></aside>
+<article class="prose"><p>This is the implementation material behind the <a href="/mobile-system-design/feature-flags/">feature flags interview case</a>. It covers:</p>
+<ul><li>the flag list, the contract and <a class="gl" href="/glossary/#rollout-bucket" title="A number that the server works out from a user ID and a flag key.">rollout buckets</a></li><li>the store, the saved copy and the vendor adapter</li><li>the <a class="gl" href="/glossary/#kill-switch" title="A remote flag that turns a feature off at once.">kill switch</a>, the crash guard, privacy, testing and cleanup</li><li>platform limits and the iOS version</li></ul>
+<p>None of it belongs in a 45-minute round (the length I assume). I draw it only if asked. The Kotlin was compiled with Firebase BoM 34.19.0, which gave firebase-config 23.1.0. The Firebase pages I read on 14 October 2026 show BoM 35.0.0 and firebase-config 24.0.0. Check the current release notes before you copy a call name. The Swift store was type-checked. The Firebase Swift adapter was not compiled.</p>
+<h2 id="1-the-flag-list">1. The flag list</h2>
+<p>Every flag is declared in code. It has a key, a default, an owner and an expiry date. A kill switch has no date. The default is the behavior that already shipped and worked.</p>
+<p><code>expired()</code> is for CI. A flag past its date fails the build until someone removes it.</p>
+<pre tabindex="0"><code>package flags
+
+import java.time.LocalDate
+
+/**
+ * A flag, declared in code. `default` is the behavior that already shipped and worked.
+ * A kill switch has no expiry date. Every other flag must have one.
+ */
+class Flag(
+    val key: String,
+    val default: Boolean,
+    val owner: String,
+    val expires: LocalDate? = null,
+    val killSwitch: Boolean = false,
+) {
+    init { require(killSwitch || expires != null) { &quot;$key needs an expiry date&quot; } }
+}
+
+object Flags {
+    val NewCheckout = Flag(&quot;new_checkout&quot;, default = false, owner = &quot;payments&quot;, expires = LocalDate.of(2027, 3, 1))
+    val ChatMedia = Flag(&quot;chat_media_enabled&quot;, default = true, owner = &quot;chat&quot;, killSwitch = true)
+
+    val all = listOf(NewCheckout, ChatMedia)
+
+    /** Run this in CI. A flag past its date fails the build until someone removes it. */
+    fun expired(today: LocalDate): List&lt;Flag&gt; = all.filter { it.expires?.isBefore(today) == true }
+}</code></pre>
+<h2 id="2-the-contract">2. The contract</h2>
+<p>This is my design, not a vendor API. The phone sends the least it can. The server evaluates the rules and returns only answers.</p>
+<pre tabindex="0"><code>POST /v1/flags/evaluate
+     body: { platform, appVersion, accountId | null, installId }
+     → 200 { version, flags: { &quot;new_checkout&quot;: true, &quot;chat_media_enabled&quot;: true } }
+     → 304 when the client sends If-None-Match with the last version</code></pre>
+<ul><li>Unknown keys are ignored by the app. A missing key means "use the default in the code".</li><li>Rules stay on the server. Unleash advises against evaluation on the client, because it exposes flag configuration and context. It suggests sending the context to an evaluation server and caching the results (<a href="https://docs.getunleash.io/guides/feature-flag-best-practices">Unleash best practices</a>).</li><li>LaunchDarkly mobile <a class="gl" href="/glossary/#sdk" title="Software development kit.">SDKs</a> use the same shape. The SDK gets values for one context (<a href="https://launchdarkly.com/docs/sdk/concepts/client-side-server-side">LaunchDarkly SDK types</a>).</li><li>Do not put secrets in flag values. Firebase says users can read any default or fetched value (<a href="https://firebase.google.com/docs/remote-config/android/get-started">Firebase get started</a>).</li></ul>
+<h2 id="3-rollout-buckets">3. Rollout buckets</h2>
+<p>The bucket is a number from 0 to 9,999. It comes from a <a class="gl" href="/glossary/#hash" title="A short code made from the bytes of a file.">hash</a> of the flag key and a stable ID. The same account and flag always give the same bucket. A bigger percentage only adds buckets, so the first group stays in.</p>
+<p>LaunchDarkly describes the same idea with 100,000 buckets from the context key and kind. It says each flag assigns people on its own (<a href="https://launchdarkly.com/docs/home/releases/percentage-rollouts">LaunchDarkly percentage rollouts</a>). Unleash hashes a context field with the flag name, and it says stickiness is not guaranteed when no user or session field exists (<a href="https://docs.getunleash.io/concepts/stickiness">Unleash stickiness</a>).</p>
+<p>This code runs on the server. I show it here so you can test the property. The Android and iOS versions give the same number for the same input (1500 for <code>acct-42</code> and <code>new_checkout</code>).</p>
+<pre tabindex="0"><code>package flags
+
+import java.security.MessageDigest
+
+/**
+ * Rollout bucket, 0 to 9,999. Runs on the server. It is shown here so the property can be tested:
+ * the same account and flag always give the same bucket, and a larger percentage only adds buckets.
+ */
+object Bucket {
+    fun of(stableId: String, flagKey: String): Int {
+        val d = MessageDigest.getInstance(&quot;SHA-256&quot;).digest(&quot;$flagKey:$stableId&quot;.toByteArray())
+        val n = (d[0].toLong() and 0xff shl 24) or (d[1].toLong() and 0xff shl 16) or
+            (d[2].toLong() and 0xff shl 8) or (d[3].toLong() and 0xff)
+        return (n % 10_000).toInt()
+    }
+
+    /** `basisPoints` 1,000 means 10 percent. */
+    fun isIn(stableId: String, flagKey: String, basisPoints: Int): Boolean = of(stableId, flagKey) &lt; basisPoints
+}</code></pre>
+<p>Which ID to hash:</p>
+<ul><li>Signed in: the account ID. The group then follows the person to a new phone.</li><li>Signed out: the install ID. The group changes after a reinstall.</li><li>Firebase's own random percent rule maps each app instance to a number, and keeps it (<a href="https://firebase.google.com/docs/remote-config/parameters/client">Firebase client templates</a>). That follows the install, not the account.</li></ul>
+<p>To get account-stable groups on Firebase, send the bucket as a custom signal. Firebase conditions can compare custom signals as numbers (<a href="https://firebase.google.com/docs/remote-config/condition-reference">Firebase condition reference</a>). A console rule can then say <code>rollout_bucket &lt; 1000</code> for 10 percent. The adapter in section 6 sets the signal. Flags then share one bucket, so the same people are first in every rollout. Send one signal per flag if that matters.</p>
+<h2 id="4-the-store">4. The store</h2>
+<p>The store is the center of the design. It reads local disk at start and never waits for the network. A screen takes a view once. The answers in that view stay the same. A kill switch is the one value read live.</p>
+<p>Three details:</p>
+<ul><li><code>start()</code> counts starts that never finish. After two, it deletes the saved copy and uses the defaults.</li><li><code>refreshIfStale()</code> treats a negative age as <a class="gl" href="/glossary/#stale-data" title="Saved data that may be out of date.">stale</a>. If the device clock moved back, it fetches.</li><li><code>switchUser()</code> only loads a copy saved for that user. One user's values never reach another user.</li></ul>
+<pre tabindex="0"><code>package flags
+
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
+data class FlagSnapshot(
+    val userKey: String?,            // null means signed out
+    val fetchedAtMillis: Long,       // 0 means never fetched
+    val values: Map&lt;String, Boolean&gt;,
+)
+
+interface FlagSource {
+    /** Returns the values for this user, or null when the fetch failed. */
+    suspend fun fetch(userKey: String?): Map&lt;String, Boolean&gt;?
+}
+
+interface FlagDisk {
+    suspend fun read(): FlagSnapshot?
+    suspend fun write(snapshot: FlagSnapshot)
+    suspend fun clear()
+    suspend fun unfinishedStarts(): Int
+    suspend fun setUnfinishedStarts(n: Int)
+}
+
+class FlagStore(
+    private val source: FlagSource,
+    private val disk: FlagDisk,
+    private val now: () -&gt; Long,
+    private val flags: List&lt;Flag&gt; = Flags.all,
+    private val maxAgeMillis: Long = 15 * 60_000L,
+) {
+    private val killKeys = flags.filter { it.killSwitch }.map { it.key }.toSet()
+    private val lock = Mutex()
+    private var userKey: String? = null
+    private var session = FlagSnapshot(null, 0, emptyMap())     // fixed for the whole session
+    private var lastFetchAt = 0L
+    private val live = MutableStateFlow&lt;Map&lt;String, Boolean&gt;&gt;(emptyMap())   // kill switches only
+
+    /** Call once, before the first frame. It reads local disk only. It never waits for the network. */
+    suspend fun start(userKey: String?) = lock.withLock {
+        this.userKey = userKey
+        val unfinished = disk.unfinishedStarts()
+        disk.setUnfinishedStarts(unfinished + 1)
+        val saved = disk.read()
+        session = when {
+            unfinished &gt;= 2 -&gt; { disk.clear(); empty(userKey) }          // two starts never finished: safe mode
+            saved != null &amp;&amp; saved.userKey == userKey -&gt; saved
+            else -&gt; empty(userKey)
+        }
+        lastFetchAt = session.fetchedAtMillis
+        live.value = session.values.filterKeys { it in killKeys }
+    }
+
+    /** Call a few seconds after the first frame. It resets the crash counter. */
+    suspend fun startFinished() = disk.setUnfinishedStarts(0)
+
+    /** A screen takes one view when it opens. The answers stay the same until the screen closes. */
+    fun view(): FlagView = FlagView(session.values, this)
+
+    internal fun liveValue(flag: Flag): Boolean = live.value[flag.key] ?: flag.default
+
+    suspend fun refreshIfStale() {
+        val age = now() - lastFetchAt
+        if (age in 0 until maxAgeMillis) return       // a negative age means the clock moved back: fetch
+        refresh()
+    }
+
+    suspend fun refresh() = lock.withLock {
+        val fresh = source.fetch(userKey) ?: return@withLock          // failed: keep what we have
+        lastFetchAt = now()
+        disk.write(FlagSnapshot(userKey, lastFetchAt, fresh))         // the next session reads this
+        live.value = fresh.filterKeys { it in killKeys }              // kill switches change now
+    }
+
+    /** Sign in or out. The old user&#x27;s values must not reach the new user. */
+    suspend fun switchUser(newKey: String?) {
+        lock.withLock {
+            userKey = newKey
+            val saved = disk.read()
+            session = if (saved != null &amp;&amp; saved.userKey == newKey) saved else empty(newKey)
+            lastFetchAt = session.fetchedAtMillis
+            live.value = session.values.filterKeys { it in killKeys }
+        }
+        refresh()
+    }
+
+    private fun empty(userKey: String?) = FlagSnapshot(userKey, 0, emptyMap())
+}
+
+class FlagView internal constructor(private val values: Map&lt;String, Boolean&gt;, private val store: FlagStore) {
+    fun isOn(flag: Flag): Boolean =
+        if (flag.killSwitch) store.liveValue(flag) else values[flag.key] ?: flag.default
+}</code></pre>
+<h2 id="5-the-saved-copy-datastore">5. The saved copy (DataStore)</h2>
+<p>DataStore is a Jetpack library for small saved settings. Android says it stores data asynchronously, consistently and transactionally (<a href="https://developer.android.com/topic/libraries/architecture/datastore">Android DataStore</a>). One <code>edit</code> call is one write, so a crash cannot leave half a <a class="gl" href="/glossary/#snapshot" title="A copy of the data as it was at one moment.">snapshot</a>. I rely on that sentence, and I did not test a crash.</p>
+<pre tabindex="0"><code>package flags
+
+import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.first
+
+private val Context.flagStore by preferencesDataStore(name = &quot;flags&quot;)
+
+class DataStoreFlagDisk(private val context: Context, private val flags: List&lt;Flag&gt; = Flags.all) : FlagDisk {
+    private val userKey = stringPreferencesKey(&quot;_user&quot;)
+    private val fetchedAt = longPreferencesKey(&quot;_fetched_at&quot;)
+    private val written = booleanPreferencesKey(&quot;_written&quot;)
+    private val unfinished = intPreferencesKey(&quot;_unfinished_starts&quot;)
+
+    override suspend fun read(): FlagSnapshot? {
+        val p = context.flagStore.data.first()
+        if (p[written] != true) return null
+        val values = flags.mapNotNull { f -&gt; p[booleanPreferencesKey(f.key)]?.let { f.key to it } }.toMap()
+        return FlagSnapshot(p[userKey], p[fetchedAt] ?: 0L, values)
+    }
+
+    // One edit is one transaction, so a crash cannot leave half a snapshot.
+    override suspend fun write(snapshot: FlagSnapshot) {
+        context.flagStore.edit { p -&gt;
+            flags.forEach { p.remove(booleanPreferencesKey(it.key)) }
+            snapshot.values.forEach { (k, v) -&gt; p[booleanPreferencesKey(k)] = v }
+            val user = snapshot.userKey
+            if (user == null) p.remove(userKey) else p[userKey] = user
+            p[fetchedAt] = snapshot.fetchedAtMillis
+            p[written] = true
+        }
+    }
+
+    override suspend fun clear() {
+        context.flagStore.edit { p -&gt;
+            flags.forEach { p.remove(booleanPreferencesKey(it.key)) }
+            p.remove(userKey); p.remove(fetchedAt); p.remove(written)
+        }
+    }
+
+    override suspend fun unfinishedStarts(): Int = context.flagStore.data.first()[unfinished] ?: 0
+    override suspend fun setUnfinishedStarts(n: Int) { context.flagStore.edit { it[unfinished] = n } }
+}</code></pre>
+<h2 id="6-the-vendor-adapter-firebase">6. The vendor adapter (Firebase)</h2>
+<p>The adapter has three jobs.</p>
+<ul><li><code>fetch()</code> asks Firebase for new values. It also calls <code>activate()</code>, which moves Firebase's own copy forward. Screens read the store, not Firebase.</li><li>It keeps only values that came from the server. For the rest, the default in the code applies. The Android reference has <code>getSource()</code> and <code>VALUE_SOURCE_REMOTE</code> for this (<a href="https://firebase.google.com/docs/reference/android/com/google/firebase/remoteconfig/FirebaseRemoteConfigValue">FirebaseRemoteConfigValue</a>).</li><li><code>onKillSwitchChanged()</code> listens for live updates. They run only in the foreground (<a href="https://firebase.google.com/docs/remote-config/android/real-time">Firebase real-time</a>).</li></ul>
+<p>Fetch obeys the minimum fetch interval. The default is 12 hours (<a href="https://firebase.google.com/docs/remote-config/android/get-started">Firebase get started</a>). A call inside that window does not reach the network. Real-time updates skip the interval. That is why the kill switch uses them.</p>
+<pre tabindex="0"><code>package flags
+
+import com.google.firebase.remoteconfig.ConfigUpdate
+import com.google.firebase.remoteconfig.ConfigUpdateListener
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigException
+import com.google.firebase.remoteconfig.customSignals
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.tasks.await
+
+class FirebaseFlagSource(private val rc: FirebaseRemoteConfig) : FlagSource {
+
+    /** Fetch respects the minimum fetch interval (12 hours by default), so a call can be a no-op. */
+    override suspend fun fetch(userKey: String?): Map&lt;String, Boolean&gt;? = try {
+        rc.fetch().await()
+        rc.activate().await()      // this moves Firebase&#x27;s own copy forward. Screens read FlagStore, not Firebase.
+        // Keep only values that came from the server. For the rest, the Flag default in code applies.
+        Flags.all
+            .filter { rc.getValue(it.key).source == FirebaseRemoteConfig.VALUE_SOURCE_REMOTE }
+            .associate { it.key to rc.getBoolean(it.key) }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {      // throttled, offline, timeout
+        null
+    }
+
+    /** Send a rollout bucket that follows the account, not the install. A console rule can say bucket &lt; 1000. */
+    fun setBucket(accountId: String?) {
+        rc.setCustomSignals(customSignals {
+            put(&quot;rollout_bucket&quot;, if (accountId == null) -1L else Bucket.of(accountId, &quot;all&quot;).toLong())
+        })
+    }
+
+    /** Real-time updates run only while the app is in the foreground. Use them for kill switches. */
+    fun onKillSwitchChanged(action: () -&gt; Unit) {
+        val killKeys = Flags.all.filter { it.killSwitch }.map { it.key }.toSet()
+        rc.addOnConfigUpdateListener(object : ConfigUpdateListener {
+            override fun onUpdate(configUpdate: ConfigUpdate) {
+                if (configUpdate.updatedKeys.any { it in killKeys }) action()
+            }
+            override fun onError(error: FirebaseRemoteConfigException) { /* the next foreground fetch repairs it */ }
+        })
+    }
+}</code></pre>
+<h2 id="7-start-foreground-and-the-splash-screen">7. Start, foreground and the splash screen</h2>
+<p>The <code>Application</code> class builds the store and starts it. <code>ProcessLifecycleOwner</code> reports the foreground. Its stop events come with a delay, so a screen turn does not look like a background trip (<a href="https://developer.android.com/reference/androidx/lifecycle/ProcessLifecycleOwner">ProcessLifecycleOwner</a>).</p>
+<p>The first activity holds the splash screen until the local read is done. Android's own sample holds the first frame for small local data, such as settings from disk (<a href="https://developer.android.com/develop/ui/views/launch/splash-screen">Android splash screen</a>). The compat library has <code>setKeepOnScreenCondition</code> for the same job (<a href="https://developer.android.com/reference/androidx/core/splashscreen/SplashScreen">SplashScreen reference</a>). Do not hold it for the network.</p>
+<p><code>startFinished()</code> runs after five seconds. That number is my choice. It only needs to be longer than the time a bad flag takes to crash the app.</p>
+<pre tabindex="0"><code>package flags
+
+import android.app.Activity
+import android.app.Application
+import android.os.Bundle
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
+import com.google.firebase.Firebase
+import com.google.firebase.remoteconfig.remoteConfig
+import com.google.firebase.remoteconfig.remoteConfigSettings
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+class FlagsApp : Application() {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val ready = AtomicBoolean(false)
+    lateinit var flagStore: FlagStore
+        private set
+
+    override fun onCreate() {
+        super.onCreate()
+        val rc = Firebase.remoteConfig
+        rc.setConfigSettingsAsync(remoteConfigSettings { minimumFetchIntervalInSeconds = 12 * 3600 })
+        val source = FirebaseFlagSource(rc)
+        flagStore = FlagStore(source, DataStoreFlagDisk(this), now = System::currentTimeMillis)
+
+        scope.launch {
+            flagStore.start(userKey = null)            // local disk only
+            ready.set(true)
+            delay(5_000)
+            flagStore.startFinished()                  // the app lived 5 seconds, so it did not crash at start
+        }
+
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {          // the app came to the foreground
+                scope.launch { flagStore.refreshIfStale() }
+            }
+        })
+        source.onKillSwitchChanged { scope.launch { flagStore.refresh() } }
+    }
+}
+
+/** The first activity holds the splash screen until the local read is done. It never waits for the network. */
+class MainActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        val app = application as FlagsApp
+        installSplashScreen().setKeepOnScreenCondition { !app.ready.get() }
+        super.onCreate(savedInstanceState)
+    }
+}</code></pre>
+<p>The screens take one view each. <code>CheckoutViewModel</code> keeps its answer until it is cleared. <code>ChatViewModel</code> reads a kill switch each time.</p>
+<pre tabindex="0"><code>package flags
+
+import androidx.lifecycle.ViewModel
+
+class CheckoutViewModel(store: FlagStore) : ViewModel() {
+    private val flags = store.view()                          // one view, taken when the screen opens
+    val useNewCheckout: Boolean = flags.isOn(Flags.NewCheckout)   // the same answer until the screen closes
+}
+
+class ChatViewModel(store: FlagStore) : ViewModel() {
+    private val flags = store.view()
+    fun canSendMedia(): Boolean = flags.isOn(Flags.ChatMedia)     // a kill switch is read each time
+}</code></pre>
+<h2 id="8-privacy-of-targeting-data">8. Privacy of targeting data</h2>
+<p>Targeting needs facts about the user. Each fact is a decision. My default is to send the least.</p>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Field</th><th>Send?</th><th>Why</th></tr></thead><tbody><tr><td>Platform, app version</td><td>Yes</td><td>Needed for version rules. Low risk</td></tr><tr><td>Account bucket number</td><td>Yes</td><td>One number. It shows no attribute</td></tr><tr><td>Account ID</td><td>Only if the server needs it</td><td>It identifies a person. A hash of it still does</td></tr><tr><td>Email, phone, exact location</td><td>No</td><td>A rule can use a coarse group that the server already holds</td></tr><tr><td>Country</td><td>No</td><td>The server can read it from the request. I did not verify how each vendor does this</td></tr></tbody></table></div>
+<ul><li>Apple asks you to declare the data that you and your third-party partners collect (<a href="https://developer.apple.com/app-store/app-privacy-details/">Apple app privacy details</a>). A flag vendor that gets an ID is a partner. Play has a matching Data safety form <a href="https://support.google.com/googleplay/android-developer/answer/10787469">Verified: [Play Data safety</a>, page fetched 2026-10-14].</li><li>LaunchDarkly private attributes are not stored by LaunchDarkly or sent in events. A client SDK still sends them for evaluation (<a href="https://launchdarkly.com/docs/sdk/features/private-attributes">LaunchDarkly private attributes</a>).</li><li>Flagsmith warns that an identity such as a counting number is easy to guess (<a href="https://docs.flagsmith.com/flagsmith-concepts/identities">Flagsmith identities</a>). Use a random ID.</li><li>Apple says fingerprinting with UserDefaults is not allowed (<a href="https://developer.apple.com/documentation/foundation/userdefaults">Apple UserDefaults</a>). Do not use flags to tag a device.</li></ul>
+<h2 id="9-testing-flags">9. Testing flags</h2>
+<p>A flag doubles the paths in a feature. Test both. The store takes fakes for the source and the disk, so a test needs no network and no vendor.</p>
+<p>The tests below cover the cases that hurt in production:</p>
+<ul><li>no network, no saved copy and a failed fetch</li><li>a changed user, a crash loop and a clock set back</li><li>an expired flag and the bucket rules</li></ul>
+<p>They ran on the JVM.</p>
+<pre tabindex="0"><code>package flags
+
+import java.time.LocalDate
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlinx.coroutines.test.runTest
+
+class FakeSource(var result: Map&lt;String, Boolean&gt;? = null) : FlagSource {
+    var calls = 0
+    override suspend fun fetch(userKey: String?): Map&lt;String, Boolean&gt;? { calls++; return result }
+}
+
+class FakeDisk(var snapshot: FlagSnapshot? = null, var unfinished: Int = 0) : FlagDisk {
+    override suspend fun read() = snapshot
+    override suspend fun write(snapshot: FlagSnapshot) { this.snapshot = snapshot }
+    override suspend fun clear() { snapshot = null }
+    override suspend fun unfinishedStarts() = unfinished
+    override suspend fun setUnfinishedStarts(n: Int) { unfinished = n }
+}
+
+class FlagStoreTest {
+    private var clock = 1_000_000L
+    private fun store(source: FlagSource, disk: FlagDisk) = FlagStore(source, disk, { clock })
+    private val saved = FlagSnapshot(&quot;u1&quot;, 500_000L, mapOf(&quot;new_checkout&quot; to true, &quot;chat_media_enabled&quot; to true))
+
+    @Test fun firstLaunchOfflineUsesCodeDefaults() = runTest {
+        val s = store(FakeSource(null), FakeDisk())
+        s.start(&quot;u1&quot;)
+        val v = s.view()
+        assertFalse(v.isOn(Flags.NewCheckout))     // default false
+        assertTrue(v.isOn(Flags.ChatMedia))        // default true
+    }
+
+    @Test fun savedValuesApplyAtStartAndNewOnesWaitForNextSession() = runTest {
+        val src = FakeSource(mapOf(&quot;new_checkout&quot; to false, &quot;chat_media_enabled&quot; to true))
+        val disk = FakeDisk(saved)
+        val s = store(src, disk)
+        s.start(&quot;u1&quot;)
+        val screen = s.view()
+        assertTrue(screen.isOn(Flags.NewCheckout))
+        s.refresh()
+        assertTrue(screen.isOn(Flags.NewCheckout))                 // this screen does not flicker
+        assertTrue(s.view().isOn(Flags.NewCheckout))               // same session, same answer
+        assertFalse(disk.snapshot!!.values.getValue(&quot;new_checkout&quot;))   // next start sees false
+    }
+
+    @Test fun killSwitchChangesNow() = runTest {
+        val s = store(FakeSource(mapOf(&quot;chat_media_enabled&quot; to false)), FakeDisk(saved))
+        s.start(&quot;u1&quot;)
+        val screen = s.view()
+        assertTrue(screen.isOn(Flags.ChatMedia))
+        s.refresh()
+        assertFalse(screen.isOn(Flags.ChatMedia))
+    }
+
+    @Test fun failedFetchKeepsLastValues() = runTest {
+        val disk = FakeDisk(saved)
+        val s = store(FakeSource(null), disk)
+        s.start(&quot;u1&quot;); s.refresh()
+        assertEquals(saved, disk.snapshot)
+        assertTrue(s.view().isOn(Flags.NewCheckout))
+    }
+
+    @Test fun otherUsersValuesAreNeverShown() = runTest {
+        val s = store(FakeSource(null), FakeDisk(saved))
+        s.start(&quot;u2&quot;)
+        assertFalse(s.view().isOn(Flags.NewCheckout))
+        s.switchUser(&quot;u1&quot;)
+        assertTrue(s.view().isOn(Flags.NewCheckout))
+        s.switchUser(null)
+        assertFalse(s.view().isOn(Flags.NewCheckout))
+    }
+
+    @Test fun twoUnfinishedStartsMeanSafeMode() = runTest {
+        val disk = FakeDisk(saved, unfinished = 2)
+        val s = store(FakeSource(null), disk)
+        s.start(&quot;u1&quot;)
+        assertFalse(s.view().isOn(Flags.NewCheckout))
+        assertEquals(null, disk.snapshot)
+        s.startFinished()
+        assertEquals(0, disk.unfinished)
+    }
+
+    @Test fun clockMovedBackStillFetches() = runTest {
+        val src = FakeSource(mapOf(&quot;new_checkout&quot; to true))
+        val s = store(src, FakeDisk(saved.copy(fetchedAtMillis = clock + 9_999_999L)))
+        s.start(&quot;u1&quot;)
+        s.refreshIfStale()
+        assertEquals(1, src.calls)
+    }
+
+    @Test fun freshSnapshotIsNotFetchedAgain() = runTest {
+        val src = FakeSource(mapOf(&quot;new_checkout&quot; to true))
+        val s = store(src, FakeDisk(saved.copy(fetchedAtMillis = clock - 60_000L)))
+        s.start(&quot;u1&quot;)
+        s.refreshIfStale()
+        assertEquals(0, src.calls)
+    }
+
+    @Test fun noFlagIsPastItsExpiry() {
+        // Use the real date in CI. A fixed date here keeps this example repeatable.
+        assertEquals(emptyList(), Flags.expired(LocalDate.of(2026, 10, 14)))
+        assertEquals(listOf(Flags.NewCheckout), Flags.expired(LocalDate.of(2027, 3, 2)))
+    }
+
+    @Test fun sameAccountSameBucket() {
+        assertEquals(Bucket.of(&quot;acct-42&quot;, &quot;new_checkout&quot;), Bucket.of(&quot;acct-42&quot;, &quot;new_checkout&quot;))
+    }
+
+    @Test fun androidAndIosAgree() {
+        assertEquals(1500, Bucket.of(&quot;acct-42&quot;, &quot;new_checkout&quot;))   // the Swift version prints the same number
+    }
+
+    @Test fun biggerPercentageOnlyAddsPeople() {
+        val ids = (1..20_000).map { &quot;acct-$it&quot; }
+        val ten = ids.filter { Bucket.isIn(it, &quot;new_checkout&quot;, 1_000) }.toSet()
+        val twenty = ids.filter { Bucket.isIn(it, &quot;new_checkout&quot;, 2_000) }.toSet()
+        assertTrue(twenty.containsAll(ten))
+        assertTrue(ten.size in 1_800..2_200, &quot;ten percent of 20,000 was ${ten.size}&quot;)
+    }
+
+    @Test fun flagsPickTheirPeopleIndependently() {
+        val ids = (1..20_000).map { &quot;acct-$it&quot; }
+        val a = ids.filter { Bucket.isIn(it, &quot;flag_a&quot;, 1_000) }.toSet()
+        val b = ids.filter { Bucket.isIn(it, &quot;flag_b&quot;, 1_000) }.toSet()
+        assertTrue((a intersect b).size &lt; 400, &quot;overlap was ${(a intersect b).size}&quot;)
+    }
+}</code></pre>
+<p>More rules, all my opinion:</p>
+<ul><li>Run each screen test with the flag on and with it off.</li><li>Put a debug-only screen on the store to force a value. Never ship it in a release build.</li><li>Run the expiry check in CI with the real date. The test above uses a fixed date so the example stays repeatable.</li><li>Vendors help here. LaunchDarkly offline mode makes no network requests, which suits unit tests (<a href="https://launchdarkly.com/docs/sdk/features/offline-mode">LaunchDarkly offline mode</a>). OpenFeature's client SDKs wait for a provider to be ready before they evaluate (<a href="https://openfeature.dev/docs/reference/sdks/client/kotlin/">OpenFeature Kotlin SDK</a>).</li></ul>
+<h2 id="10-flag-cleanup">10. Flag cleanup</h2>
+<p>Old flags are debt. Unleash says stale flags make code harder to read, and can expose features by mistake (<a href="https://docs.getunleash.io/concepts/technical-debt">Unleash technical debt</a>). Unleash lists expected lifetimes by type. These are the numbers it gives (<a href="https://docs.getunleash.io/concepts/feature-flags">feature flags</a>).</p>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Type</th><th>Unleash lifetime</th><th>My use</th></tr></thead><tbody><tr><td>Release</td><td>40 days</td><td>A new feature rollout</td></tr><tr><td>Experiment</td><td>40 days</td><td>Parked in this case</td></tr><tr><td>Operational</td><td>7 days</td><td>A switch for a migration</td></tr><tr><td>Kill switch</td><td>Permanent</td><td>Marked in code, no date</td></tr><tr><td>Sunset</td><td>90 days</td><td>Removing an old feature</td></tr></tbody></table></div>
+<p>The cleanup steps:</p>
+<ol><li>The rollout reaches 100 percent and stays there for a set time.</li><li>Remove the old code path. Keep serving the flag.</li><li>Remove the flag from the code and from the flag list.</li><li>Archive it in the dashboard. Never reuse the key. Unleash gives unique names as a reason: reuse can turn on an old feature (<a href="https://docs.getunleash.io/guides/feature-flag-best-practices">best practices</a>).</li></ol>
+<p>Order matters. After a LaunchDarkly archive, an app that still asks for the flag gets the fallback value from the code (<a href="https://launchdarkly.com/docs/home/flags/archive">LaunchDarkly archiving</a>). So remove the code first.</p>
+<h2 id="11-platform-limits">11. Platform limits</h2>
+<p>Each cell restates a fact from this guide or from the interview page.</p>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Limit</th><th>Android</th><th>iOS</th><th>So the design changes by</th></tr></thead><tbody><tr><td>Live updates</td><td>Firebase real-time runs in the foreground and stops in the background</td><td>Same Firebase behavior</td><td>Kill switches use live updates and also the next foreground fetch</td></tr><tr><td>Waking the app</td><td><a class="gl" href="/glossary/#doze" title="The deep-sleep mode of an idle Android phone.">Doze</a> suspends network access on an idle phone</td><td>Background push is low priority, not guaranteed, two or three an hour at most</td><td>A push is an extra, never the plan</td></tr><tr><td>Foreground signal</td><td><code>ProcessLifecycleOwner</code>, with delayed stop events</td><td><code>ScenePhase</code> <code>active</code></td><td>Refresh when the saved copy is old</td></tr><tr><td>Saved copy</td><td>DataStore, transactional</td><td>UserDefaults, thread-safe, written to disk later</td><td>One record. The next fetch repairs a lost write</td></tr><tr><td>Start screen</td><td>Hold the splash screen only for local data</td><td>I did not read an Apple number for this</td><td>Never wait for the network at start</td></tr><tr><td>Throttle</td><td>Fetch can be throttled</td><td>Fetch can be throttled</td><td>A failed fetch keeps the old values</td></tr><tr><td>Store release</td><td>Play <a class="gl" href="/glossary/#staged-rollout" title="A release to a growing share of users, not to everyone at once.">staged rollout</a> can be halted</td><td>Phased release can be paused up to 30 days</td><td>Neither recalls a build. The flag is the <a class="gl" href="/glossary/#rollback" title="Going back to the old behavior after a problem.">rollback</a></td></tr></tbody></table></div>
+<h2 id="12-how-to-build-feature-flags-on-ios-swift">12. How to build feature flags on iOS (Swift)</h2>
+<p>The design carries over: a store with a saved copy, defaults in code, one decision per session, and a live kill switch. Only the tools change.</p>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Concern</th><th>Android</th><th>iOS</th></tr></thead><tbody><tr><td>Saved copy</td><td>DataStore</td><td>UserDefaults (one key, JSON)</td></tr><tr><td>Store</td><td>Class made in <code>Application</code></td><td><code>@MainActor</code> class</td></tr><tr><td>Foreground signal</td><td><code>ProcessLifecycleOwner</code></td><td><code>ScenePhase</code> in SwiftUI</td></tr><tr><td>Vendor SDK</td><td><code>firebase-config</code></td><td><code>FirebaseRemoteConfig</code></td></tr><tr><td>Bucket hash</td><td><code>MessageDigest</code></td><td>CryptoKit <code>SHA256</code></td></tr></tbody></table></div>
+<p>What really changes:</p>
+<ul><li><strong>The store runs on the main <a class="gl" href="/glossary/#actor" title="A Swift type that runs one task at a time.">actor</a>.</strong> A view can call <code>isOn</code> in its body without an <code>await</code>. The disk and the source are async protocols, so slow work does not block the main thread.</li><li><strong>A refresh can overlap a user switch.</strong> <code>refresh()</code> drops the answer if the user changed while it waited. A late write cannot leak either, because the saved copy carries a user key, and a mismatch is ignored at start.</li><li><strong>The foreground signal is the scene phase.</strong> <code>active</code> means the scene is in the foreground and interactive (<a href="https://developer.apple.com/documentation/swiftui/scenephase">Apple ScenePhase</a>).</li><li><strong>The first screen waits for the local read.</strong> <code>RootView</code> shows an empty view for a few milliseconds.</li></ul>
+<pre tabindex="0"><code>import CryptoKit
+import Foundation
+
+/// A flag, declared in code. `defaultValue` is the behavior that already shipped and worked.
+/// A kill switch has no expiry date. Every other flag must have one.
+struct Flag: Sendable {
+    let key: String
+    let defaultValue: Bool
+    let owner: String
+    let expires: Date?
+    let killSwitch: Bool
+
+    init(key: String, defaultValue: Bool, owner: String, expires: Date? = nil, killSwitch: Bool = false) {
+        precondition(killSwitch || expires != nil, &quot;\(key) needs an expiry date&quot;)
+        self.key = key; self.defaultValue = defaultValue; self.owner = owner
+        self.expires = expires; self.killSwitch = killSwitch
+    }
+}
+
+enum Flags {
+    static func day(_ y: Int, _ m: Int, _ d: Int) -&gt; Date {
+        var c = Calendar(identifier: .gregorian)
+        c.timeZone = TimeZone(identifier: &quot;UTC&quot;)!
+        return c.date(from: DateComponents(year: y, month: m, day: d))!
+    }
+
+    static let newCheckout = Flag(key: &quot;new_checkout&quot;, defaultValue: false, owner: &quot;payments&quot;, expires: day(2027, 3, 1))
+    static let chatMedia = Flag(key: &quot;chat_media_enabled&quot;, defaultValue: true, owner: &quot;chat&quot;, killSwitch: true)
+    static let all = [newCheckout, chatMedia]
+
+    /// Run this in CI. A flag past its date fails the build until someone removes it.
+    static func expired(on today: Date) -&gt; [Flag] {
+        all.filter { ($0.expires ?? .distantFuture) &lt; today }
+    }
+}
+
+/// Rollout bucket, 0 to 9,999. It runs on the server. It is shown here so the property can be tested:
+/// the same account and flag always give the same bucket, and a larger percentage only adds buckets.
+enum Bucket {
+    static func of(stableID: String, flagKey: String) -&gt; Int {
+        let digest = SHA256.hash(data: Data(&quot;\(flagKey):\(stableID)&quot;.utf8))
+        let first4 = digest.prefix(4).reduce(UInt32(0)) { ($0 &lt;&lt; 8) | UInt32($1) }
+        return Int(first4 % 10_000)
+    }
+
+    /// `basisPoints` 1,000 means 10 percent.
+    static func isIn(stableID: String, flagKey: String, basisPoints: Int) -&gt; Bool {
+        of(stableID: stableID, flagKey: flagKey) &lt; basisPoints
+    }
+}</code></pre>
+<pre tabindex="0"><code>import Foundation
+
+struct FlagSnapshot: Codable, Equatable, Sendable {
+    var userKey: String?             // nil means signed out
+    var fetchedAt: TimeInterval      // seconds since 1970. 0 means never fetched
+    var values: [String: Bool]
+
+    static func empty(_ userKey: String?) -&gt; FlagSnapshot { .init(userKey: userKey, fetchedAt: 0, values: [:]) }
+}
+
+protocol FlagSource: Sendable {
+    /// Returns the values for this user, or nil when the fetch failed.
+    func fetch(userKey: String?) async -&gt; [String: Bool]?
+}
+
+protocol FlagDisk: Sendable {
+    func read() async -&gt; FlagSnapshot?
+    func write(_ snapshot: FlagSnapshot) async
+    func clear() async
+    func unfinishedStarts() async -&gt; Int
+    func setUnfinishedStarts(_ n: Int) async
+}
+
+@MainActor
+final class FlagStore {
+    private let source: FlagSource
+    private let disk: FlagDisk
+    private let now: @Sendable () -&gt; TimeInterval
+    private let maxAge: TimeInterval
+    private let killKeys: Set&lt;String&gt;
+
+    private var userKey: String?
+    private var session = FlagSnapshot.empty(nil)      // fixed for the whole session
+    private var live: [String: Bool] = [:]             // kill switches only
+    private var lastFetchAt: TimeInterval = 0
+
+    init(source: FlagSource, disk: FlagDisk, now: @escaping @Sendable () -&gt; TimeInterval,
+         flags: [Flag] = Flags.all, maxAge: TimeInterval = 15 * 60) {
+        self.source = source; self.disk = disk; self.now = now; self.maxAge = maxAge
+        self.killKeys = Set(flags.filter(\.killSwitch).map(\.key))
+    }
+
+    /// Call once, before the first screen. It reads local disk only. It never waits for the network.
+    func start(userKey: String?) async {
+        self.userKey = userKey
+        let unfinished = await disk.unfinishedStarts()
+        await disk.setUnfinishedStarts(unfinished + 1)
+        let saved = await disk.read()
+        if unfinished &gt;= 2 {                                   // two starts never finished: safe mode
+            await disk.clear()
+            session = .empty(userKey)
+        } else if let saved, saved.userKey == userKey {
+            session = saved
+        } else {
+            session = .empty(userKey)
+        }
+        lastFetchAt = session.fetchedAt
+        live = session.values.filter { killKeys.contains($0.key) }
+    }
+
+    /// Call a few seconds after the first screen. It resets the crash counter.
+    func startFinished() async { await disk.setUnfinishedStarts(0) }
+
+    /// A screen takes one view when it opens. The answers stay the same until the screen closes.
+    func view() -&gt; FlagView { FlagView(values: session.values, store: self) }
+
+    fileprivate func liveValue(_ flag: Flag) -&gt; Bool { live[flag.key] ?? flag.defaultValue }
+
+    func refreshIfStale() async {
+        let age = now() - lastFetchAt
+        if age &gt;= 0 &amp;&amp; age &lt; maxAge { return }                 // a negative age means the clock moved back: fetch
+        await refresh()
+    }
+
+    func refresh() async {
+        let key = userKey
+        guard let fresh = await source.fetch(userKey: key) else { return }   // failed: keep what we have
+        guard key == userKey else { return }                                  // the user changed while we waited
+        lastFetchAt = now()
+        await disk.write(FlagSnapshot(userKey: key, fetchedAt: lastFetchAt, values: fresh))   // the next session reads this
+        if key == userKey { live = fresh.filter { killKeys.contains($0.key) } }               // kill switches change now
+    }
+
+    /// Sign in or out. The old user&#x27;s values must not reach the new user.
+    func switchUser(_ newKey: String?) async {
+        userKey = newKey
+        let saved = await disk.read()
+        session = (saved?.userKey == newKey ? saved : nil) ?? .empty(newKey)
+        lastFetchAt = session.fetchedAt
+        live = session.values.filter { killKeys.contains($0.key) }
+        await refresh()
+    }
+}
+
+@MainActor
+struct FlagView {
+    fileprivate let values: [String: Bool]
+    fileprivate let store: FlagStore
+
+    func isOn(_ flag: Flag) -&gt; Bool {
+        flag.killSwitch ? store.liveValue(flag) : (values[flag.key] ?? flag.defaultValue)
+    }
+}</code></pre>
+<pre tabindex="0"><code>import Foundation
+
+/// One key holds the whole snapshot, so a reader never sees half of it.
+/// UserDefaults is thread-safe. It writes to disk later, so a very recent write can be lost if the app is killed.
+struct UserDefaultsFlagDisk: FlagDisk, @unchecked Sendable {
+    var defaults: UserDefaults = .standard
+    private let snapshotKey = &quot;flags.snapshot.v1&quot;            // change the number if FlagSnapshot changes
+    private let unfinishedKey = &quot;flags.unfinishedStarts&quot;
+
+    func read() async -&gt; FlagSnapshot? {
+        guard let data = defaults.data(forKey: snapshotKey) else { return nil }
+        return try? JSONDecoder().decode(FlagSnapshot.self, from: data)
+    }
+    func write(_ snapshot: FlagSnapshot) async {
+        if let data = try? JSONEncoder().encode(snapshot) { defaults.set(data, forKey: snapshotKey) }
+    }
+    func clear() async { defaults.removeObject(forKey: snapshotKey) }
+    func unfinishedStarts() async -&gt; Int { defaults.integer(forKey: unfinishedKey) }
+    func setUnfinishedStarts(_ n: Int) async { defaults.set(n, forKey: unfinishedKey) }
+}</code></pre>
+<pre tabindex="0"><code>import SwiftUI
+
+struct RootView: View {
+    let store: FlagStore
+    @State private var ready = false
+    @Environment(\.scenePhase) private var scenePhase
+
+    var body: some View {
+        Group {
+            if ready { CheckoutScreen(store: store) } else { Color.clear }     // the local read takes a few milliseconds
+        }
+        .task {
+            await store.start(userKey: nil)                    // local disk only
+            ready = true
+            await store.refreshIfStale()                       // cold start: fetch only if the saved copy is old
+            try? await Task.sleep(for: .seconds(5))
+            await store.startFinished()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await store.refreshIfStale() } }    // back in the foreground
+        }
+    }
+}
+
+struct CheckoutScreen: View {
+    @State private var flags: FlagView
+
+    init(store: FlagStore) {
+        _flags = State(initialValue: store.view())             // one view, taken when the screen opens
+    }
+
+    var body: some View {
+        Text(flags.isOn(Flags.newCheckout) ? &quot;New checkout&quot; : &quot;Checkout&quot;)
+    }
+}</code></pre>
+<p>The Firebase adapter below was not compiled, because the Firebase iOS SDK was not on this machine. I took each call from the Firebase Swift reference: <code>fetch()</code> and <code>activate()</code> as async throwing calls, <code>allKeys(from:)</code> with <code>.remote</code>, <code>configValue(forKey:)</code> and <code>setCustomSignals(_:)</code> (<a href="https://firebase.google.com/docs/reference/swift/firebaseremoteconfig/api/reference/Classes/RemoteConfig">Firebase Swift reference</a>). Compile it before you ship it.</p>
+<pre tabindex="0"><code>import FirebaseRemoteConfig
+
+// Not compiled for this guide: the Firebase iOS SDK was not on this machine.
+struct FirebaseFlagSource: FlagSource {
+    func fetch(userKey: String?) async -&gt; [String: Bool]? {
+        let rc = RemoteConfig.remoteConfig()
+        do {
+            _ = try await rc.fetch()                           // respects minimumFetchInterval
+            _ = try await rc.activate()                        // moves Firebase&#x27;s own copy forward. Screens read FlagStore.
+            // Keep only values that came from the server. For the rest, the Flag default in code applies.
+            let remote = Set(rc.allKeys(from: .remote))
+            return Dictionary(uniqueKeysWithValues: Flags.all.filter { remote.contains($0.key) }
+                .map { ($0.key, rc.configValue(forKey: $0.key).boolValue) })
+        } catch {
+            return nil                                         // throttled, offline, timeout
+        }
+    }
+
+    /// Send a rollout bucket that follows the account, not the install. A console rule can say bucket &lt; 1000.
+    func setBucket(accountID: String?) async {
+        let bucket = accountID.map { Bucket.of(stableID: $0, flagKey: &quot;all&quot;) } ?? -1
+        try? await RemoteConfig.remoteConfig().setCustomSignals([&quot;rollout_bucket&quot;: .integer(bucket)])
+    }
+}</code></pre>
+<p>The Swift tests use the same cases as the Kotlin ones. They ran as a small macOS program, and all checks passed.</p>
+<pre tabindex="0"><code>import Foundation
+
+final class Counter: @unchecked Sendable { var n = 0 }
+final class FakeSource: FlagSource, @unchecked Sendable {
+    var result: [String: Bool]?
+    let calls = Counter()
+    init(_ r: [String: Bool]? = nil) { result = r }
+    func fetch(userKey: String?) async -&gt; [String: Bool]? { calls.n += 1; return result }
+}
+actor FakeDisk: FlagDisk {
+    var snapshot: FlagSnapshot?
+    var unfinished = 0
+    init(_ s: FlagSnapshot? = nil, unfinished: Int = 0) { snapshot = s; self.unfinished = unfinished }
+    func read() -&gt; FlagSnapshot? { snapshot }
+    func write(_ s: FlagSnapshot) { snapshot = s }
+    func clear() { snapshot = nil }
+    func unfinishedStarts() -&gt; Int { unfinished }
+    func setUnfinishedStarts(_ n: Int) { unfinished = n }
+    func current() -&gt; FlagSnapshot? { snapshot }
+    func unfinishedNow() -&gt; Int { unfinished }
+}
+
+var failures = 0, checks = 0
+@MainActor func check(_ ok: Bool, _ what: String) { checks += 1; if !ok { failures += 1; print(&quot;FAIL:&quot;, what) } }
+
+@MainActor func run() async {
+    let clock: TimeInterval = 1_000_000
+    let saved = FlagSnapshot(userKey: &quot;u1&quot;, fetchedAt: 500_000, values: [&quot;new_checkout&quot;: true, &quot;chat_media_enabled&quot;: true])
+    func make(_ src: FlagSource, _ disk: FlagDisk) -&gt; FlagStore { FlagStore(source: src, disk: disk, now: { clock }) }
+
+    do {   // first launch offline uses code defaults
+        let s = make(FakeSource(nil), FakeDisk()); await s.start(userKey: &quot;u1&quot;)
+        let v = s.view()
+        check(!v.isOn(Flags.newCheckout), &quot;default false&quot;); check(v.isOn(Flags.chatMedia), &quot;default true&quot;)
+    }
+    do {   // saved values apply at start; new ones wait for the next session
+        let disk = FakeDisk(saved)
+        let s = make(FakeSource([&quot;new_checkout&quot;: false, &quot;chat_media_enabled&quot;: true]), disk)
+        await s.start(userKey: &quot;u1&quot;)
+        let screen = s.view()
+        check(screen.isOn(Flags.newCheckout), &quot;saved value&quot;)
+        await s.refresh()
+        check(screen.isOn(Flags.newCheckout), &quot;no flicker&quot;); check(s.view().isOn(Flags.newCheckout), &quot;same session, same answer&quot;)
+        check(await disk.current()?.values[&quot;new_checkout&quot;] == false, &quot;next start sees false&quot;)
+    }
+    do {   // kill switch changes now
+        let s = make(FakeSource([&quot;chat_media_enabled&quot;: false]), FakeDisk(saved)); await s.start(userKey: &quot;u1&quot;)
+        let screen = s.view(); check(screen.isOn(Flags.chatMedia), &quot;on before&quot;)
+        await s.refresh(); check(!screen.isOn(Flags.chatMedia), &quot;kill switch applied now&quot;)
+    }
+    do {   // failed fetch keeps last values
+        let disk = FakeDisk(saved); let s = make(FakeSource(nil), disk); await s.start(userKey: &quot;u1&quot;); await s.refresh()
+        check(await disk.current() == saved, &quot;disk unchanged&quot;); check(s.view().isOn(Flags.newCheckout), &quot;still on&quot;)
+    }
+    do {   // other users&#x27; values are never shown
+        let s = make(FakeSource(nil), FakeDisk(saved)); await s.start(userKey: &quot;u2&quot;)
+        check(!s.view().isOn(Flags.newCheckout), &quot;u2 sees defaults&quot;)
+        await s.switchUser(&quot;u1&quot;); check(s.view().isOn(Flags.newCheckout), &quot;u1 sees u1&quot;)
+        await s.switchUser(nil); check(!s.view().isOn(Flags.newCheckout), &quot;signed out sees defaults&quot;)
+    }
+    do {   // two unfinished starts mean safe mode
+        let disk = FakeDisk(saved, unfinished: 2); let s = make(FakeSource(nil), disk); await s.start(userKey: &quot;u1&quot;)
+        check(!s.view().isOn(Flags.newCheckout), &quot;safe mode&quot;); check(await disk.current() == nil, &quot;snapshot cleared&quot;)
+        await s.startFinished(); check(await disk.unfinishedNow() == 0, &quot;counter reset&quot;)
+    }
+    do {   // clock moved back still fetches; a fresh snapshot does not
+        let a = FakeSource([&quot;new_checkout&quot;: true])
+        var future = saved; future.fetchedAt = clock + 9_999_999
+        let s1 = make(a, FakeDisk(future)); await s1.start(userKey: &quot;u1&quot;); await s1.refreshIfStale()
+        check(a.calls.n == 1, &quot;clock back fetches&quot;)
+        let b = FakeSource([&quot;new_checkout&quot;: true])
+        var fresh = saved; fresh.fetchedAt = clock - 60
+        let s2 = make(b, FakeDisk(fresh)); await s2.start(userKey: &quot;u1&quot;); await s2.refreshIfStale()
+        check(b.calls.n == 0, &quot;fresh is not fetched again&quot;)
+    }
+    do {   // flags past their date
+        check(Flags.expired(on: Flags.day(2026, 10, 14)).isEmpty, &quot;none expired today&quot;)
+        check(Flags.expired(on: Flags.day(2027, 3, 2)).count == 1, &quot;one expired later&quot;)
+    }
+    do {   // buckets
+        check(Bucket.of(stableID: &quot;acct-42&quot;, flagKey: &quot;new_checkout&quot;) == Bucket.of(stableID: &quot;acct-42&quot;, flagKey: &quot;new_checkout&quot;), &quot;stable&quot;)
+        let ids = (1...20_000).map { &quot;acct-\($0)&quot; }
+        let ten = Set(ids.filter { Bucket.isIn(stableID: $0, flagKey: &quot;new_checkout&quot;, basisPoints: 1_000) })
+        let twenty = Set(ids.filter { Bucket.isIn(stableID: $0, flagKey: &quot;new_checkout&quot;, basisPoints: 2_000) })
+        check(ten.isSubset(of: twenty), &quot;bigger percentage only adds people&quot;); check((1_800...2_200).contains(ten.count), &quot;about ten percent: \(ten.count)&quot;)
+        let a = Set(ids.filter { Bucket.isIn(stableID: $0, flagKey: &quot;flag_a&quot;, basisPoints: 1_000) })
+        let b = Set(ids.filter { Bucket.isIn(stableID: $0, flagKey: &quot;flag_b&quot;, basisPoints: 1_000) })
+        check(a.intersection(b).count &lt; 400, &quot;flags are independent: \(a.intersection(b).count)&quot;)
+        print(&quot;bucket acct-42/new_checkout =&quot;, Bucket.of(stableID: &quot;acct-42&quot;, flagKey: &quot;new_checkout&quot;))
+    }
+}
+await run()
+print(&quot;\(checks) checks, \(failures) failures&quot;)
+exit(failures == 0 ? 0 : 1)</code></pre>
+<h2 id="13-more-practice-prompts">13. More practice prompts</h2>
+<ol><li>How do you show a screen that depends on a flag before the first fetch? (Use the saved copy or the default. Never a spinner for the network.)</li><li>How would you let support see which flags one user has? (Log the flag version and the bucket, not the user's attributes.)</li><li>How do you know a flag is safe to remove? (Zero reads in the last release, the rollout at 100 percent, and the old code path deleted.)</li><li>How would you move from Firebase to another vendor? (The store and the flag list stay. Only the source adapter changes. OpenFeature offers a standard provider interface (<a href="https://openfeature.dev/docs/reference/concepts/provider/">OpenFeature providers</a>).)</li></ol>
+<h2 id="further-reading-official-docs">Further reading (official docs)</h2>
+<ul><li><a href="/mobile-system-design/feature-flags/">The interview part of this case</a>: scope, decisions, failures, follow-ups and levels</li><li><a href="https://firebase.google.com/docs/remote-config/loading">Remote Config loading strategies (Firebase)</a></li><li><a href="https://firebase.google.com/docs/remote-config/optimization-best-practices">Optimize fetch frequency (Firebase)</a></li><li><a href="https://firebase.google.com/docs/remote-config/android/real-time">Real-time Remote Config (Firebase)</a></li><li><a href="https://firebase.google.com/docs/remote-config/parameters/client">Parameters and conditions in client templates (Firebase)</a></li><li><a href="https://firebase.google.com/docs/remote-config/templates/client">Manage template versions (Firebase)</a></li><li><a href="https://launchdarkly.com/docs/home/releases/percentage-rollouts">Percentage rollouts (LaunchDarkly)</a></li><li><a href="https://launchdarkly.com/docs/sdk/concepts/client-side-server-side">Client-side and mobile SDKs (LaunchDarkly)</a></li><li><a href="https://docs.getunleash.io/concepts/stickiness">Stickiness and technical debt (Unleash)</a></li><li><a href="https://openfeature.dev/docs/reference/concepts/sdk-paradigms">Evaluation context and SDK paradigms (OpenFeature)</a></li><li><a href="https://developer.android.com/topic/libraries/architecture/datastore">DataStore (Android)</a></li><li><a href="https://developer.android.com/reference/androidx/lifecycle/ProcessLifecycleOwner">ProcessLifecycleOwner (Android)</a></li><li><a href="https://developer.apple.com/documentation/swiftui/scenephase">ScenePhase (Apple)</a></li><li><a href="https://developer.apple.com/app-store/review/guidelines/">App Review Guidelines (Apple)</a></li></ul>
+<details class="notes words" id="words"><summary>Words on this page (11)</summary><dl><dt><a href="/glossary/#actor">Actor</a></dt><dd>A Swift type that runs one task at a time. This keeps its data safe when many tasks use it.</dd><dt><a href="/glossary/#doze">Doze</a></dt><dd>The deep-sleep mode of an idle Android phone. It pauses network access and delays background work.</dd><dt><a href="/glossary/#hash">Hash</a></dt><dd>A short code made from the bytes of a file. Apps compare the codes to see if two files are the same.</dd><dt><a href="/glossary/#kill-switch">Kill switch</a></dt><dd>A remote flag that turns a feature off at once. It is the one rollback that reaches apps that are already installed.</dd><dt><a href="/glossary/#main-thread">Main thread</a></dt><dd>The thread that draws the screen. If slow work runs on it, the screen freezes.</dd><dt><a href="/glossary/#rollback">Rollback</a></dt><dd>Going back to the old behavior after a problem. A build on a user&#x27;s phone cannot be taken back, so teams use a kill switch.</dd><dt><a href="/glossary/#rollout-bucket">Rollout bucket</a></dt><dd>A number that the server works out from a user ID and a flag key. A flag set to 10% is on for the users with the lowest 10% of the numbers.</dd><dt><a href="/glossary/#sdk">SDK</a></dt><dd>Software development kit. Code that other developers add to their own apps.</dd><dt><a href="/glossary/#snapshot">Snapshot</a></dt><dd>A copy of the data as it was at one moment. It is not a list of changes.</dd><dt><a href="/glossary/#staged-rollout">Staged rollout</a></dt><dd>A release to a growing share of users, not to everyone at once. It limits the harm of a bad release.</dd><dt><a href="/glossary/#stale-data">Stale data</a></dt><dd>Saved data that may be out of date. The app should show how old it is, or refresh it.</dd></dl><p class="mut"><a href="/glossary/">Read the whole glossary</a></p></details><aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> 31 official pages (<a href="#notes">notes below</a>).</p><p>Kotlin 2.4.20 core and 13 tests ran on the JVM. Android glue compiled, not run on a device. Swift 6.4 type-checked.</p><p>Opinion marked in 2 places.</p><p>Not verified: Android glue on a device; FirebaseFlagSource.swift.</p><p>No outside reviewer yet. Checked 14 Oct 2026.</p></aside><details class="notes" id="notes"><summary>Verification notes (last reviewed 14 Oct 2026)</summary><p>this guide holds the build material for the feature flags case. The code is new. Everything on this page was written and checked on 2026-10-14. Compile checks. The Kotlin core (Flag, Bucket, FlagStore) and its 13 tests ran on the JVM with Gradle 9.8.1 and Kotlin 2.4.20 (kotlinx-coroutines 1.10.2). All 13 passed. The Android glue (DataStoreFlagDisk, FirebaseFlagSource, FlagsApp, Screens) was compiled with <code>compileDebugKotlin</code> using Android Gradle Plugin 9.4.1, compileSdk 36, minSdk 26, Firebase BoM 34.19.0 (firebase-config 23.1.0), lifecycle 2.9.4, DataStore 1.2.1 and core-splashscreen 1.2.0. It was built offline against the local Gradle cache. I had to force androidx.core 1.16.0 and firebase-measurement-connector 20.0.1 to versions that were cached, so a normal build may resolve slightly different versions. Not done: the glue was not run on a device or emulator, so the DataStore write, the Firebase calls, the real-time listener, the splash hold and the Application wiring are compile-checked only. Not compiled: the <code>MainActivity</code> has no manifest entry or theme in this project. The Swift files Flags, FlagStore, UserDefaultsFlagDisk and RootView were type-checked in Swift language modes 5 and 6 against the macOS SDK and the iOS 27.0 simulator SDK (target iOS 17), with Swift 6.4. The Swift tests were built and run as a macOS program with the Flags, FlagStore and UserDefaultsFlagDisk files, and 24 checks passed. RootView was only type-checked. FirebaseFlagSource.swift was not compiled and not run. The Kotlin and Swift Bucket functions give 1500 for acct-42 and new_checkout. Opinion, not verified: the crash guard, the 15 minute age, the 5 second finish delay, the idea of one record per snapshot, the privacy table choices, the test rules and the lifetimes in my use column. Facts I read and where: the Firebase pages for loading strategies, fetch frequency, real-time, get started, client templates, condition reference, quotas and the Android and Swift references; the LaunchDarkly pages for SDK types, percentage rollouts, private attributes, offline mode and archiving; the Unleash pages for best practices, stickiness, feature flags and technical debt; the Flagsmith identities page; the OpenFeature Kotlin, provider and paradigms pages; the Android DataStore, ProcessLifecycleOwner, splash screen and SplashScreen reference pages; the Apple ScenePhase, UserDefaults, review guidelines and privacy details pages; the Play Data safety page. The Play Data safety page was fetched but I did not read its rules closely. The Apple launch-time page could not be read, since it returned almost no text, so the iOS start cell says so. Known inferences: that a Firebase reinstall changes the group comes from the page saying each app instance is mapped to a number. The statement that Firebase fetch calls inside the interval do not reach the network is the documented meaning of the minimum fetch interval, and I did not measure it. I did not test a crash during a DataStore write. The Flagsmith and Unleash pages are vendor docs, not neutral sources. The Unleash expected lifetimes are its defaults, not a standard. No count of sources is claimed.</p></details>
+
+<nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/feature-flags/"><small>Read first</small>Design feature flags and remote config (Android and iOS)</a><a class="nx" href="/guides/#build"><small>Done with this one?</small>All build guides</a></nav>
+<h2 id="keep-reading">Keep reading</h2><ul class="related"><li><a href="/mobile-system-design/feature-flags/">Design feature flags and remote config (Android and iOS)</a><br><span class="mut">The interview answer that this page builds on: scope, structure, failure modes and what to say at each level.</span></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries: all case studies in this topic</a><br><span class="mut">Code that other developers add to their apps.</span></li><li><a href="/guides/#build">All build guides</a><br><span class="mut">Every build guide, grouped by topic.</span></li></ul>
+<div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You get a short note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">Case studies</a></li><li><a href="/compare/">Compare design choices</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/practice/#kit">Practice kit</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Guides</p><ul><li><a href="/guides/">All guides</a></li><li><a href="/guides/#short">Short guides</a></li><li><a href="/guides/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/simulators/">All practice tools</a></li><li><a href="/practice/">Practice timer</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script>(()=>{
+if(innerWidth<1040){var d=document.querySelector('.toc details');if(d)d.open=false}
+var L=[].slice.call(document.querySelectorAll('.steps a'));
+if(L.length&&window.IntersectionObserver){
+ var H=L.map(a=>document.getElementById(a.hash.slice(1))),cur=-1,inb={};
+ var set=i=>{if(i===cur)return;cur=i;L.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current')})};
+ var io=new IntersectionObserver(es=>es.forEach(e=>{var i=H.indexOf(e.target);
+  if(e.isIntersecting){inb[i]=1;set(i)}
+  else if(e.boundingClientRect.top<0)set(Math.max(cur,i));
+  else if(inb[i]){inb[i]=0;set(i-1)}}),{rootMargin:'0px 0px -75% 0px'});
+ H.forEach(h=>h&&io.observe(h))}
+var F=[].slice.call(document.querySelectorAll('.dg.an'));
+if(F.length&&window.IntersectionObserver&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+ var go=f=>{f.classList.remove('go');void f.getBoundingClientRect();f.classList.add('go')},
+ fo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){fo.unobserve(e.target);go(e.target)}}),{threshold:.4});
+ F.forEach(f=>{f.classList.add('rdy');f.querySelector('.replay').onclick=()=>go(f);fo.observe(f)})}
+if(!(navigator.clipboard&&navigator.clipboard.writeText))return;
+document.querySelectorAll('.prose pre').forEach(p=>{
+ var w=document.createElement('div'),b=document.createElement('button');
+ w.className='code';b.className='copy';b.type='button';b.textContent='Copy';b.setAttribute('aria-label','Copy code to clipboard');
+ b.onclick=()=>{var done=t=>{b.textContent=t;setTimeout(()=>{b.textContent='Copy'},1500)};
+  try{navigator.clipboard.writeText(p.innerText).then(()=>done('Copied'),()=>done('Copy failed'))}catch(e){done('Copy failed')}};
+ p.before(w);w.append(p,b)})
+})();</script></body></html>

@@ -29,6 +29,8 @@
 - [Design a travel plans app](https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/): Friends edit a trip together, even offline, and no change is lost without a sign.
 - [Build it: an offline-first travel plans app on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/build/): the schema, API, code and platform limits for the design a travel plans app answer
 - [Design a public transport app](https://mobiledesignrounds.com/mobile-system-design/public-transport-app/): A timetable that works offline, live delays on top, and careful use of location and battery. Free teaser; the full case is planned for the study pack.
+- [Design feature flags and remote config](https://mobiledesignrounds.com/mobile-system-design/feature-flags/): Values saved on the phone, a rollout that stays stable, and a kill switch that works when the flag service fails.
+- [Build it: feature flags and remote config on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/feature-flags/build/): the schema, API, code and platform limits for the design feature flags and remote config answer
 
 ## Case studies by topic
 - [Offline and sync](https://mobiledesignrounds.com/mobile-system-design/offline-and-sync/): Apps that keep working with no network, and sync later.
@@ -63,7 +65,7 @@
 - [Weak and strong answer](https://mobiledesignrounds.com/practice/weak-vs-strong/): a weak and a strong answer to the chat app send path, side by side, with what the weak one skips
 
 ## Glossary
-- [Glossary](https://mobiledesignrounds.com/glossary/): plain English meanings of 75 hard words from the case studies, such as outbox, idempotent, Doze and WorkManager
+- [Glossary](https://mobiledesignrounds.com/glossary/): plain English meanings of 77 hard words from the case studies, such as outbox, idempotent, Doze and WorkManager
 
 ## Pack waitlist (not yet a product)
 - [Pack waitlist](https://mobiledesignrounds.com/pack/): a planned paid study pack. It does not exist yet. There is no price, only a waitlist

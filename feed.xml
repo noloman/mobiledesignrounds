@@ -92,6 +92,13 @@
 <summary>A timetable that works offline, live delays on top, and careful use of location and battery.</summary>
 </entry>
 <entry>
+<title>Design feature flags and remote config</title>
+<link href="https://mobiledesignrounds.com/mobile-system-design/feature-flags/"/>
+<id>https://mobiledesignrounds.com/mobile-system-design/feature-flags/</id>
+<updated>2026-10-14T00:00:00Z</updated>
+<summary>Values saved on the phone, a rollout that stays stable, and a kill switch that works when the flag service fails.</summary>
+</entry>
+<entry>
 <title>Idempotency keys on mobile: how to retry without sending twice</title>
 <link href="https://mobiledesignrounds.com/guides/idempotency-keys/"/>
 <id>https://mobiledesignrounds.com/guides/idempotency-keys/</id>
