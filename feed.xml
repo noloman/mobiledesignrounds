@@ -78,6 +78,20 @@
 <summary>How push tokens change over time, delivery, and deep links.</summary>
 </entry>
 <entry>
+<title>Design a travel plans app</title>
+<link href="https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/"/>
+<id>https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/</id>
+<updated>2026-10-13T00:00:00Z</updated>
+<summary>Friends edit a trip together, even offline, and no change is lost without a sign.</summary>
+</entry>
+<entry>
+<title>Design a public transport app</title>
+<link href="https://mobiledesignrounds.com/mobile-system-design/public-transport-app/"/>
+<id>https://mobiledesignrounds.com/mobile-system-design/public-transport-app/</id>
+<updated>2026-10-13T00:00:00Z</updated>
+<summary>A timetable that works offline, live delays on top, and careful use of location and battery.</summary>
+</entry>
+<entry>
 <title>Staff-level mobile system design: what the round tests</title>
 <link href="https://mobiledesignrounds.com/guides/staff-mobile-loop-guide/"/>
 <id>https://mobiledesignrounds.com/guides/staff-mobile-loop-guide/</id>

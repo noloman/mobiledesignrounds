@@ -26,6 +26,9 @@
 - [Build it: an analytics SDK on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/analytics-sdk/build/): the schema, API, code and platform limits for the design an analytics sdk answer
 - [Design a push notification SDK](https://mobiledesignrounds.com/mobile-system-design/push-sdk/): How push tokens change over time, delivery, and deep links.
 - [Build it: a push notification SDK on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/push-sdk/build/): the schema, API, code and platform limits for the design a push notification sdk answer
+- [Design a travel plans app](https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/): Friends edit a trip together, even offline, and no change is lost without a sign.
+- [Build it: an offline-first travel plans app on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/build/): the schema, API, code and platform limits for the design a travel plans app answer
+- [Design a public transport app](https://mobiledesignrounds.com/mobile-system-design/public-transport-app/): A timetable that works offline, live delays on top, and careful use of location and battery. Free teaser; the full case is planned for the study pack.
 
 ## Guides
 - [Staff-level mobile system design: what the round tests](https://mobiledesignrounds.com/guides/staff-mobile-loop-guide/): How staff answers differ from senior answers, what interviewers can see, and a four-week practice plan.
