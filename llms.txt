@@ -7,10 +7,14 @@
 
 ## Case studies
 - [Design a chat app](https://mobiledesignrounds.com/mobile-system-design/chat-app/): Outbox, idempotent sends, WebSocket and push sync.
+- [Build it: a chat app on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/chat-app/build/): schema, API, code and platform limits for the design a chat app answer
 - [Design a news feed](https://mobiledesignrounds.com/mobile-system-design/news-feed/): Pagination, optimistic writes, cache invalidation.
+- [Build it: a news feed on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/news-feed/build/): schema, API, code and platform limits for the design a news feed answer
 - [Design photo backup and file sync](https://mobiledesignrounds.com/mobile-system-design/photo-file-sync/): Resumable uploads, block-level sync, conflicts.
+- [Build it: photo backup and file sync on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/photo-file-sync/build/): schema, API, code and platform limits for the design photo backup and file sync answer
 - [Design a pagination library](https://mobiledesignrounds.com/mobile-system-design/pagination-library/): Library API, generics, request prioritization.
 - [Design an image loading library](https://mobiledesignrounds.com/mobile-system-design/image-loading/): Memory and disk caches, decoding, cancellation.
+- [Build it: an image loading library on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/image-loading/build/): schema, API, code and platform limits for the design an image loading library answer
 - [Design a hotel or ride booking app](https://mobiledesignrounds.com/mobile-system-design/booking-app/): Holds, time sync, payments, search.
 - [Design a stock ticker app](https://mobiledesignrounds.com/mobile-system-design/live-ticker/): Streaming updates, buffered UI, always-online.
 - [Design a video streaming app](https://mobiledesignrounds.com/mobile-system-design/video-app/): Prefetching, adaptive bitrate, playback state.
