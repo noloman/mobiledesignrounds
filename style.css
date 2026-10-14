@@ -280,7 +280,7 @@ details.notes p{font-size:.9rem;color:var(--ink2);margin:.8em 0 0}
 .flg .fb{fill:var(--panel);stroke:var(--ink2);stroke-width:1.5}.flg .fb.tz{stroke-dasharray:3 2}.flg .fb.gd{fill:var(--tint)}.flg .fb.hl{fill:var(--blue);stroke:var(--blue)}
 .ftree,.ftree ul{margin:.3em 0 0;padding-left:1.3em}.ftree{padding-left:0;list-style:none}.ftree li{margin:.35em 0}.ftree ul{list-style:disc}
 .fnav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 16px;margin:0 0 28px}
-@media(min-width:820px){.fnav{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:820px){.fnav{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(min-width:820px){.fnav .fh{min-height:0}}
 .fnav ul{list-style:none;margin:0;padding:0}.fnav a{display:inline-block;padding:6px 0;color:var(--ink2)}.fnav a:hover{color:var(--blue)}
 .fnav .fh{min-height:2.4em;font:600 .78rem/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);margin:0 0 4px}

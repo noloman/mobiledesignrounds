@@ -1,0 +1,216 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Vcg4aHHyc4/23x9/A/yz4kaN+G3W1W7NxFnRcQm4baM='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Pagination race: offset vs cursor | Mobile Design Rounds</title><meta name="description" content="Change one thing and watch a mobile list repeat or miss posts. Compare page numbers with a cursor, double taps and deletes, in plain English.">
+<link rel="canonical" href="https://mobiledesignrounds.com/simulators/pagination/"><meta property="og:title" content="Pagination race: offset vs cursor | Mobile Design Rounds"><meta property="og:description" content="Change one thing and watch a mobile list repeat or miss posts. Compare page numbers with a cursor, double taps and deletes, in plain English."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/simulators/pagination/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/pagination.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Pagination race: offset vs cursor | Mobile Design Rounds">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Pagination race", "url": "https://mobiledesignrounds.com/simulators/pagination/", "description": "Change one thing and watch a mobile list repeat or miss posts. Compare page numbers with a cursor, double taps and deletes, in plain English.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "inLanguage": "en", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Practice", "item": "https://mobiledesignrounds.com/simulators/"}, {"@type": "ListItem", "position": 3, "name": "Pagination race", "item": "https://mobiledesignrounds.com/simulators/pagination/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/guides/">Guides</a><a href="/simulators/">Practice</a><a href="/glossary/">Glossary</a><a href="/about/">About</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/simulators/">Practice</a></li><li aria-current="page">Pagination race</li></ol></nav><div class="chips"><span>Simulator</span></div>
+<h1>Pagination race: why a page number breaks and a cursor does not</h1>
+<p class="mut" style="font-size:1.05rem">Paging means loading a long list in small parts. This page shows what breaks when the list changes while the reader scrolls. Change one thing, then look at what happens.</p></div>
+<style>
+.pg-tool{background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:16px;margin:8px 0 32px}
+.pg-tool h2,.pg-tool h3{font:700 1.05rem var(--display);margin:0 0 8px}
+.pg-tool fieldset{border:1.5px solid var(--line);border-radius:10px;margin:0 0 12px;padding:8px 12px 4px;min-width:0}
+.pg-tool legend{font:500 .78rem var(--mono);color:var(--ink2);padding:0 6px}
+.pg-opt{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;line-height:1.35}
+.pg-opt input{width:22px;height:22px;margin:0;flex:none;accent-color:var(--blue)}
+.pg-row{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.pg-btn{font:600 .92rem var(--body);min-height:44px;padding:10px 14px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;text-align:left}
+.pg-btn:hover{border-color:var(--blue)}
+.pg-btn.main{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.pg-btn.pre{background:var(--tint)}
+.pg-key{font:500 .82rem var(--mono);color:var(--ink2);margin:0 0 12px}
+.pg-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:0 0 12px}
+.pg-col{min-width:0}
+.pg-scroll{max-height:340px;overflow-y:auto;border:1.5px solid var(--line);border-radius:10px;padding:8px;background:var(--paper)}
+.pg-chips,.pg-legend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:4px}
+.pg-chips li,.pg-sw{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:46px;min-height:38px;padding:2px 4px;border:1.5px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.pg-chips b,.pg-sw b{font:600 .85rem/1.2 var(--mono)}
+.pg-chips i,.pg-sw i{font:500 .72rem/1.2 var(--body);font-style:normal}
+li.dup,.pg-sw.dup{background:repeating-linear-gradient(45deg,var(--amber-bg) 0 4px,transparent 4px 8px);border:2px dashed var(--amber)}
+li.miss,.pg-sw.miss{background:radial-gradient(circle,var(--blue) 1.2px,transparent 1.7px) 0 0/7px 7px,var(--tint);border:2px dotted var(--blue)}
+li.new,.pg-sw.new{background:var(--green-bg);border:2px solid var(--green)}
+li.gone,.pg-sw.gone{border:1.5px dashed var(--ink2);color:var(--ink2)}
+li.gone b,.pg-sw.gone b{text-decoration:line-through}
+.pg-legend{gap:8px 16px;margin:0 0 14px;font-size:.88rem}
+.pg-legend li{display:flex;align-items:center;gap:8px}
+.pg-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:0 0 12px}
+.pg-stat{border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--paper)}
+.pg-stat span{display:block;font-size:.82rem;color:var(--ink2)}
+.pg-stat output{font:700 1.5rem/1.2 var(--display)}
+.pg-say{border-left:4px solid var(--blue);background:var(--tint);padding:10px 14px;border-radius:0 10px 10px 0;margin:0 0 14px;max-width:none}
+.pg-tab{width:100%;border-collapse:collapse;font-size:.92rem;margin:0 0 24px}
+.pg-tab th,.pg-tab td{border:1.5px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.pg-tab thead th{background:var(--tint)}
+@media(max-width:700px){.pg-tab,.pg-tab tbody,.pg-tab tr,.pg-tab th,.pg-tab td{display:block;width:100%}
+ .pg-tab thead{position:absolute;left:-9999px}.pg-tab tr{margin:0 0 14px;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+ .pg-tab th,.pg-tab td{border:0;border-bottom:1px solid var(--line)}.pg-tab td::before{content:attr(data-l);display:block;font:500 .74rem var(--mono);color:var(--ink2)}}
+</style>
+<div class="prose">
+<h2>How to use it</h2>
+<ol>
+<li>Press Load next page. The phone gets 10 more posts.</li>
+<li>Press A new post arrives at the top. Then press Load next page again.</li>
+<li>Switch from page numbers to the cursor. Try the same steps.</li>
+<li>Allow double taps. Then press Tap Load next page twice, fast.</li>
+<li>Press A post is deleted on the server. Then press Load next page with page numbers, and look for a missed post.</li>
+</ol>
+<noscript><p><strong>This tool needs JavaScript.</strong> The table further down shows the same four examples, step by step.</p></noscript>
+</div>
+<section class="pg-tool" id="pg-tool" hidden aria-label="Pagination race tool">
+<h2>The tool</h2>
+<fieldset><legend>Examples</legend><div class="pg-row">
+<button type="button" class="pg-btn pre" data-preset="0">Page numbers with a new post arriving</button>
+<button type="button" class="pg-btn pre" data-preset="1">Cursor with a new post arriving</button>
+<button type="button" class="pg-btn pre" data-preset="2">Double tap without a guard</button>
+<button type="button" class="pg-btn pre" data-preset="3">Delete during paging</button></div></fieldset>
+<fieldset><legend>How the phone asks for the next page</legend>
+<label class="pg-opt"><input type="radio" name="pg-mode" value="offset" checked> Page numbers (offset): page 2 means rows 11 to 20</label>
+<label class="pg-opt"><input type="radio" name="pg-mode" value="cursor"> Cursor: a saved place the server gave you</label></fieldset>
+<fieldset><legend>Taps</legend>
+<label class="pg-opt"><input type="radio" name="pg-guard" value="on" checked> Send one request at a time</label>
+<label class="pg-opt"><input type="radio" name="pg-guard" value="off"> Allow double taps</label></fieldset>
+<div class="pg-row">
+<button type="button" class="pg-btn main" data-act="load">Load next page</button>
+<button type="button" class="pg-btn" data-act="tap2">Tap Load next page twice, fast</button>
+<button type="button" class="pg-btn" data-act="arrive">A new post arrives at the top</button>
+<button type="button" class="pg-btn" data-act="del">A post is deleted on the server</button>
+<button type="button" class="pg-btn" data-act="refresh">Refresh from the top</button>
+<button type="button" class="pg-btn" data-act="reset">Start again</button></div>
+<p class="pg-key" id="pg-key"></p>
+<h3>What this shows</h3>
+<p class="pg-say" id="pg-say" aria-live="polite" aria-atomic="true"></p>
+<div class="pg-cols">
+<section class="pg-col" aria-labelledby="pg-h-server"><h3 id="pg-h-server">On the server</h3>
+<div class="pg-scroll" tabindex="0" role="region" aria-label="Server list, newest first. You can scroll it."><ul class="pg-chips" id="pg-server"></ul></div></section>
+<section class="pg-col" aria-labelledby="pg-h-phone"><h3 id="pg-h-phone">On the phone</h3>
+<div class="pg-scroll" tabindex="0" role="region" aria-label="Phone list, in the order it was loaded. You can scroll it."><ul class="pg-chips" id="pg-phone"></ul></div></section></div>
+<ul class="pg-legend" aria-label="Key to the marks">
+<li><span class="pg-sw dup"><b>51</b><i>repeat</i></span> A post that shows twice (stripes)</li>
+<li><span class="pg-sw miss"><b>50</b><i>missed</i></span> A post the phone never got (dots)</li>
+<li><span class="pg-sw new"><b>61</b><i>new</i></span> A new post, not loaded yet</li>
+<li><span class="pg-sw gone"><b>56</b><i>deleted</i></span> Deleted on the server, still on the phone</li></ul>
+<div class="pg-stats">
+<div class="pg-stat"><span>Repeated posts</span><output id="pg-dup">0</output></div>
+<div class="pg-stat"><span>Missed posts</span><output id="pg-miss">0</output></div>
+<div class="pg-stat"><span>Page requests sent</span><output id="pg-req">0</output></div>
+<div class="pg-stat"><span>Posts on the phone</span><output id="pg-n">0</output></div></div>
+</section>
+<div class="prose">
+<h2>How the model works</h2>
+<ul>
+<li>The server has 60 posts, newest first. Post 60 is the newest. A new post gets the next number, 61, and goes at the top.</li>
+<li>The phone loads 10 posts for each request.</li>
+<li>With page numbers (offset), page 2 means rows 11 to 20 of the server list at that moment. The phone counts rows.</li>
+<li>With a <a href="/glossary/#cursor">cursor</a>, the server gives the phone a saved place after each page. The phone sends it back without reading it. The server sends the 10 posts after that place.</li>
+<li>With one request at a time, a second tap is ignored while a request is running. The library does the same: it allows one running load for each direction.</li>
+<li>Refresh drops the list on the phone and loads the first page again.</li>
+<li>A repeated post shows more than once on the phone. A missed post is on the server, between the newest and the oldest post on the phone, but not on the phone. A new post above the newest post on the phone is not missed. It waits for a refresh.</li>
+<li>There are no random numbers. The same steps always give the same result.</li>
+</ul>
+<h2>Without JavaScript</h2>
+<p>The tool needs JavaScript. This table writes out the four examples, step by step. Each example starts with the same lists: the server has posts 60 to 1, and the phone shows posts 60 to 51.</p>
+<table class="pg-tab"><caption class="sr">The four examples, before and after</caption><thead><tr><th scope="col">Example</th><th scope="col">What happens</th><th scope="col">After</th><th scope="col">What it shows</th></tr></thead><tbody><tr><th scope="row">Page numbers with a new post arriving<br><span class="mut">Page numbers (offset), one request at a time</span></th><td data-l="What happens">Post 61 arrives at the top of the server. The phone loads page 2.</td><td data-l="After">Server: posts 61 to 1. Phone: posts 60 to 51, then 51 to 42. Repeated: 1 (post 51). Missed: 0. Post 61 is new and waits for a refresh.</td><td data-l="What it shows">A page number counts rows. The new post moved every row down by one, so post 51 came twice.</td></tr><tr><th scope="row">Cursor with a new post arriving<br><span class="mut">Cursor, one request at a time</span></th><td data-l="What happens">Post 61 arrives at the top of the server. The phone loads the next page with its cursor.</td><td data-l="After">Server: posts 61 to 1. Phone: posts 60 to 41. Repeated: 0. Missed: 0. Post 61 is new and waits for a refresh.</td><td data-l="What it shows">The cursor is a saved place, not a row number. The new post at the top does not move it.</td></tr><tr><th scope="row">Double tap without a guard<br><span class="mut">Cursor, double taps allowed</span></th><td data-l="What happens">The reader taps Load next page twice, fast. The phone sends two requests with the same cursor.</td><td data-l="After">Server: posts 60 to 1. Phone: posts 60 to 41, then 50 to 41. Repeated: 10 (posts 50 to 41). Missed: 0. Page requests sent: 3, not 2.</td><td data-l="What it shows">A cursor does not stop a double request. Sending one request at a time does.</td></tr><tr><th scope="row">Delete during paging<br><span class="mut">Page numbers (offset), one request at a time</span></th><td data-l="What happens">Post 56 is deleted on the server. The phone loads page 2.</td><td data-l="After">Server: posts 60 to 1 without post 56. Phone: posts 60 to 51, then 49 to 40. Repeated: 0. Missed: 1 (post 50). Post 56 is deleted but still on the phone.</td><td data-l="What it shows">A page number counts rows. The delete moved every row up by one, so post 50 moved into rows the phone already had.</td></tr></tbody></table>
+<h2>What this model leaves out</h2>
+<ul>
+<li>A cursor does not stop every problem. If the server changes the ranking between two pages, a post can still repeat. The app removes repeats by post ID.</li>
+<li>The model does not use a cursor that has expired, or a lost network. In the case study, an expired cursor gives a typed error, and then the app refreshes.</li>
+<li>The model has no <a href="/glossary/#prefetch">prefetch</a> (loading before the reader asks). You press a button instead, so you can see each step. A fast scroll can send many requests for the same place, as the double tap does here.</li>
+</ul>
+<h2>Read more</h2>
+<ul>
+<li><a href="/mobile-system-design/pagination-library/">Design a pagination library</a>, the case study behind this tool</li>
+<li><a href="/mobile-system-design/pagination-library/build/">The pagination library build guide</a></li>
+<li><a href="/mobile-system-design/news-feed/">Design a news feed</a>, where cursor paging is used for the feed</li>
+<li>Glossary: <a href="/glossary/#cursor">cursor</a>, <a href="/glossary/#paging">paging</a>, <a href="/glossary/#prefetch">prefetch</a></li>
+</ul>
+</div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">Case studies</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Guides</p><ul><li><a href="/guides/">Long guides</a></li><li><a href="/guides/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/simulators/">All practice tools</a></li><li><a href="/practice/">Practice timer</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script>(()=>{
+const SIZE=10, PRESETS=[{"name": "Page numbers with a new post arriving", "mode": "offset", "guard": true, "steps": ["arrive", "load"]}, {"name": "Cursor with a new post arriving", "mode": "cursor", "guard": true, "steps": ["arrive", "load"]}, {"name": "Double tap without a guard", "mode": "cursor", "guard": false, "steps": ["tap2"]}, {"name": "Delete during paging", "mode": "offset", "guard": true, "steps": ["del", "load"]}];
+const fmt=ids=>{const o=[];let i=0;while(i<ids.length){let j=i;while(j+1<ids.length&&ids[j+1]===ids[j]-1)j++;
+ o.push(j-i>=2?ids[i]+' to '+ids[j]:ids.slice(i,j+1).join(', '));i=j+1}return o.join(', ')};
+const posts=ids=>(ids.length>1?'posts ':'post ')+fmt(ids);
+const uniq=a=>a.filter((x,i)=>a.indexOf(x)===i);
+const start=s=>s.mode==='offset'?0:Infinity;
+const ask=(s,k)=>s.mode==='offset'?s.server.slice(k,k+SIZE):s.server.filter(x=>x<k).slice(0,SIZE);
+function first(s){const r=ask(s,start(s));s.phone=r.slice();s.reqs++;s.changes=0;s.key=s.mode==='offset'?SIZE:(r.length?r[r.length-1]:Infinity)}
+function fresh(mode,guard){const s={server:[],next:61,phone:[],mode,guard,key:0,reqs:0,changes:0,last:{t:'start'}};
+ for(let i=60;i>=1;i--)s.server.push(i);first(s);return s}
+function load(s,taps){const n=taps>1&&s.guard?1:taps,k=s.key,rs=[];
+ for(let i=0;i<n;i++){rs.push(ask(s,k));s.reqs++}
+ let got=[];for(const r of rs){s.phone.push(...r);got=got.concat(r);if(r.length)s.key=s.mode==='offset'?k+SIZE:r[r.length-1]}
+ s.last={t:'load',taps,sent:n,key:k,items:got,changed:s.changes>0};s.changes=0}
+function arrive(s){s.server.unshift(s.next);s.changes++;s.last={t:'arrive',id:s.next++}}
+function del(s){const on=s.phone.filter(x=>s.server.includes(x));
+ if(!on.length){s.last={t:'delnone'};return}
+ const id=on[Math.min(4,on.length-1)];s.server.splice(s.server.indexOf(id),1);s.changes++;s.last={t:'del',id}}
+function refresh(s){first(s);s.last={t:'refresh'}}
+function act(s,a){({arrive,del,refresh,load:x=>load(x,1),tap2:x=>load(x,2)})[a](s)}
+function run(p){const s=fresh(p.mode,p.guard);p.steps.forEach(a=>act(s,a));return s}
+function stats(s){const seen=new Set(),marks=[];
+ for(const id of s.phone){marks.push(seen.has(id)?'dup':s.server.includes(id)?'ok':'gone');seen.add(id)}
+ const hi=Math.max(...s.phone),lo=Math.min(...s.phone);
+ return {marks,dupes:marks.filter(m=>m==='dup').length,
+  dupIds:uniq(s.phone.filter((id,i)=>marks[i]==='dup')),
+  missed:s.server.filter(x=>x>lo&&x<hi&&!seen.has(x)),newer:s.server.filter(x=>x>hi)}}
+const G='<a href="/glossary/#';
+function explain(s){
+ const st=stats(s),L=s.last,d=st.dupes,m=st.missed.length,off=s.mode==='offset';
+ const head='<strong>Repeated posts: '+d+'. Missed posts: '+m+'.</strong> ';
+ let t;
+ if(L.t==='start')t='The phone shows the first page, '+posts(s.phone)+'. The server has '+s.server.length+' posts. Nothing is wrong yet. Add a new post at the top, then load the next page.';
+ else if(L.t==='guard')t=s.guard?'One request at a time is on. A second tap is ignored while a request is running.':'Double taps are allowed. A second tap sends a second request, even if the first has not come back.';
+ else if(L.t==='mode')t='You changed how the phone asks for pages. The list started again from the first page.';
+ else if(L.t==='arrive')t='New post '+L.id+' is on the server. The phone does not show it yet. A refresh from the top shows it. '+(off?'Every row on the server moved down by one place, and the phone does not know that yet.':'The saved place (the '+G+'cursor">cursor</a>) does not move.');
+ else if(L.t==='del')t='Post '+L.id+' is deleted on the server. The phone still shows it, marked deleted, until you refresh. '+(off?'Every row after it moved up by one place.':'The cursor is a place, not a row number, so it still works.');
+ else if(L.t==='delnone')t='No post on the phone can be deleted now.';
+ else if(L.t==='refresh')t='Refresh starts over from the top. The phone drops its list and asks for the first page again, so it shows '+posts(s.phone)+'. In the pagination library case, this is a new generation. Telling the list that its data is out of date is called invalidation.';
+ else if(!L.items.length)t='The server has no more posts after this place. The list is finished.';
+ else if(L.taps===2&&L.sent===1)t='You tapped twice. The app sent one request and ignored the second tap, because one request was still running. So this tap added no repeats. A fast scroll can also send many requests for the same place, so the app allows one running load at a time.';
+ else if(L.taps===2)t='You tapped twice. The app sent two requests with the same '+(off?'page number':'cursor')+', because the first answer had not come back. Both answers were added'+(d?', so '+posts(st.dupIds)+' show twice':'')+'. '+(off?'The page number':'A '+G+'cursor">cursor</a>')+' does not stop this. Sending one request at a time does.';
+ else if(d||m){const p=L.key/SIZE+1,rows='rows '+(L.key+1)+' to '+(L.key+SIZE);const o=[];
+  if(!off)o.push('Some posts repeat or are missing from an earlier step. Refresh from the top to start clean.');
+  else{if(d)o.push('New posts moved every row down. So page '+p+' ('+rows+') includes '+posts(st.dupIds)+', which the phone already has. '+(d>1?'They show':'It shows')+' twice.');
+   if(m)o.push('A deleted post moved the rows up. So page '+p+' ('+rows+') skips '+posts(st.missed)+', which the phone never got. '+(m>1?'They are':'It is')+' missed.');
+   o.push('A page number counts rows, and the rows moved. This is the problem with '+G+'paging">paging</a> by page number.')}
+  t=o.join(' ')}
+ else if(off)t='The rows did not move between loads, so the page number worked here. Add a new post or delete one, then load again.';
+ else t='The phone sent its cursor, the saved place at post '+L.key+'. The server sent the posts after that place, '+fmt(L.items)+'. '+(L.changed?'New posts and deleted posts do not change a saved place, so nothing repeats and nothing is missed.':'Nothing changed on the server this time, so a page number would also work. Add a new post and compare.');
+ return head+t}
+function keyText(s){return s.mode==='offset'?'Next request: page '+(s.key/SIZE+1)+', which means rows '+(s.key+1)+' to '+(s.key+SIZE)+'.':'Next request: the cursor from the server, a saved place at post '+s.key+'.'}
+if(typeof document==='undefined'){module.exports={fresh,act,run,stats,explain,fmt,PRESETS};return}
+
+const $=s=>document.querySelector(s);
+let S=fresh('offset',true);
+const radio=n=>document.querySelector('input[name='+n+']:checked').value;
+const chip=(id,c,tag)=>'<li class="'+c+'"><b>'+id+'</b>'+(tag?'<i>'+tag+'</i>':'')+'</li>';
+function paint(say){
+ const st=stats(S),ph=S.phone.map((id,i)=>({k:i,h:st.marks[i]==='dup'?chip(id,'dup','repeat'):st.marks[i]==='gone'?chip(id,'gone','deleted'):chip(id,'','')}));
+ st.missed.forEach(id=>{let j=S.phone.findIndex(x=>x<id);if(j<0)j=S.phone.length;ph.push({k:j-.5-id*1e-4,h:chip(id,'miss','missed')})});
+ ph.sort((a,b)=>a.k-b.k);
+ $('#pg-phone').innerHTML=ph.map(x=>x.h).join('');
+ $('#pg-server').innerHTML=S.server.map(id=>st.missed.includes(id)?chip(id,'miss','missed'):st.newer.includes(id)?chip(id,'new','new'):chip(id,'','')).join('');
+ $('#pg-dup').textContent=st.dupes;$('#pg-miss').textContent=st.missed.length;
+ $('#pg-req').textContent=S.reqs;$('#pg-n').textContent=S.phone.length;
+ $('#pg-key').textContent=keyText(S);
+ $('#pg-say').innerHTML=(say?'<em>'+say+'.</em> ':'')+explain(S)}
+function again(last){S=fresh(radio('pg-mode'),radio('pg-guard')==='on');if(last)S.last=last;paint()}
+document.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>{
+ const a=b.dataset.act;if(a==='reset')return again();act(S,a);paint()}));
+document.querySelectorAll('input[name=pg-mode]').forEach(r=>r.addEventListener('change',()=>again({t:'mode'})));
+document.querySelectorAll('input[name=pg-guard]').forEach(r=>r.addEventListener('change',()=>{
+ S.guard=r.value==='on';S.last={t:'guard'};paint()}));
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+ const p=PRESETS[+b.dataset.preset];
+ document.querySelector('input[name=pg-mode][value='+p.mode+']').checked=true;
+ document.querySelector('input[name=pg-guard][value='+(p.guard?'on':'off')+']').checked=true;
+ S=run(p);paint(p.name)}));
+$('#pg-tool').hidden=false;
+paint();
+})();</script></body></html>

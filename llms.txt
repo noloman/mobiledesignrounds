@@ -41,6 +41,13 @@
 - [Offline-first mobile system design: one model, six case studies](https://mobiledesignrounds.com/guides/offline-first-hub/): The official offline-first model (the app keeps working without a network) used for chat, feed, upload, booking, analytics and push.
 - [Native vs cross-platform: write the decision record](https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/): A staff-level decision record (ADR) for choosing a framework. It covers criteria, the assumption that would change the choice, migration, parity tests, libraries with no owner, rollback, and a free template.
 
+## Practice tools
+- [Practice tools](https://mobiledesignrounds.com/simulators/): a timer and three simulators that let you change one thing and see what happens
+- [Practice timer](https://mobiledesignrounds.com/practice/): A 45-minute clock for a mobile system design round, with a prompt, five steps and a checklist.
+- [Retry explorer](https://mobiledesignrounds.com/simulators/retry/): Change the retry rules and see if a lost reply makes a duplicate message.
+- [Pagination race](https://mobiledesignrounds.com/simulators/pagination/): Change one thing and watch a list repeat or miss posts. Compare page numbers with a cursor.
+- [Offline chat simulator](https://mobiledesignrounds.com/simulators/offline-chat/): Send a chat message with no connection and lose a reply. Watch the outbox and the server.
+
 ## Glossary
 - [Glossary](https://mobiledesignrounds.com/glossary/): plain English meanings of 75 hard words from the case studies, such as outbox, idempotent, Doze and WorkManager
 

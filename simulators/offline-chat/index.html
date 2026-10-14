@@ -1,0 +1,113 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-ZT/OqKiKUdyxPIa8VfMi4HTPOOx4XNo4knV9DUt5U2M='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Offline chat simulator | Mobile Design Rounds</title><meta name="description" content="Send a chat message with no connection, then lose a server reply. See the outbox, the local database and a safe retry work in your browser.">
+<link rel="canonical" href="https://mobiledesignrounds.com/simulators/offline-chat/"><meta property="og:title" content="Offline chat simulator | Mobile Design Rounds"><meta property="og:description" content="Send a chat message with no connection, then lose a server reply. See the outbox, the local database and a safe retry work in your browser."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/simulators/offline-chat/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/offline-chat.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Offline chat simulator | Mobile Design Rounds">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Offline chat simulator", "url": "https://mobiledesignrounds.com/simulators/offline-chat/", "description": "Send a chat message with no connection, then lose a server reply. See the outbox, the local database and a safe retry work in your browser.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "inLanguage": "en", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Practice", "item": "https://mobiledesignrounds.com/simulators/"}, {"@type": "ListItem", "position": 3, "name": "Offline chat simulator", "item": "https://mobiledesignrounds.com/simulators/offline-chat/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/guides/">Guides</a><a href="/simulators/">Practice</a><a href="/glossary/">Glossary</a><a href="/about/">About</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/simulators/">Practice</a></li><li aria-current="page">Offline chat simulator</li></ol></nav><div class="chips"><span>Simulator</span></div>
+<h1>Offline chat simulator: send a message with no connection</h1>
+<p class="mut" style="font-size:1.05rem">A chat app must work when the network is bad. Turn the connection off, send messages, and watch the app save them and send them later.</p></div>
+<div class="prose" style="max-width:760px">
+<h2 id="idea">The idea</h2>
+<p>When you press send, the app does not wait for the server. It saves the message in a database on the phone. The message shows on screen at once. A list of unsent messages, the <a href="/glossary/#outbox">outbox</a>, holds it until the server confirms.</p>
+<p>The server confirms with a short reply, an acknowledgement (ack). If the reply is lost, the app does not know if the server has the message. So it sends the message again with the same ID. The server sees the same ID and ignores the copy. This is the idea behind an <a href="/glossary/#idempotency-key">idempotency key</a>. It is the design in the <a href="/mobile-system-design/chat-app/#4-1-the-send-path-minutes-22-to-33">chat app case study</a>.</p>
+<h2 id="steps">Try this</h2>
+<ol>
+<li>Press Send a message. The bubble shows at once, then it changes to Sent.</li>
+<li>Press Airplane mode. Press Send a message two times. Both messages stay pending, and the outbox lists them.</li>
+<li>Press Airplane mode again to turn it off. The outbox sends the messages in order.</li>
+<li>Press Lose next ack, then Send a message. The server saves the message, but the reply is lost. The phone sends it again. Look at the counter called Duplicates ignored.</li>
+</ol>
+<p>The result of each press is also written in a line of text under the three panes.</p>
+</div>
+<style>
+.simpage{max-width:960px;margin:28px auto;padding:0 20px}
+.simpage [hidden]{display:none!important}
+.simpage .sim-ctl button[aria-pressed=true]::after{content:": on"}.simpage .sim-ctl button[aria-pressed=false]::after{content:": off"}
+.simpage .sim-ctl #sim-send::after{content:none}
+.simpage button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+</style>
+<div class="simpage" id="sim-app" hidden><div class="sim" id="sim"><div class="sim-head"><h2>The simulator</h2><p>Three buttons and three panes. Nothing leaves your browser.</p></div>
+<div class="sim-ctl"><button id="sim-send" type="button">Send a message</button><button id="sim-air" type="button" aria-pressed="false">Airplane mode</button><button id="sim-drop" type="button" aria-pressed="false">Lose next ack</button></div>
+<div class="sim-body"><div class="pane"><h3>Chat screen</h3><div id="sim-phone"></div></div>
+<div class="pane"><h3>On the device</h3><table id="sim-db" aria-label="Local database rows"></table><h4>Outbox</h4><ul id="sim-outbox"></ul></div>
+<div class="pane"><h3>Server</h3><ul id="sim-server"></ul><p class="dupes">Duplicates ignored: <b id="sim-dupes">0</b></p></div></div>
+<p class="say" id="sim-say" aria-live="polite" aria-atomic="true"></p></div></div>
+<div class="prose" style="max-width:760px">
+<h2 id="nojs">Without JavaScript</h2>
+<p>The simulator needs JavaScript. This table shows what happens in each of the four steps above.</p>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th scope="col">What you do</th><th scope="col">On the phone</th><th scope="col">On the server</th></tr></thead><tbody><tr><th scope="row">Press Send a message while online</th><td>The message is saved on the device as pending. It shows at once. Then it is sent.</td><td>It stores the message ID once. The reply (ack) arrives and the message is marked sent.</td></tr><tr><th scope="row">Turn on Airplane mode, then press Send a message</th><td>The message is saved as pending and added to the outbox. You can still read and write. The screen never waits.</td><td>Nothing arrives. The server has not seen the message.</td></tr><tr><th scope="row">Turn Airplane mode off</th><td>The outbox sends the pending messages in order.</td><td>It stores each message ID once.</td></tr><tr><th scope="row">Press Lose next ack, then Send a message</th><td>The phone does not get the reply, so it sends the message again with the same ID.</td><td>It stores the message the first time. The second time it sees the same ID, ignores the copy and sends the first reply again. Duplicates ignored: 1.</td></tr></tbody></table></div>
+<h2 id="model">How the model works</h2>
+<ul>
+<li>Each message gets a short ID on the phone when you press send. This is a client ID. The server stores each ID once.</li>
+<li>A message is pending until the ack arrives. Then it is sent.</li>
+<li>In airplane mode, nothing reaches the server, and the outbox grows.</li>
+<li>The outbox sends one message at a time, in the order you wrote them.</li>
+<li>After a lost ack, the phone waits a moment and sends again with the same ID. Here the wait is about one second. In the case study, the wait starts at 10 seconds and grows.</li>
+</ul>
+<h2 id="leaves-out">What this model leaves out</h2>
+<p>This is a small model in JavaScript. It has no real network and no background worker. The system never stops the app. The server gives no order numbers. There are no push messages and no second device. The <a href="/mobile-system-design/chat-app/#4-1-the-send-path-minutes-22-to-33">case study</a> covers these.</p>
+<h2 id="more">Read more</h2>
+<ul>
+<li><a href="/mobile-system-design/chat-app/#4-1-the-send-path-minutes-22-to-33">Chat app case: the send path</a></li>
+<li><a href="/mobile-system-design/chat-app/build/">Chat app build guide</a></li>
+<li><a href="/simulators/retry/">Retry explorer</a>: change the retry rules and the server replies</li>
+<li>Glossary: <a href="/glossary/#outbox">outbox</a>, <a href="/glossary/#idempotent">idempotent</a>, <a href="/glossary/#idempotency-key">idempotency key</a></li>
+</ul>
+</div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">Case studies</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Guides</p><ul><li><a href="/guides/">Long guides</a></li><li><a href="/guides/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/simulators/">All practice tools</a></li><li><a href="/practice/">Practice timer</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script>
+(()=>{
+const $=s=>document.querySelector(s), RM=matchMedia('(prefers-reduced-motion:reduce)').matches, sleep=ms=>new Promise(r=>setTimeout(r,RM?0:ms));
+const st={online:true,drop:false,busy:false,msgs:[],server:[],dupes:0,i:0};
+const lines=["Running late, 10 min","On my way","Did you see the doc?","Call me when you land","Sounds good","Send me the address"];
+const uid=()=>Math.random().toString(16).slice(2,8);
+let log=[];const say=t=>{log=RM?log.concat(t):[t];$('#sim-say').textContent=log.join(' ')};
+function render(){
+ const phone=$('#sim-phone');
+ phone.innerHTML=st.msgs.map(m=>`<div class="bub ${m.s}"><span>${m.t}</span><small>${m.s==='sent'?'Sent':'Sending…'}</small></div>`).join('');
+ phone.scrollTop=phone.scrollHeight;
+ $('#sim-db').innerHTML=st.msgs.map(m=>`<tr><td>${m.c}</td><td class="${m.s}">${m.s==='sent'?'SENT':'PENDING'}</td></tr>`).join('');
+ const q=st.msgs.filter(m=>m.s==='pending');
+ $('#sim-outbox').innerHTML=q.length?q.map(m=>`<li>${m.c}</li>`).join(''):'<li class="none">Empty</li>';
+ $('#sim-server').innerHTML=st.server.map(c=>`<li>${c}</li>`).join('')||'<li class="none">Nothing yet</li>';
+ $('#sim-dupes').textContent=st.dupes;
+}
+async function pump(){
+ if(st.busy)return; st.busy=true;
+ while(st.online){
+  const m=st.msgs.find(x=>x.s==='pending'); if(!m)break;
+  await sleep(900); if(!st.online)break;
+  if(st.server.includes(m.c)){st.dupes++;say('The server already has '+m.c+'. It ignores the duplicate and returns the first acknowledgement (ack).')}
+  else st.server.push(m.c);
+  render();
+  if(st.drop){st.drop=false;$('#sim-drop').setAttribute('aria-pressed','false');
+   say('The server stored '+m.c+', but the acknowledgement (ack) was lost. The app tries again with the same ID.');await sleep(1200);continue}
+  m.s='sent';say('The ack arrived. '+m.c+' is marked as sent.');render();
+ }
+ st.busy=false;
+}
+$('#sim-send').onclick=()=>{log=[];
+ st.msgs.push({c:uid(),t:lines[st.i++%lines.length],s:'pending'});render();
+ say(st.online?'Saved on the device first, then sent from the outbox (the list of unsent messages).':'No connection. Saved on the device and added to the outbox. The screen never waits.');
+ pump();
+};
+$('#sim-air').onclick=e=>{log=[];
+ st.online=!st.online;e.currentTarget.setAttribute('aria-pressed',String(!st.online));
+ say(st.online?'Back online. Sending the outbox messages in order.':'Airplane mode is on. You can still read and write messages.');
+ if(st.online)pump();
+};
+$('#sim-drop').onclick=e=>{log=[];
+ st.drop=!st.drop;e.currentTarget.setAttribute('aria-pressed',String(st.drop));
+ say(st.drop?'On: the next ack will be lost after the server stores the message.':'Off.');
+};
+st.msgs.push({c:uid(),t:'Are we still on for 6?',s:'sent'});st.server.push(st.msgs[0].c);
+render();say('Try it: turn on airplane mode, then send a message.');
+$('#sim-app').hidden=false;
+})();
+</script></body></html>

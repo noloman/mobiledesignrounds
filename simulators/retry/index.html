@@ -1,0 +1,214 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-/ATJqk3C7L4d/LxEKGkci2VkhRJSLE7Vb4AueyqXs3Q='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Retry explorer: lost replies | Mobile Design Rounds</title><meta name="description" content="Change the retry rules, the idempotency key and the server replies. See how many copies of a chat message the server saves, and why.">
+<link rel="canonical" href="https://mobiledesignrounds.com/simulators/retry/"><meta property="og:title" content="Retry explorer: lost replies | Mobile Design Rounds"><meta property="og:description" content="Change the retry rules, the idempotency key and the server replies. See how many copies of a chat message the server saves, and why."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/simulators/retry/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/retry.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Retry explorer: lost replies | Mobile Design Rounds">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Retry explorer", "url": "https://mobiledesignrounds.com/simulators/retry/", "description": "Change the retry rules, the idempotency key and the server replies. See how many copies of a chat message the server saves, and why.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "inLanguage": "en", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Practice", "item": "https://mobiledesignrounds.com/simulators/"}, {"@type": "ListItem", "position": 3, "name": "Retry explorer", "item": "https://mobiledesignrounds.com/simulators/retry/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/guides/">Guides</a><a href="/simulators/">Practice</a><a href="/glossary/">Glossary</a><a href="/about/">About</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/simulators/">Practice</a></li><li aria-current="page">Retry explorer</li></ol></nav><div class="chips"><span>Simulator</span></div>
+<h1>Retry explorer: what happens when the reply is lost</h1>
+<p>A phone sends one message. The reply can get lost, and then the phone does not know if the message arrived. Change one setting and see how many copies the server saves.</p></div>
+<div class="prose rt" style="max-width:760px">
+<style>
+.rt h2{scroll-margin-top:16px}
+.rt [hidden]{display:none!important}
+.rt fieldset{border:1.5px solid var(--line);border-radius:12px;padding:10px 14px 14px;margin:16px 0;background:var(--panel);min-width:0}
+.rt legend{font:700 1rem var(--display);padding:0 6px}
+.rt label{display:block;font-size:.92rem;font-weight:600;margin:10px 0 4px}
+.rt select{display:block;width:100%;min-height:44px;font:inherit;font-size:.95rem;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:8px;padding:0 10px}
+.rt .chk{display:flex;align-items:center;gap:12px;min-height:44px;margin:6px 0;font-weight:600;cursor:pointer}
+.rt .chk input{width:24px;height:24px;flex:none;accent-color:var(--blue)}
+.rt .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:0 16px}
+.rt button{font:600 .92rem var(--body);min-height:44px;padding:10px 14px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.rt button:hover{border-color:var(--blue)}
+.rt .run{background:var(--blue);border-color:var(--blue);color:var(--on-blue);margin-top:6px}
+.rt .presets{display:flex;flex-wrap:wrap;gap:8px}
+.rt .rules{font-size:.9rem;color:var(--ink2);margin:6px 0 0}
+.rt .res{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px;margin:12px 0}
+.rt .res div{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel)}
+.rt .res dt{font:500 .74rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.rt .res dd{margin:4px 0 0;font:700 1.35rem var(--display)}
+.rt .res .good{border-color:var(--green);background:var(--green-bg)}
+.rt .res .bad{border-color:var(--amber);background:var(--amber-bg)}
+.rt ol.tl{list-style:none;padding:0;margin:12px 0}
+.rt ol.tl li{border:1.5px solid var(--line);border-left-width:6px;border-radius:10px;padding:10px 14px;margin:10px 0;background:var(--panel);max-width:none}
+.rt ol.tl li.ok{border-left-color:var(--green)}
+.rt ol.tl li.bad{border-left-color:var(--amber)}
+.rt ol.tl li.wait{border-style:dashed;background:transparent}
+.rt ol.tl dl{margin:6px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:2px}
+.rt ol.tl dt{font:500 .74rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-top:6px}
+.rt ol.tl dd{margin:0}
+.rt .tw{overflow-x:auto}
+@media(min-width:640px){.rt ol.tl dl{grid-template-columns:130px minmax(0,1fr);gap:4px 12px}.rt ol.tl dt{margin-top:0;padding-top:3px}}
+</style>
+<h2 id="idea">The idea</h2>
+<p>A phone sends one chat message. The server saves it and sends back a short reply that says it worked. If that reply is lost, the phone sees an error. The phone cannot tell if the server saved the message or not.</p>
+<p>So the phone tries again. Without protection, the server may save the message twice. An idempotency key stops this. It is an ID that the phone adds to the message. The server sees the same key again and does not save a second copy.</p>
+<p>These are the rules from the <a href="/mobile-system-design/chat-app/#4-1-the-send-path-minutes-22-to-33">chat app case</a>. A network error, a 408, a 429 and a 5xx error are temporary, so the phone tries again. Any other 4xx error is permanent, so the phone stops. The phone makes at most 8 attempts. The wait starts at 10 s and doubles.</p>
+
+<div id="rt-app" hidden>
+<h2 id="try">Try it</h2>
+<fieldset><legend>Start with a preset</legend>
+<div class="presets"><button type="button" data-p="0">The reply is lost (no key)</button><button type="button" data-p="1">The reply is lost (with key)</button><button type="button" data-p="2">The server is down for a while</button><button type="button" data-p="3">A bad request</button></div>
+<p class="rules" id="rt-pdesc">A preset sets every control below and runs the simulation. The result shows below the controls.</p></fieldset>
+<fieldset><legend>Retry settings</legend>
+<label class="chk" for="rt-key"><input type="checkbox" id="rt-key"> Use an idempotency key (client ID)</label>
+<div class="grid">
+<div><label for="rt-policy">Retry policy</label><select id="rt-policy"><option value="stop">Stop at the first error</option><option value="now">Retry at once</option><option value="backoff">Backoff: wait longer each time</option><option value="jitter">Backoff with jitter (random)</option></select></div>
+<div><label for="rt-limit">Attempt limit</label><select id="rt-limit"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option selected>8</option></select></div>
+<div><label for="rt-base">Starting wait (used by the two waiting policies)</label><select id="rt-base"><option value="10" selected>10 seconds</option><option value="20">20 seconds</option><option value="30">30 seconds</option></select></div>
+</div></fieldset>
+<fieldset><legend>What the server does on each attempt</legend>
+<div class="grid"><div><label for="rt-a1">Attempt 1</label><select id="rt-a1"><option value="ok">Works</option><option value="lost">Request lost before the server</option><option value="replylost">Saved, but the reply is lost</option><option value="slow">Slow reply (timeout)</option><option value="e500">Server error (500)</option><option value="e429">Busy (429, Retry-After)</option><option value="e400">Bad request (400)</option></select></div><div><label for="rt-a2">Attempt 2</label><select id="rt-a2"><option value="ok">Works</option><option value="lost">Request lost before the server</option><option value="replylost">Saved, but the reply is lost</option><option value="slow">Slow reply (timeout)</option><option value="e500">Server error (500)</option><option value="e429">Busy (429, Retry-After)</option><option value="e400">Bad request (400)</option></select></div><div><label for="rt-a3">Attempt 3</label><select id="rt-a3"><option value="ok">Works</option><option value="lost">Request lost before the server</option><option value="replylost">Saved, but the reply is lost</option><option value="slow">Slow reply (timeout)</option><option value="e500">Server error (500)</option><option value="e429">Busy (429, Retry-After)</option><option value="e400">Bad request (400)</option></select></div><div><label for="rt-a4">Attempt 4</label><select id="rt-a4"><option value="ok">Works</option><option value="lost">Request lost before the server</option><option value="replylost">Saved, but the reply is lost</option><option value="slow">Slow reply (timeout)</option><option value="e500">Server error (500)</option><option value="e429">Busy (429, Retry-After)</option><option value="e400">Bad request (400)</option></select></div><div><label for="rt-a5">Attempt 5</label><select id="rt-a5"><option value="ok">Works</option><option value="lost">Request lost before the server</option><option value="replylost">Saved, but the reply is lost</option><option value="slow">Slow reply (timeout)</option><option value="e500">Server error (500)</option><option value="e429">Busy (429, Retry-After)</option><option value="e400">Bad request (400)</option></select></div><div><label for="rt-a6">Attempt 6</label><select id="rt-a6"><option value="ok">Works</option><option value="lost">Request lost before the server</option><option value="replylost">Saved, but the reply is lost</option><option value="slow">Slow reply (timeout)</option><option value="e500">Server error (500)</option><option value="e429">Busy (429, Retry-After)</option><option value="e400">Bad request (400)</option></select></div><div><label for="rt-a7">Attempt 7</label><select id="rt-a7"><option value="ok">Works</option><option value="lost">Request lost before the server</option><option value="replylost">Saved, but the reply is lost</option><option value="slow">Slow reply (timeout)</option><option value="e500">Server error (500)</option><option value="e429">Busy (429, Retry-After)</option><option value="e400">Bad request (400)</option></select></div><div><label for="rt-a8">Attempt 8</label><select id="rt-a8"><option value="ok">Works</option><option value="lost">Request lost before the server</option><option value="replylost">Saved, but the reply is lost</option><option value="slow">Slow reply (timeout)</option><option value="e500">Server error (500)</option><option value="e429">Busy (429, Retry-After)</option><option value="e400">Bad request (400)</option></select></div></div>
+<p class="rules">The simulation only uses as many attempts as it needs. Attempts it does not reach are ignored.</p></fieldset>
+<button type="button" class="run" id="rt-run">Run the simulation</button>
+
+<h2 id="result">Result</h2>
+<p class="sx" id="rt-say" role="status" aria-live="polite" aria-atomic="true"></p>
+<dl class="res" id="rt-res"></dl>
+<h3>Timeline</h3>
+<ol class="tl" id="rt-tl"><li>Press "Run the simulation" or pick a preset.</li></ol>
+<h2 id="shows">What this shows</h2>
+<div id="rt-why"><p>Run the simulation to see what it shows.</p></div>
+</div>
+
+<h2 id="presets">Without JavaScript</h2>
+<p>The controls in Try it need JavaScript. If JavaScript is off, use this table. It shows what the four presets give. With JavaScript on, you can change every setting and run your own tests.</p>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th scope="col">Preset</th><th scope="col">Saved on the server</th><th scope="col">Time</th><th scope="col">Final status</th></tr></thead><tbody><tr><th scope="row">The reply is lost (no key)<br><span class="mut">The first send is saved, but its reply is lost. The phone waits 10 s and sends again. The second send works.</span></th><td>2 saved, 1 duplicate</td><td>10.6 s</td><td>Sent</td></tr><tr><th scope="row">The reply is lost (with key)<br><span class="mut">The same story, but the phone sends an idempotency key. The server sees the key again and saves nothing new.</span></th><td>1 saved, 0 duplicates</td><td>10.6 s</td><td>Sent</td></tr><tr><th scope="row">The server is down for a while<br><span class="mut">The server returns 500 five times. The phone waits 10, 20, 40, 80 and 160 s. The sixth send works.</span></th><td>1 saved, 0 duplicates</td><td>5 min 12 s</td><td>Sent</td></tr><tr><th scope="row">A bad request<br><span class="mut">The server returns 400 on the first send. This error is permanent, so the phone does not retry.</span></th><td>0 saved, 0 duplicates</td><td>0.3 s</td><td>Failed</td></tr></tbody></table></div>
+
+<h2 id="model">How the model works</h2>
+<p>From the case:</p>
+<ul>
+<li>Temporary errors: a network error, 408, 429 and 5xx. Permanent errors: any other 4xx.</li>
+<li>At most 8 attempts. After that the phone marks the message failed. This is the ninth run, after the last wait.</li>
+<li>The wait starts at 10 s and doubles each time: 10, 20, 40 s and so on.</li>
+<li>A 429 reply may carry a Retry-After header (a hint about how long to wait). The worker does not read it. It uses its own wait. This tool does the same.</li>
+<li>With jitter, each wait changes at random. The case uses jitter when a live connection (a socket) reconnects.</li>
+<li>One reply takes about 0.3 s.</li>
+</ul>
+<p>My own choices for this tool, not from the case:</p>
+<ul>
+<li>A timeout is 30 s. A timeout counts as a network error.</li>
+<li>A 429 asks for a wait of 20 s.</li>
+<li>A 5xx, a 429 and a 400 save nothing on the server.</li>
+<li>A jittered wait is 50% to 100% of the normal wait. A fixed seed makes the same run give the same result every time.</li>
+</ul>
+<h2 id="more">Read more</h2>
+<ul>
+<li><a href="/mobile-system-design/chat-app/#4-1-the-send-path-minutes-22-to-33">Chat app case: the send path</a></li>
+<li><a href="/mobile-system-design/chat-app/build/">Chat app build guide</a></li>
+<li>Glossary: <a href="/glossary/#idempotency-key">idempotency key</a>, <a href="/glossary/#exponential-backoff">backoff</a>, <a href="/glossary/#jitter">jitter</a></li>
+</ul>
+</div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">Case studies</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Guides</p><ul><li><a href="/guides/">Long guides</a></li><li><a href="/guides/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/simulators/">All practice tools</a></li><li><a href="/practice/">Practice timer</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script>(()=>{
+const OUT={ok:3,lost:3,replylost:3,slow:300,e500:3,e429:3,e400:3};
+const PERM={e400:1}, RETRY_AFTER=20;
+const PRESETS=[
+ {key:false,policy:'backoff',limit:8,base:10,seq:['replylost','ok']},
+ {key:true,policy:'backoff',limit:8,base:10,seq:['replylost','ok']},
+ {key:true,policy:'backoff',limit:8,base:10,seq:['e500','e500','e500','e500','e500','ok']},
+ {key:true,policy:'backoff',limit:8,base:10,seq:['e400']}];
+const PDESC=['Attempt 1 is saved but the reply is lost. Attempt 2 works. No key.','Attempt 1 is saved but the reply is lost. Attempt 2 works. A key is sent.','Attempts 1 to 5 get a 500 error. Attempt 6 works. A key is sent.','Attempt 1 gets a 400 error. A key is sent.'];
+const fmt=ds=>{const s=ds/10;if(s<60)return s.toFixed(1)+' s';const r=Math.round(s);return Math.floor(r/60)+' min '+(r%60)+' s'};
+const pl=(n,w)=>n+' '+w+(n===1?'':'s');
+function sim(c){
+ let seed=12345;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ const steps=[];let saved=0,total=0,sent=false,seen=false,n=0;
+ for(;;){
+  n++;const o=c.seq[n-1]||'ok';const st={n,o,ds:OUT[o],srv:'none',wait:0,end:''};
+  if(o==='ok'||o==='replylost'||o==='slow'){if(c.key&&seen)st.srv='again';else{saved++;st.srv='saved';st.copy=saved}seen=true}
+  total+=st.ds;steps.push(st);
+  if(o==='ok'){sent=true;st.end='sent';break}
+  if(PERM[o]){st.end='perm';break}
+  if(c.policy==='stop'){st.end='stop';break}
+  const b=c.base*Math.pow(2,n-1);
+  st.wait=Math.round((c.policy==='now'?0:c.policy==='jitter'?Math.max(1,Math.round(b*(0.5+0.5*rnd()))):b)*10);
+  total+=st.wait;
+  if(n>=c.limit){st.end='limit';break}
+  st.end='retry';
+ }
+ return{steps,saved,dupes:Math.max(0,saved-1),total,status:sent?'sent':'failed',attempts:steps.length};
+}
+if(typeof document==='undefined'){globalThis.__sim={sim,PRESETS,fmt};return}
+const $=id=>document.getElementById(id);
+const SENT={ok:'200 OK with the message ID.',lost:'A network error. No reply.',replylost:'A network error. No reply.',slow:'No reply after 30 s. The phone stops waiting (timeout).',e500:'A 500 server error.',e429:'A 429 busy error. The server asks for a wait of '+RETRY_AFTER+' s (Retry-After).',e400:'A 400 bad request error.'};
+function srvText(st,c){
+ const o=st.o;
+ if(o==='lost')return 'Nothing. The request never arrived.';
+ if(o==='e500')return 'Fails. Saves nothing.';
+ if(o==='e429')return 'Too busy. Saves nothing.';
+ if(o==='e400')return 'Rejects the request. Saves nothing.';
+ const save=st.srv==='again'?'Has seen this key before. Returns the first copy. Saves nothing new.':'Saves the message (copy '+st.copy+').';
+ if(o==='replylost')return save+' The reply is lost on the way.';
+ if(o==='slow')return save+' The reply comes after the phone stopped waiting.';
+ return save+' Sends the reply.';
+}
+function endText(st,c){
+ const nx=st.n+1;
+ if(st.end==='sent')return 'The reply arrived. The phone marks the message as sent.';
+ if(st.end==='perm')return 'This error is permanent. A retry would fail the same way. The phone marks the message as failed.';
+ if(st.end==='stop')return 'The policy is to stop at the first error. The phone marks the message as failed.';
+ const w=st.wait?'Waits '+fmt(st.wait)+'.':'Does not wait.';
+ return st.end==='limit'?'This error is temporary. '+w:'This error is temporary. '+w+' Then it sends attempt '+nx+'.';
+}
+function why(c,r){
+ const p=[],S=r.steps,fail=r.status==='failed',last=S[S.length-1];
+ const again=S.some(s=>s.srv==='again'),waits=S.some(s=>s.wait>0||s.end==='retry'||s.end==='limit');
+ if(r.dupes>0)p.push('The server saved the message '+r.saved+' times. An earlier attempt reached the server, but the phone did not get the reply. The phone could not know this, so it sent the message again. With no key, the server cannot tell a repeat from a new message. The user would see the message twice. Turn on the idempotency key to see the fix.');
+ else if(again)p.push('The server saw the same key again. It did not save a second copy and it returned the first answer. This is why a retry is safe. The user sees one message.');
+ else if(!fail&&S.length===1)p.push('The first attempt worked. One message is saved and no retry was needed.');
+ else if(!fail)p.push('The message was sent after '+pl(r.attempts,'attempt')+'. One message is saved.');
+ if(fail&&r.saved>=1)p.push('The phone shows failed, but the server saved the message. The replies were lost, so the phone never learned this. If the user taps to retry, a key makes the retry safe.');
+ if(fail&&r.saved===0){
+  if(last.end==='perm')p.push('A 400 error is permanent. The same request would fail again, so the phone stops at once. The case marks the message failed and shows "Tap to retry".');
+  else if(last.end==='stop')p.push('The phone stopped at the first error. A temporary error often goes away, so this gives up too early. Try a policy that waits and retries.');
+  else p.push('The phone used all '+pl(c.limit,'attempt')+' and then marked the message failed. The limit stops one stuck message from blocking the rest of the chat. The message stays on the phone and the user can tap to retry.');
+ }
+ if(waits&&c.policy==='now')p.push('The phone retried at once, so the server had no time to recover.');
+ if(waits&&c.policy==='backoff')p.push('Each wait doubles from '+c.base+' s. This gives the server more time to recover after each failure. The case uses this for message sends.');
+ if(waits&&c.policy==='jitter')p.push('With jitter, each wait changes at random. Here it is 50% to 100% of the normal wait. Many phones that fail together then retry at different times. The case uses jitter when a live connection (a socket) reconnects.');
+ if(S.some(s=>s.o==='e429'))p.push('The server asked for a wait of '+RETRY_AFTER+' s. The case worker does not read that value. It uses its own wait, and so does this tool.');
+ return p;
+}
+function run(){
+ const c={key:$('rt-key').checked,policy:$('rt-policy').value,limit:+$('rt-limit').value,base:+$('rt-base').value,seq:[]};
+ for(let i=1;i<=8;i++)c.seq.push($('rt-a'+i).value);
+ const r=sim(c),ok=r.status==='sent';
+ const cls=(b)=>b?'good':'bad';
+ $('rt-res').innerHTML='<div class="'+cls(r.saved===1)+'"><dt>Saved on the server</dt><dd>'+r.saved+(r.saved===1?' (correct)':r.saved===0?' (none)':' (too many)')+'</dd></div>'
+  +'<div class="'+cls(r.dupes===0)+'"><dt>Duplicates</dt><dd>'+r.dupes+'</dd></div>'
+  +'<div><dt>Time taken</dt><dd>'+fmt(r.total)+'</dd></div>'
+  +'<div class="'+cls(ok)+'"><dt>Final status</dt><dd>'+(ok?'Sent':'Failed')+'</dd></div>'
+  +'<div><dt>Attempts sent</dt><dd>'+r.attempts+'</dd></div>';
+ let h='';
+ for(const s of r.steps){
+  const good=s.o==='ok';
+  h+='<li class="'+(good?'ok':'bad')+'"><strong>Attempt '+s.n+': '+(good?'OK':'Problem')+'</strong><dl>'
+   +'<dt>Phone sent</dt><dd>'+(c.key?'The message with the same client ID each time.':'The message with no client ID.')+'</dd>'
+   +'<dt>Server did</dt><dd>'+srvText(s,c)+'</dd>'
+   +'<dt>Phone saw</dt><dd>'+SENT[s.o]+'</dd>'
+   +'<dt>Phone decided</dt><dd>'+endText(s,c)+'</dd>'
+   +'<dt>Time</dt><dd>'+fmt(s.ds)+(s.wait?' plus a wait of '+fmt(s.wait):'')+'</dd></dl></li>';
+  if(s.end==='limit')h+='<li class="wait"><strong>Run '+(s.n+1)+': limit reached</strong><br>The phone sees the limit of '+c.limit+' and sends nothing. It marks the message as failed.</li>';
+ }
+ $('rt-tl').innerHTML=h;
+ $('rt-why').innerHTML=why(c,r).map(t=>'<p>'+t+'</p>').join('');
+ $('rt-say').textContent='Result: '+(ok?'sent':'failed')+'. '+pl(r.saved,'message')+' saved on the server. '+pl(r.dupes,'duplicate')+'. '+pl(r.attempts,'attempt')+'. Time taken '+fmt(r.total)+'.';
+}
+function load(i){
+ const c=PRESETS[i];
+ $('rt-key').checked=c.key;$('rt-policy').value=c.policy;$('rt-limit').value=String(c.limit);$('rt-base').value=String(c.base);
+ for(let k=1;k<=8;k++)$('rt-a'+k).value=c.seq[k-1]||'ok';
+ $('rt-pdesc').textContent='Preset loaded: '+document.querySelector('[data-p="'+i+'"]').textContent+'. '+PDESC[i]+' The result is below.';
+ run();
+}
+$('rt-run').addEventListener('click',run);
+document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>load(+b.dataset.p)));
+$('rt-app').hidden=false;
+})();
+</script></body></html>
