@@ -129,6 +129,12 @@ td.sent{color:var(--green)}td.pending{color:var(--amber)}
 .prose th{font:500 .74rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);background:var(--tint)}
 .prose blockquote{margin:1.4em 0;padding:14px 18px;border-left:4px solid var(--blue);background:var(--tint);border-radius:0 12px 12px 0}
 .prose blockquote p{margin:.2em 0}
+.prose p{margin:0 0 1.15em;line-height:1.7}.prose li{line-height:1.65}
+.prose .beat{border-left:4px solid var(--line);padding:.15em 0 .15em 16px;margin:1.3em 0}
+.prose .beat>strong:first-child{display:block;font:500 .74rem var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ink2);margin-bottom:.3em}
+.prose .beat.b-instinct{border-left-color:var(--amber)}.prose .beat.b-say{border-left-color:var(--green)}.prose .beat.b-push{border-left-color:var(--blue)}
+.prose blockquote.bq-call{border-left-color:var(--amber);background:var(--amber-bg)}.prose blockquote.bq-say{border-left-color:var(--green);background:var(--green-bg)}
+.prose blockquote.bq-call strong:first-child,.prose blockquote.bq-say strong:first-child{display:block;font:500 .74rem var(--mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.3em}
 .prose hr{border:0;border-top:1.5px solid var(--line);margin:2.4em 0}
 .diagram{margin:1.6em 0;padding:16px;background:var(--panel);border:1.5px solid var(--line);border-radius:14px}
 .diagram{overflow-x:auto;-webkit-overflow-scrolling:touch}
