@@ -54,6 +54,13 @@
 ## Compare and look up
 - [Compare the main design choices](https://mobiledesignrounds.com/compare/): tables that put polling, push and WebSocket, offset and cursor paging, retry keys, background work and conflict rules side by side, with the case that uses each
 - [Failure modes](https://mobiledesignrounds.com/failure-modes/): an index of how a mobile app fails, such as a lost reply, process death, stale data and an expired token, with links to the case sections that handle each one
+- [Mobile system design interview prep options compared](https://mobiledesignrounds.com/alternatives/): a fair, dated comparison of books, courses, free pages and mock interview services for mobile system design interview prep, with price and platforms as each official page shows them, and where this site is different
+
+## Practice kit
+- [Mock interview script](https://mobiledesignrounds.com/practice/mock-interview-script/): a minute-by-minute script for a 45-minute mock round with a friend, with the prompt, the time calls, six follow-up questions and rules for the interviewer
+- [Score sheet](https://mobiledesignrounds.com/practice/score-sheet/): a six-row score sheet from 1 to 4 for a practice round, with plain meanings for each score and a way to read the total
+- [Study plans](https://mobiledesignrounds.com/practice/study-plans/): a 3-week and a 4-week study plan in 2, 5 and 10 hour sizes, with the case, the guide and the tool for each week
+- [Weak and strong answer](https://mobiledesignrounds.com/practice/weak-vs-strong/): a weak and a strong answer to the chat app send path, side by side, with what the weak one skips
 
 ## Glossary
 - [Glossary](https://mobiledesignrounds.com/glossary/): plain English meanings of 75 hard words from the case studies, such as outbox, idempotent, Doze and WorkManager
