@@ -51,6 +51,10 @@
 - [Pagination race](https://mobiledesignrounds.com/simulators/pagination/): Change one thing and watch a list repeat or miss posts. Compare page numbers with a cursor.
 - [Offline chat simulator](https://mobiledesignrounds.com/simulators/offline-chat/): Send a chat message with no connection and lose a reply. Watch the outbox and the server.
 
+## Compare and look up
+- [Compare the main design choices](https://mobiledesignrounds.com/compare/): tables that put polling, push and WebSocket, offset and cursor paging, retry keys, background work and conflict rules side by side, with the case that uses each
+- [Failure modes](https://mobiledesignrounds.com/failure-modes/): an index of how a mobile app fails, such as a lost reply, process death, stale data and an expired token, with links to the case sections that handle each one
+
 ## Glossary
 - [Glossary](https://mobiledesignrounds.com/glossary/): plain English meanings of 75 hard words from the case studies, such as outbox, idempotent, Doze and WorkManager
 
