@@ -37,6 +37,9 @@
 - [Live data and payments](https://mobiledesignrounds.com/mobile-system-design/live-data-and-payments/): Data that changes live, and actions that must happen once.
 
 ## Guides
+- [Idempotency keys on mobile: how to retry without sending twice](https://mobiledesignrounds.com/guides/idempotency-keys/): One ID for one action, sent with every retry, so a lost reply never charges or sends twice.
+- [Cursor versus offset paging on mobile: why page numbers break](https://mobiledesignrounds.com/guides/cursor-vs-offset/): Why items repeat or vanish when a list changes while you scroll, and why a cursor fixes it.
+- [WorkManager vs BGTaskScheduler: what runs your background work](https://mobiledesignrounds.com/guides/workmanager-vs-bgtaskscheduler/): Android keeps your job and runs it when the rules are true. iOS only gives you a chance to run.
 - [Staff-level mobile system design: what the round tests](https://mobiledesignrounds.com/guides/staff-mobile-loop-guide/): How staff answers differ from senior answers, what interviewers can see, and a four-week practice plan.
 - [Offline-first mobile system design: one model, six case studies](https://mobiledesignrounds.com/guides/offline-first-hub/): The official offline-first model (the app keeps working without a network) used for chat, feed, upload, booking, analytics and push.
 - [Native vs cross-platform: write the decision record](https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/): A staff-level decision record (ADR) for choosing a framework. It covers criteria, the assumption that would change the choice, migration, parity tests, libraries with no owner, rollback, and a free template.

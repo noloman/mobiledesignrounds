@@ -4,112 +4,133 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
 <entry>
 <title>Design a chat app</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/chat-app/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/chat-app/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Outbox, safe retries (idempotent sends), and sync with WebSocket and push.</summary>
 </entry>
 <entry>
 <title>Design a news feed</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/news-feed/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/news-feed/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Paging, optimistic writes (show a change first), and keeping the cache fresh.</summary>
 </entry>
 <entry>
 <title>Design photo backup and file sync</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/photo-file-sync/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/photo-file-sync/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Uploads that can resume, sync by blocks, and edit conflicts.</summary>
 </entry>
 <entry>
 <title>Design a pagination library</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/pagination-library/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/pagination-library/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>The library API, generic types, and which requests go first.</summary>
 </entry>
 <entry>
 <title>Design an image loading library</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/image-loading/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/image-loading/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Memory and disk caches, decoding, and cancelling requests.</summary>
 </entry>
 <entry>
 <title>Design a hotel or ride booking app</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/booking-app/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/booking-app/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Holds, server time, payments, and search.</summary>
 </entry>
 <entry>
 <title>Design a stock ticker app</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/live-ticker/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/live-ticker/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Streaming updates, limiting how often the screen changes, and an always-online app.</summary>
 </entry>
 <entry>
 <title>Design a video streaming app</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/video-app/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/video-app/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Loading ahead (prefetch), adaptive bitrate, and playback state.</summary>
 </entry>
 <entry>
 <title>Design an analytics SDK</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/analytics-sdk/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/analytics-sdk/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Sending events in batches, saving them on the device, privacy, and versions.</summary>
 </entry>
 <entry>
 <title>Design a push notification SDK</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/push-sdk/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/push-sdk/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>How push tokens change over time, delivery, and deep links.</summary>
 </entry>
 <entry>
 <title>Design a travel plans app</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/travel-plans-app/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>Friends edit a trip together, even offline, and no change is lost without a sign.</summary>
 </entry>
 <entry>
 <title>Design a public transport app</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/public-transport-app/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/public-transport-app/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>A timetable that works offline, live delays on top, and careful use of location and battery.</summary>
+</entry>
+<entry>
+<title>Idempotency keys on mobile: how to retry without sending twice</title>
+<link href="https://mobiledesignrounds.com/guides/idempotency-keys/"/>
+<id>https://mobiledesignrounds.com/guides/idempotency-keys/</id>
+<updated>2026-10-14T00:00:00Z</updated>
+<summary>One ID for one action, sent with every retry, so a lost reply never charges or sends twice.</summary>
+</entry>
+<entry>
+<title>Cursor versus offset paging on mobile: why page numbers break</title>
+<link href="https://mobiledesignrounds.com/guides/cursor-vs-offset/"/>
+<id>https://mobiledesignrounds.com/guides/cursor-vs-offset/</id>
+<updated>2026-10-14T00:00:00Z</updated>
+<summary>Why items repeat or vanish when a list changes while you scroll, and why a cursor fixes it.</summary>
+</entry>
+<entry>
+<title>WorkManager vs BGTaskScheduler: what runs your background work</title>
+<link href="https://mobiledesignrounds.com/guides/workmanager-vs-bgtaskscheduler/"/>
+<id>https://mobiledesignrounds.com/guides/workmanager-vs-bgtaskscheduler/</id>
+<updated>2026-10-14T00:00:00Z</updated>
+<summary>Android keeps your job and runs it when the rules are true. iOS only gives you a chance to run.</summary>
 </entry>
 <entry>
 <title>Staff-level mobile system design: what the round tests</title>
 <link href="https://mobiledesignrounds.com/guides/staff-mobile-loop-guide/"/>
 <id>https://mobiledesignrounds.com/guides/staff-mobile-loop-guide/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>How staff answers differ from senior answers, what interviewers can see, and a four-week practice plan.</summary>
 </entry>
 <entry>
 <title>Offline-first mobile system design: one model, six case studies</title>
 <link href="https://mobiledesignrounds.com/guides/offline-first-hub/"/>
 <id>https://mobiledesignrounds.com/guides/offline-first-hub/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>The official offline-first model (the app keeps working without a network) used for chat, feed, upload, booking, analytics and push.</summary>
 </entry>
 <entry>
 <title>Native vs cross-platform: write the decision record</title>
 <link href="https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/"/>
 <id>https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/</id>
-<updated>2026-10-13T00:00:00Z</updated>
+<updated>2026-10-14T00:00:00Z</updated>
 <summary>A staff-level decision record (ADR) for choosing a framework. It covers criteria, the assumption that would change the choice, migration, parity tests, libraries with no owner, rollback, and a free template.</summary>
 </entry>
 </feed>
