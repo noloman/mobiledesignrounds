@@ -43,6 +43,7 @@
 ## Guides
 - [Design patterns in mobile system design rounds](https://mobiledesignrounds.com/patterns/): Eleven patterns that the rounds use, where each one appears, and the Android and iOS habits an interviewer listens for, such as delegation.
 - [Idempotency keys on mobile: how to retry without sending twice](https://mobiledesignrounds.com/guides/idempotency-keys/): One ID for one action, sent with every retry, so a lost reply never charges or sends twice.
+- [Caching and eviction on mobile: what to keep, when it expires, what to drop](https://mobiledesignrounds.com/guides/caching-and-eviction/): When a cached value is too old, and what to remove when the cache is full. LRU, TTL and the trade-offs, with a diagram.
 - [Cursor versus offset paging on mobile: why page numbers break](https://mobiledesignrounds.com/guides/cursor-vs-offset/): Why items repeat or vanish when a list changes while you scroll, and why a cursor fixes it.
 - [WorkManager vs BGTaskScheduler: what runs your background work](https://mobiledesignrounds.com/guides/workmanager-vs-bgtaskscheduler/): Android keeps your job and runs it when the rules are true. iOS only gives you a chance to run.
 - [Staff-level mobile system design: what the round tests](https://mobiledesignrounds.com/guides/staff-mobile-loop-guide/): How staff answers differ from senior answers, what interviewers can see, and a four-week practice plan.
@@ -50,11 +51,12 @@
 - [Native vs cross-platform: write the decision record](https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/): A staff-level decision record (ADR) for choosing a framework. It covers criteria, the assumption that would change the choice, migration, parity tests, libraries with no owner, rollback, and a free template.
 
 ## Practice tools
-- [Practice tools](https://mobiledesignrounds.com/simulators/): a timer and three simulators that let you change one thing and see what happens
+- [Practice tools](https://mobiledesignrounds.com/simulators/): a timer and four simulators that let you change one thing and see what happens
 - [Practice timer](https://mobiledesignrounds.com/practice/): A 45-minute clock for a mobile system design round, with a prompt, five steps and a checklist.
 - [Retry explorer](https://mobiledesignrounds.com/simulators/retry/): Change the retry rules and see if a lost reply makes a duplicate message.
 - [Pagination race](https://mobiledesignrounds.com/simulators/pagination/): Change one thing and watch a list repeat or miss posts. Compare page numbers with a cursor.
 - [Offline chat simulator](https://mobiledesignrounds.com/simulators/offline-chat/): Send a chat message with no connection and lose a reply. Watch the outbox and the server.
+- [Cache explorer](https://mobiledesignrounds.com/simulators/cache/): Change the cache size, the removal rule and the expiry time. See what stays and what is fetched again.
 
 ## Compare and look up
 - [Concepts and reference](https://mobiledesignrounds.com/concepts/): a hub for design patterns, failure modes, comparisons, guides and the glossary
