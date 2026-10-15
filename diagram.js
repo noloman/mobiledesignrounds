@@ -64,10 +64,11 @@
         next.textContent = step < s.length ? 'Next' : 'Again';
       } else {
         if (sel) { sel.classList.add('sel'); panel.textContent = ''; var t = h('strong', '', sel.getAttribute('data-title') + '. '); panel.appendChild(t); panel.appendChild(document.createTextNode(sel.getAttribute('data-info'))); }
-        else panel.textContent = (nodes.length ? 'Tap a box for details. ' : '') + 'Or step through ' + (flows.length > 1 ? 'a case' : 'it') + '.';
+        else panel.textContent = (nodes.length ? 'Tap a box to see what it does.' : '') + (flows.length ? ' Or step through ' + (flows.length > 1 ? 'a case' : 'it') + '.' : '');
         count.textContent = '';
-        next.textContent = flows.length > 1 ? 'Start' : 'Start: ' + flows[0].name;
+        if (flows.length) next.textContent = flows.length > 1 ? 'Start' : 'Start: ' + flows[0].name;
       }
+      back.hidden = next.hidden = !flows.length;
       back.disabled = step < 2;
       reset.hidden = step === 0 && !sel;
       tabBtns.forEach(function (b, i) { b.setAttribute('aria-pressed', step > 0 && i === flow ? 'true' : 'false'); });
