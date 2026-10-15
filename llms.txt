@@ -31,6 +31,8 @@
 - [Design a public transport app](https://mobiledesignrounds.com/mobile-system-design/public-transport-app/): A timetable that works offline, live delays on top, and careful use of location and battery. Free teaser; the full case is planned for the study pack.
 - [Design feature flags and remote config](https://mobiledesignrounds.com/mobile-system-design/feature-flags/): Values saved on the phone, a rollout that stays stable, and a kill switch that works when the flag service fails.
 - [Build it: feature flags and remote config on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/feature-flags/build/): the schema, API, code and platform limits for the design feature flags and remote config answer
+- [Design a state machine for a mobile flow](https://mobiledesignrounds.com/mobile-system-design/state-machine/): Explicit states and events for a checkout, double taps that do nothing, and a recovery path when the app is killed mid-payment.
+- [Build it: a state machine for a mobile flow on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/state-machine/build/): the types, reducer, store, saved attempt record, tests and platform limits for the design a state machine answer
 
 ## Case studies by topic
 - [Offline and sync](https://mobiledesignrounds.com/mobile-system-design/offline-and-sync/): Apps that keep working with no network, and sync later.

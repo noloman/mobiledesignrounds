@@ -1,0 +1,435 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-WJDm62DDE4MZD9v2EoCFL7mWS2pksWjW0iId/jEDZH4=' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Build it: a State Machine on Android and iOS</title><meta name="description" content="Build a state machine for a mobile checkout flow in Kotlin and Swift: types, a pure reducer, a store, a saved attempt record, effects, tests and platform limits.">
+<link rel="canonical" href="https://mobiledesignrounds.com/mobile-system-design/state-machine/build/"><meta property="og:title" content="Build it: a State Machine on Android and iOS"><meta property="og:description" content="Build a state machine for a mobile checkout flow in Kotlin and Swift: types, a pure reducer, a store, a saved attempt record, effects, tests and platform limits."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/mobile-system-design/state-machine/build/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/live-data-and-payments.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Build it: a State Machine on Android and iOS">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Build it: a state machine for a mobile flow on Android and iOS", "description": "Build a state machine for a mobile checkout flow in Kotlin and Swift: types, a pure reducer, a store, a saved attempt record, effects, tests and platform limits.", "datePublished": "2026-10-15", "dateModified": "2026-10-15", "mainEntityOfPage": "https://mobiledesignrounds.com/mobile-system-design/state-machine/build/", "image": ["https://mobiledesignrounds.com/og/live-data-and-payments.png"], "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/", "sameAs": ["https://manulorenzo.me", "https://github.com/noloman"]}, "publisher": {"@type": "Organization", "name": "Mobile Design Rounds", "url": "https://mobiledesignrounds.com/", "logo": {"@type": "ImageObject", "url": "https://mobiledesignrounds.com/icon-512.png"}}, "inLanguage": "en"}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://mobiledesignrounds.com/mobile-system-design/"}, {"@type": "ListItem", "position": 3, "name": "Design a state machine for a mobile flow", "item": "https://mobiledesignrounds.com/mobile-system-design/state-machine/"}, {"@type": "ListItem", "position": 4, "name": "Build guide", "item": "https://mobiledesignrounds.com/mobile-system-design/state-machine/build/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/guides/">Guides</a><a href="/simulators/">Practice</a><a href="/glossary/">Glossary</a><a href="/about/">About</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/mobile-system-design/">Case studies</a></li><li><a href="/mobile-system-design/state-machine/">Design a state machine for a mobile flow</a></li><li aria-current="page">Build guide</li></ol></nav><div class="chips"><span>Build guide</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>Android</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>iOS</span><span>20 min read</span></div><h1>Build it: a state machine for a mobile flow on Android and iOS</h1><p class="meta">Last reviewed <time datetime="2026-10-15">15 Oct 2026</time>. Drafted with AI assistance. Checked against official documentation where noted (<a href="/about/#how">how this is checked</a>). Kotlin reducer and tests run; Swift not compiled. Part of: <a href="/mobile-system-design/state-machine/">Design a state machine for a mobile flow (Android and iOS)</a> &middot; <a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a> &middot; <a href="/mobile-system-design/#method">The five-step method</a>.</p></div><div class="layout"><aside class="toc"><details open><summary>On this page</summary><ol><li><a href="#1-the-types">1. The types</a></li><li><a href="#2-the-reducer">2. The reducer</a></li><li><a href="#3-the-store">3. The store</a></li><li><a href="#4-the-saved-attempt-and-the-effect-runner">4. The saved attempt and the effect runner</a></li><li><a href="#5-tests">5. Tests</a></li><li><a href="#6-platform-limits">6. Platform limits</a></li><li><a href="#7-more-practice-prompts">7. More practice prompts</a></li><li><a href="#further-reading-official-docs">Further reading (official docs)</a></li></ol></details></aside><article class="prose"><p>This is the implementation material behind the <a href="/mobile-system-design/state-machine/">state machine interview case</a>. It covers:</p><ul><li>the state, event and effect types</li><li>the pure reducer that holds every rule</li><li>the store, the saved attempt record and the effect runner</li><li>tests that prove the double tap and the lost answer</li><li>platform limits</li></ul><p>None of it belongs in a 45-minute round (the length I assume). I draw the types and the table, and write code only if asked. <strong>Checked on 15 October 2026:</strong> the Kotlin types, reducer and tests compiled with Kotlin 2.1.20 and all six tests passed. The store and runner compiled against small stand-ins for ViewModel and DataStore, not the real AndroidX libraries, and a simulated double tap with a lost answer made one charge. <strong>The Swift was not compiled</strong>, because I had no Swift toolchain. Compile it before you copy it.</p><h2 id="1-the-types">1. The types</h2><p>Three closed lists: states, events and effects. A <code>when</code> or <code>switch</code> over a closed list tells you at compile time when you forget a case. Events that come from an effect carry the attempt id, so a stale one can be spotted.</p><h3 id="1-1-kotlin">1.1 Kotlin</h3><pre tabindex="0"><code>package checkout
+
+data class Form(val cardToken: String? = null, val addressId: String? = null) {
+    val valid get() = cardToken != null &amp;&amp; addressId != null
+}
+
+sealed interface PayResult {
+    data class Paid(val orderId: String) : PayResult
+    data class Declined(val reason: String) : PayResult
+}
+
+sealed interface Status {
+    data class Paid(val orderId: String) : Status
+    data object NotPaid : Status
+    data object Pending : Status
+}
+
+/** Where the flow is. Each case holds only the data that makes sense there. */
+sealed interface State {
+    data class Editing(val form: Form = Form(), val error: String? = null) : State
+    data class Submitting(val attemptId: String, val form: Form) : State
+    data class Unknown(val attemptId: String, val checks: Int = 0) : State
+    data class Succeeded(val orderId: String) : State
+    data class Failed(val reason: String, val canRetry: Boolean) : State
+}
+
+/** What happened. Every event that comes from an effect carries the attempt id. */
+sealed interface Event {
+    data class FieldChanged(val form: Form) : Event
+    data class PayTapped(val newAttemptId: String) : Event   // the store makes the id, so reduce stays pure
+    data class PayAnswered(val attemptId: String, val result: PayResult) : Event
+    data class PayTimedOut(val attemptId: String) : Event
+    data class Restored(val attemptId: String?) : Event      // app start or return to the foreground
+    data class StatusChecked(val attemptId: String, val status: Status) : Event
+    data object RetryTapped : Event
+}
+
+/** What the flow asks the outside world to do. Effects run in order. */
+sealed interface Effect {
+    data class SaveAttempt(val attemptId: String) : Effect
+    data class Pay(val attemptId: String, val form: Form) : Effect
+    data class CheckStatus(val attemptId: String, val delayMs: Long) : Effect
+    data object ClearAttempt : Effect
+}
+
+data class Step(val state: State, val effects: List&lt;Effect&gt; = emptyList())</code></pre><h3 id="1-2-swift">1.2 Swift</h3><pre tabindex="0"><code>import Foundation
+
+struct Form: Equatable {
+    var cardToken: String?
+    var addressId: String?
+    var isValid: Bool { cardToken != nil &amp;&amp; addressId != nil }
+}
+
+enum PayResult: Equatable { case paid(orderId: String), declined(reason: String) }
+enum Status: Equatable { case paid(orderId: String), notPaid, pending }
+
+enum State: Equatable {
+    case editing(Form, error: String?)
+    case submitting(attemptId: String, form: Form)
+    case unknown(attemptId: String, checks: Int)
+    case succeeded(orderId: String)
+    case failed(reason: String, canRetry: Bool)
+}
+
+enum Event {
+    case fieldChanged(Form)
+    case payTapped(newAttemptId: String)
+    case payAnswered(attemptId: String, PayResult)
+    case payTimedOut(attemptId: String)
+    case restored(attemptId: String?)
+    case statusChecked(attemptId: String, Status)
+    case retryTapped
+}
+
+enum Effect: Equatable {
+    case saveAttempt(String)
+    case pay(attemptId: String, form: Form)
+    case checkStatus(attemptId: String, delay: Duration)
+    case clearAttempt
+}</code></pre><h2 id="2-the-reducer">2. The reducer</h2><p>This is the whole decision logic. It has no clock, no random numbers and no network, so a test needs no mock. The id for a new attempt comes in with the event. Section 3 shows who makes it.</p><p>Four rules to look for in the code:</p><ul><li>A second <code>PayTapped</code> in Submitting falls to the last branch. Nothing changes and nothing is sent.</li><li>The effect list for a new payment is <code>SaveAttempt</code> then <code>Pay</code>. They run in that order.</li><li>An event with the wrong attempt id is dropped.</li><li>A late <code>PayAnswered</code> in Unknown still wins, because the first request may have arrived after all.</li></ul><h3 id="2-1-kotlin">2.1 Kotlin</h3><pre tabindex="0"><code>package checkout
+
+const val MAX_CHECKS = 6
+
+private fun backoffMs(n: Int): Long = minOf(2_000L shl n, 60_000L)
+
+/** Pure. No clock, no random numbers, no network. Same input, same output. */
+fun reduce(s: State, e: Event): Step = when (s) {
+    is State.Editing -&gt; when (e) {
+        is Event.FieldChanged -&gt; Step(s.copy(form = e.form, error = null))
+        is Event.PayTapped -&gt;
+            if (s.form.valid) Step(
+                State.Submitting(e.newAttemptId, s.form),
+                // Order matters: the id is on disk before the request leaves.
+                listOf(Effect.SaveAttempt(e.newAttemptId), Effect.Pay(e.newAttemptId, s.form)),
+            ) else Step(s.copy(error = "Fill in all fields"))
+        is Event.Restored -&gt;
+            if (e.attemptId != null) Step(State.Unknown(e.attemptId), listOf(Effect.CheckStatus(e.attemptId, 0)))
+            else Step(s)
+        else -&gt; Step(s)
+    }
+    is State.Submitting -&gt; when {
+        e is Event.PayAnswered &amp;&amp; e.attemptId == s.attemptId -&gt; answered(e.result)
+        e is Event.PayTimedOut &amp;&amp; e.attemptId == s.attemptId -&gt;
+            Step(State.Unknown(s.attemptId), listOf(Effect.CheckStatus(s.attemptId, 0)))
+        else -&gt; Step(s) // a second PayTapped lands here: nothing changes, nothing is sent
+    }
+    is State.Unknown -&gt; when {
+        e is Event.PayAnswered &amp;&amp; e.attemptId == s.attemptId -&gt; answered(e.result) // a late answer
+        e is Event.StatusChecked &amp;&amp; e.attemptId == s.attemptId -&gt; when (val st = e.status) {
+            is Status.Paid -&gt; Step(State.Succeeded(st.orderId), listOf(Effect.ClearAttempt))
+            Status.NotPaid -&gt; Step(State.Editing(), listOf(Effect.ClearAttempt))
+            Status.Pending -&gt;
+                if (s.checks + 1 &gt;= MAX_CHECKS) Step(s.copy(checks = s.checks + 1)) // stop asking; the screen says what to do
+                else Step(s.copy(checks = s.checks + 1), listOf(Effect.CheckStatus(s.attemptId, backoffMs(s.checks + 1))))
+        }
+        e is Event.Restored -&gt; Step(s, listOf(Effect.CheckStatus(s.attemptId, 0)))
+        else -&gt; Step(s)
+    }
+    is State.Succeeded -&gt; Step(s)
+    is State.Failed -&gt; if (e is Event.RetryTapped &amp;&amp; s.canRetry) Step(State.Editing()) else Step(s)
+}
+
+private fun answered(r: PayResult): Step = when (r) {
+    is PayResult.Paid -&gt; Step(State.Succeeded(r.orderId), listOf(Effect.ClearAttempt))
+    is PayResult.Declined -&gt; Step(State.Failed(r.reason, canRetry = true), listOf(Effect.ClearAttempt))
+}</code></pre><h3 id="2-2-swift">2.2 Swift</h3><pre tabindex="0"><code>let maxChecks = 6
+
+private func backoff(_ n: Int) -&gt; Duration { .seconds(min(2 &lt;&lt; n, 60)) }
+
+private func answered(_ r: PayResult) -&gt; (State, [Effect]) {
+    switch r {
+    case .paid(let id): return (.succeeded(orderId: id), [.clearAttempt])
+    case .declined(let why): return (.failed(reason: why, canRetry: true), [.clearAttempt])
+    }
+}
+
+/// Pure. Same input, same output.
+func reduce(_ s: State, _ e: Event) -&gt; (State, [Effect]) {
+    switch (s, e) {
+    case (.editing(_, _), .fieldChanged(let f)):
+        return (.editing(f, error: nil), [])
+    case (.editing(let f, _), .payTapped(let id)):
+        guard f.isValid else { return (.editing(f, error: "Fill in all fields"), []) }
+        // Order matters: the id is on disk before the request leaves.
+        return (.submitting(attemptId: id, form: f), [.saveAttempt(id), .pay(attemptId: id, form: f)])
+    case (.editing, .restored(let id?)):
+        return (.unknown(attemptId: id, checks: 0), [.checkStatus(attemptId: id, delay: .zero)])
+
+    case (.submitting(let id, _), .payAnswered(let a, let r)) where a == id:
+        return answered(r)
+    case (.submitting(let id, _), .payTimedOut(let a)) where a == id:
+        return (.unknown(attemptId: id, checks: 0), [.checkStatus(attemptId: id, delay: .zero)])
+
+    case (.unknown(let id, _), .payAnswered(let a, let r)) where a == id:   // a late answer
+        return answered(r)
+    case (.unknown(let id, let n), .statusChecked(let a, let st)) where a == id:
+        switch st {
+        case .paid(let order): return (.succeeded(orderId: order), [.clearAttempt])
+        case .notPaid: return (.editing(Form(), error: nil), [.clearAttempt])
+        case .pending:
+            if n + 1 &gt;= maxChecks { return (.unknown(attemptId: id, checks: n + 1), []) }
+            return (.unknown(attemptId: id, checks: n + 1), [.checkStatus(attemptId: id, delay: backoff(n + 1))])
+        }
+    case (.unknown(let id, _), .restored):
+        return (s, [.checkStatus(attemptId: id, delay: .zero)])
+
+    case (.failed(_, true), .retryTapped):
+        return (.editing(Form(), error: nil), [])
+
+    default:
+        return (s, [])   // a second payTapped, a stale answer, anything else: nothing changes
+    }
+}</code></pre><p>The backoff is 4, 8, 16, 32 and 60 seconds, and it stops after six checks. That is my choice, not a documented value. After the cap the screen says "We could not confirm. Do not pay again" and the Pay button stays gone.</p><h2 id="3-the-store">3. The store</h2><p>The store owns the state and feeds events through one queue. It makes the attempt id, runs the reducer, publishes the new state and hands the effects to the runner. On Android a <code>Channel</code> gives the queue. On iOS the main actor gives it for free.</p><p>Effects run in an app-scoped scope on Android, and in a store that lives as long as the app on iOS. A ViewModel is cleared when its screen leaves (<a href="https://developer.android.com/topic/libraries/architecture/viewmodel">Android ViewModel</a>), and a payment call should not be cancelled by that.</p><h3 id="3-1-kotlin">3.1 Kotlin</h3><pre tabindex="0"><code>package checkout
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import java.util.UUID
+
+class CheckoutViewModel(
+    private val runner: EffectRunner,
+    private val effectScope: CoroutineScope,          // app-scoped: a payment must not die with the screen
+    private val newId: () -&gt; String = { UUID.randomUUID().toString() },
+    private val savedAttempt: suspend () -&gt; String?,
+) : ViewModel() {
+    private val _state = MutableStateFlow&lt;State&gt;(State.Editing())
+    val state: StateFlow&lt;State&gt; = _state
+
+    private val events = Channel&lt;Event&gt;(Channel.UNLIMITED)
+
+    init {
+        viewModelScope.launch { for (e in events) apply(e) }   // one event at a time, in arrival order
+        viewModelScope.launch { send(Event.Restored(savedAttempt())) }
+    }
+
+    fun send(e: Event) { events.trySend(e) }
+    fun onPayClicked() = send(Event.PayTapped(newId()))
+
+    private fun apply(e: Event) {
+        val step = reduce(_state.value, e)
+        _state.value = step.state
+        if (step.effects.isNotEmpty()) effectScope.launch { runner.run(step.effects, ::send) }
+    }
+}</code></pre><h3 id="3-2-swift">3.2 Swift</h3><pre tabindex="0"><code>import SwiftUI
+
+@MainActor
+final class CheckoutStore: ObservableObject {
+    @Published private(set) var state: State
+    private let run: (Effect) async -&gt; Event?
+    private let newId: () -&gt; String
+
+    init(state: State = .editing(Form(), error: nil),
+         newId: @escaping () -&gt; String = { UUID().uuidString },
+         run: @escaping (Effect) async -&gt; Event?) {
+        self.state = state
+        self.newId = newId
+        self.run = run
+    }
+
+    func payTapped() { send(.payTapped(newAttemptId: newId())) }
+
+    /// Runs on the main actor, so events are handled one at a time, in order.
+    func send(_ event: Event) {
+        let (next, effects) = reduce(state, event)
+        state = next
+        guard !effects.isEmpty else { return }
+        Task { [run] in
+            for fx in effects {                       // in order: save, then pay
+                if let result = await run(fx) { send(result) }
+            }
+        }
+    }
+}</code></pre><h2 id="4-the-saved-attempt-and-the-effect-runner">4. The saved attempt and the effect runner</h2><p>The runner is the only place that touches the network and the disk. It turns every outcome into an event, including a timeout. A failed status check becomes <code>Pending</code>, which keeps the flow in Unknown.</p><p>Where the record goes matters:</p><ul><li><strong>Android:</strong> DataStore describes its updates as transactional (<a href="https://developer.android.com/topic/libraries/architecture/datastore">DataStore</a>). I use it, not SavedStateHandle. SavedStateHandle is lost on a swipe from recents, a force stop or a reboot, and is not long-term storage (<a href="https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate">ViewModel saved state</a>).</li><li><strong>iOS:</strong> SceneStorage makes no guarantee about when it writes, and is for lightweight screen state (<a href="https://developer.apple.com/documentation/swiftui/scenestorage">Apple SceneStorage</a>). I use a file written in one piece. That atomic write behavior is from memory and I did not verify it.</li></ul><h3 id="4-1-kotlin">4.1 Kotlin</h3><pre tabindex="0"><code>package checkout
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
+import java.io.IOException
+
+interface PaymentApi {
+    suspend fun pay(attemptId: String, form: Form): PayResult   // POST /orders, Idempotency-Key = attemptId
+    suspend fun status(attemptId: String): Status               // GET /orders?attempt=ID
+}
+
+/** The one record that must outlive the process. DataStore edits are transactional. */
+class AttemptStore(private val ds: DataStore&lt;Preferences&gt;) {
+    private val key = stringPreferencesKey("open_attempt")
+    suspend fun save(id: String) { ds.edit { it[key] = id } }
+    suspend fun clear() { ds.edit { it.remove(key) } }
+    suspend fun load(): String? = ds.data.first()[key]
+}
+
+interface EffectRunner { suspend fun run(effects: List&lt;Effect&gt;, send: (Event) -&gt; Unit) }
+
+class RealEffectRunner(private val api: PaymentApi, private val store: AttemptStore) : EffectRunner {
+    override suspend fun run(effects: List&lt;Effect&gt;, send: (Event) -&gt; Unit) {
+        for (fx in effects) when (fx) {
+            is Effect.SaveAttempt -&gt; store.save(fx.attemptId)       // finishes before the next effect starts
+            is Effect.Pay -&gt; send(
+                try {
+                    Event.PayAnswered(fx.attemptId, withTimeout(30_000) { api.pay(fx.attemptId, fx.form) })
+                } catch (e: TimeoutCancellationException) {
+                    Event.PayTimedOut(fx.attemptId)
+                } catch (e: IOException) {
+                    Event.PayTimedOut(fx.attemptId)                 // we do not know if it arrived
+                }
+            )
+            is Effect.CheckStatus -&gt; {
+                delay(fx.delayMs)
+                send(Event.StatusChecked(fx.attemptId, try { api.status(fx.attemptId) } catch (e: IOException) { Status.Pending }))
+            }
+            Effect.ClearAttempt -&gt; store.clear()
+        }
+    }
+}</code></pre><h3 id="4-2-swift">4.2 Swift</h3><pre tabindex="0"><code>import Foundation
+
+protocol PaymentAPI {
+    func pay(attemptId: String, form: Form) async throws -&gt; PayResult   // POST /orders, Idempotency-Key = attemptId
+    func status(attemptId: String) async throws -&gt; Status               // GET /orders?attempt=ID
+}
+
+/// The one record that must outlive the process. A file, written all at once.
+struct AttemptFile {
+    let url: URL
+    func save(_ id: String) throws { try Data(id.utf8).write(to: url, options: .atomic) }
+    func load() -&gt; String? { (try? Data(contentsOf: url)).flatMap { String(data: $0, encoding: .utf8) } }
+    func clear() { try? FileManager.default.removeItem(at: url) }
+}
+
+func makeRunner(api: PaymentAPI, file: AttemptFile) -&gt; (Effect) async -&gt; Event? {
+    { fx in
+        switch fx {
+        case .saveAttempt(let id):
+            try? file.save(id)
+            return nil
+        case .pay(let id, let form):
+            do {
+                // URLSession's own timeout also ends the call; use one you chose on purpose.
+                return .payAnswered(attemptId: id, try await api.pay(attemptId: id, form: form))
+            } catch {
+                return .payTimedOut(attemptId: id)            // we do not know if it arrived
+            }
+        case .checkStatus(let id, let delay):
+            try? await Task.sleep(for: delay)
+            let st = (try? await api.status(attemptId: id)) ?? .pending
+            return .statusChecked(attemptId: id, st)
+        case .clearAttempt:
+            file.clear()
+            return nil
+        }
+    }
+}</code></pre><p>Wire it up so that <code>Restored</code> is sent at app start and when the app returns to the foreground. On Android the ViewModel sends it from <code>init</code> in section 3. On iOS call <code>store.send(.restored(attemptId: file.load()))</code> from <code>onChange(of: scenePhase)</code> when the phase is <code>.active</code>, and once at launch.</p><h2 id="5-tests">5. Tests</h2><p>Because <code>reduce</code> is pure, each rule from the interview page is a few lines. The last Kotlin test sends every event to every state and checks two things: no pair throws, and only Editing can ask for a payment. That test is the guard against a new state that forgets a row.</p><h3 id="5-1-kotlin">5.1 Kotlin</h3><pre tabindex="0"><code>package checkout
+
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+
+class ReduceTest {
+    private val form = Form("tok", "addr")
+
+    @Test fun `a second tap in Submitting changes nothing and sends nothing`() {
+        val s = State.Submitting("A1", form)
+        assertEquals(Step(s), reduce(s, Event.PayTapped("A2")))
+    }
+
+    @Test fun `the id is saved before the request is sent`() {
+        val step = reduce(State.Editing(form), Event.PayTapped("A1"))
+        assertEquals(listOf(Effect.SaveAttempt("A1"), Effect.Pay("A1", form)), step.effects)
+    }
+
+    @Test fun `a saved attempt after a restart starts in Unknown and asks the server`() {
+        val step = reduce(State.Editing(), Event.Restored("A1"))
+        assertEquals(State.Unknown("A1"), step.state)
+        assertEquals(listOf(Effect.CheckStatus("A1", 0)), step.effects)
+    }
+
+    @Test fun `an answer for an old attempt is dropped`() {
+        val s = State.Submitting("A2", form)
+        assertEquals(Step(s), reduce(s, Event.PayAnswered("A1", PayResult.Paid("o1"))))
+    }
+
+    @Test fun `a late answer in Unknown still wins`() {
+        val step = reduce(State.Unknown("A1"), Event.PayAnswered("A1", PayResult.Paid("o1")))
+        assertEquals(State.Succeeded("o1"), step.state)
+    }
+
+    @Test fun `Pay is only ever asked for from Editing`() {
+        val states = listOf(
+            State.Editing(form), State.Submitting("A1", form), State.Unknown("A1"),
+            State.Succeeded("o1"), State.Failed("declined", true),
+        )
+        val events = listOf(
+            Event.FieldChanged(form), Event.PayTapped("A9"), Event.PayAnswered("A1", PayResult.Declined("x")),
+            Event.PayTimedOut("A1"), Event.Restored("A1"), Event.Restored(null),
+            Event.StatusChecked("A1", Status.NotPaid), Event.StatusChecked("A1", Status.Pending), Event.RetryTapped,
+        )
+        for (s in states) for (e in events) {
+            val step = reduce(s, e)            // must not throw: every pair has an answer
+            if (s !is State.Editing) assertTrue(step.effects.none { it is Effect.Pay }, "$s + $e")
+        }
+    }
+}</code></pre><h3 id="5-2-swift">5.2 Swift</h3><pre tabindex="0"><code>import XCTest
+
+final class ReduceTests: XCTestCase {
+    let form = Form(cardToken: "tok", addressId: "addr")
+
+    func testSecondTapIsIgnored() {
+        let s = State.submitting(attemptId: "A1", form: form)
+        let (next, fx) = reduce(s, .payTapped(newAttemptId: "A2"))
+        XCTAssertEqual(next, s)
+        XCTAssertTrue(fx.isEmpty)
+    }
+
+    func testIdIsSavedBeforeRequest() {
+        let (_, fx) = reduce(.editing(form, error: nil), .payTapped(newAttemptId: "A1"))
+        XCTAssertEqual(fx, [.saveAttempt("A1"), .pay(attemptId: "A1", form: form)])
+    }
+
+    func testRestartWithSavedAttemptStartsInUnknown() {
+        let (next, fx) = reduce(.editing(Form(), error: nil), .restored(attemptId: "A1"))
+        XCTAssertEqual(next, .unknown(attemptId: "A1", checks: 0))
+        XCTAssertEqual(fx, [.checkStatus(attemptId: "A1", delay: .zero)])
+    }
+
+    func testStaleAnswerIsDropped() {
+        let s = State.submitting(attemptId: "A2", form: form)
+        let (next, _) = reduce(s, .payAnswered(attemptId: "A1", .paid(orderId: "o1")))
+        XCTAssertEqual(next, s)
+    }
+}</code></pre><p>One more test needs a device or an emulator: start a payment, kill the process in Submitting, start the app, and check that the first state is Unknown and that no second <code>POST</code> was sent. Replay a logged event list into <code>reduce</code> to reproduce a bug report.</p><h2 id="6-platform-limits">6. Platform limits</h2><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Topic</th><th>Android</th><th>iOS</th><th>Basis</th></tr></thead><tbody><tr><td>Process end</td><td>The system may destroy the app process while the user is away. A ViewModel is destroyed with it.</td><td>The app can be ended after it goes to the background. Expect it when the phase is <code>background</code>.</td><td><a href="https://developer.android.com/topic/libraries/architecture/saving-states">Android saving UI state</a>; <a href="https://developer.apple.com/documentation/swiftui/scenephase">Apple ScenePhase</a></td></tr><tr><td>Small saved UI state</td><td>SavedStateHandle survives a system-initiated process end. Lost on swipe from recents, force stop or reboot. Keep it small.</td><td>SceneStorage restores a scene. No guarantee when it is written. Lightweight data only. Lost if the scene is destroyed.</td><td><a href="https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate">ViewModel saved state</a>; <a href="https://developer.apple.com/documentation/swiftui/scenestorage">Apple SceneStorage</a></td></tr><tr><td>The attempt record</td><td>DataStore (transactional edits) or Room.</td><td>A file written whole, or the Keychain or a database.</td><td><a href="https://developer.android.com/topic/libraries/architecture/datastore">DataStore</a>; atomic write: not verified</td></tr><tr><td>Foreground signal</td><td>Lifecycle <code>ON_START</code> or a process lifecycle observer. Not verified here.</td><td><code>scenePhase == .active</code>: foreground and interactive.</td><td><a href="https://developer.apple.com/documentation/swiftui/scenephase">Apple ScenePhase</a></td></tr><tr><td>Idempotency key</td><td>Same on both: sent with the request, kept by the server.</td><td>Same.</td><td><a href="https://docs.stripe.com/api/idempotent_requests">Stripe idempotent requests</a>: kept at least 24 hours on API v1, different parameters with the same key are an error</td></tr></tbody></table></div><p>The rows come from the pages I read on 15 October 2026, except where the table says not verified.</p><h2 id="7-more-practice-prompts">7. More practice prompts</h2><ol><li>Add a coupon step that can fail on its own. Which rows change?</li><li>The server answers 409 when the attempt id was already used with other parameters. Which event is that, and which state follows?</li><li>Two checkouts open at once on a tablet in two windows. Where does the saved attempt id live, and what must the second window do?</li><li>Replace the 30 second timeout with the one your server team recommends. What else in the table depends on it?</li><li>Write the Unknown screen copy for the case after six checks. What must it never say?</li></ol><h2 id="further-reading-official-docs">Further reading (official docs)</h2><ul><li><a href="/mobile-system-design/state-machine/">The interview part of this case</a>: scope, decisions, failures, follow-ups and levels</li><li><a href="https://developer.android.com/topic/libraries/architecture/saving-states">Android saving UI state</a></li><li><a href="https://developer.android.com/topic/libraries/architecture/viewmodel/viewmodel-savedstate">ViewModel saved state</a></li><li><a href="https://developer.android.com/topic/libraries/architecture/datastore">DataStore</a></li><li><a href="https://docs.stripe.com/api/idempotent_requests">Stripe idempotent requests</a></li><li><a href="https://developer.apple.com/documentation/swiftui/scenestorage">Apple SceneStorage</a></li><li><a href="https://developer.apple.com/documentation/swiftui/scenephase">Apple ScenePhase</a></li></ul><details class="notes" id="notes"><summary>Verification notes (last reviewed 15 Oct 2026)</summary><p>I fetched these pages on 2026-10-15. Android saving UI state: the system may destroy the app process while the user is away; ViewModels are destroyed then; saved state survives a system-initiated end but is not long-term storage. ViewModel saved state: lost on swipe from recents, force stop or reboot. DataStore: updates are transactional and atomic read-modify-write; the page does not describe what happens when the process is killed mid-write. Stripe: Idempotency-Key header, keys may be pruned after at least 24 hours on API v1, the same key with different parameters is an error. SceneStorage: lightweight data, no guarantee when it is written, destroyed with the scene. ScenePhase: active is foreground and interactive, and a background phase means expect the app to end soon. Not verified: that <code>Data.write(options: .atomic)</code> replaces the file in one step (from memory; the Apple page did not load); the Android foreground signal row; that <code>2_000L shl n</code> and <code>2 &lt;&lt; n</code> give the same schedule (they do by arithmetic: 2 shifted by n is 2 times 2 to the n). The Kotlin types, reducer and tests were compiled with Kotlin 2.1.20 and all six tests passed. The Kotlin store and runner compiled against stand-in ViewModel and DataStore classes, so the real AndroidX calls are not checked. The Swift sample was not compiled. The reducer, tests, backoff, timeouts and the idea of an Unknown state are my design.</p></details><nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/state-machine/"><small>Read first</small>Design a state machine for a mobile flow</a><a class="nx" href="/start/"><small>Done with this one?</small>Back to the reading paths</a></nav><div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You get a short note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">Case studies</a></li><li><a href="/compare/">Compare design choices</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/practice/#kit">Practice kit</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Guides</p><ul><li><a href="/guides/">All guides</a></li><li><a href="/guides/#short">Short guides</a></li><li><a href="/guides/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/simulators/">All practice tools</a></li><li><a href="/practice/">Practice timer</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "547404bc5ae84ae7bcb0a39fce029e3e"}'></script><script>(()=>{
+if(innerWidth<1040){var d=document.querySelector('.toc details');if(d)d.open=false}
+var L=[].slice.call(document.querySelectorAll('.steps a'));
+if(L.length&&window.IntersectionObserver){
+ var H=L.map(a=>document.getElementById(a.hash.slice(1))),cur=-1,inb={};
+ var set=i=>{if(i===cur)return;cur=i;L.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current')})};
+ var io=new IntersectionObserver(es=>es.forEach(e=>{var i=H.indexOf(e.target);
+  if(e.isIntersecting){inb[i]=1;set(i)}
+  else if(e.boundingClientRect.top<0)set(Math.max(cur,i));
+  else if(inb[i]){inb[i]=0;set(i-1)}}),{rootMargin:'0px 0px -75% 0px'});
+ H.forEach(h=>h&&io.observe(h))}
+var F=[].slice.call(document.querySelectorAll('.dg.an'));
+if(F.length&&window.IntersectionObserver&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+ var go=f=>{f.classList.remove('go');void f.getBoundingClientRect();f.classList.add('go')},
+ fo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){fo.unobserve(e.target);go(e.target)}}),{threshold:.4});
+ F.forEach(f=>{f.classList.add('rdy');f.querySelector('.replay').onclick=()=>go(f);fo.observe(f)})}
+if(!(navigator.clipboard&&navigator.clipboard.writeText))return;
+document.querySelectorAll('.prose pre').forEach(p=>{
+ var w=document.createElement('div'),b=document.createElement('button');
+ w.className='code';b.className='copy';b.type='button';b.textContent='Copy';b.setAttribute('aria-label','Copy code to clipboard');
+ b.onclick=()=>{var done=t=>{b.textContent=t;setTimeout(()=>{b.textContent='Copy'},1500)};
+  try{navigator.clipboard.writeText(p.innerText).then(()=>done('Copied'),()=>done('Copy failed'))}catch(e){done('Copy failed')}};
+ p.before(w);w.append(p,b)})
+})();</script></body></html>

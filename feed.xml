@@ -4,7 +4,7 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-10-14T00:00:00Z</updated>
+<updated>2026-10-15T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
 <entry>
@@ -139,5 +139,12 @@
 <id>https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/</id>
 <updated>2026-10-14T00:00:00Z</updated>
 <summary>A staff-level decision record (ADR) for choosing a framework. It covers criteria, the assumption that would change the choice, migration, parity tests, libraries with no owner, rollback, and a free template.</summary>
+</entry>
+<entry>
+<title>Design a state machine for a mobile flow</title>
+<link href="https://mobiledesignrounds.com/mobile-system-design/state-machine/"/>
+<id>https://mobiledesignrounds.com/mobile-system-design/state-machine/</id>
+<updated>2026-10-15T00:00:00Z</updated>
+<summary>Explicit states and events for a checkout, double taps that do nothing, and a recovery path when the app is killed mid-payment.</summary>
 </entry>
 </feed>
