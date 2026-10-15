@@ -15,7 +15,7 @@
     var flows = cfg.flows || [];
     var items = [].slice.call(fig.querySelectorAll('[data-id]'));
     var nodes = [].slice.call(fig.querySelectorAll('.nd'));
-    var flow = 0, step = 0, sel = null;
+    var flow = 0, step = 0, sel = null, replaying = false;
     var box = h('div', 'ixc');
     var tabs = h('div', 'ixt');
     var tabBtns = [];
@@ -45,7 +45,10 @@
     function steps() { return flows[flow].steps; }
     function render() {
       var on = {}, seen = {};
+      var was = fig.classList.contains('ixs');
       fig.classList.toggle('ixon', step > 0 || !!sel);
+      fig.classList.toggle('ixs', step > 0);
+      if (was && step === 0 && fig.classList.contains('an')) { var rp = fig.querySelector('.replay'); if (rp) { replaying = true; rp.click(); replaying = false; } }
       items.forEach(function (e) { e.classList.remove('hot', 'seen', 'sel'); });
       nodes.forEach(function (n) { n.classList.remove('sel'); });
       if (step > 0) {
@@ -87,6 +90,8 @@
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); }
       });
     });
+    var rpb = fig.querySelector('.replay');
+    if (rpb) rpb.addEventListener('click', function () { if (!replaying && step > 0) { step = 0; sel = null; render(); } });
     fig.classList.add('ix');
     render();
   }
