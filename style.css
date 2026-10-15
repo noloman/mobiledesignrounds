@@ -389,3 +389,4 @@ input[type=radio],input[type=checkbox]{width:22px;height:22px;flex:none}
 @media print{.ixc{display:none}.ix.ixon .nd,.ix.ixon .ed{opacity:1}}
 
 .ix .mn{transition:none}.ix.ixon .mn{opacity:.4}.ix.ixon .mn.hot{opacity:1}.ix .mn.hot .b{stroke:var(--blue);stroke-width:3}
+.ix .nd:hover .bx,.ix .nd.sel .bx{stroke:var(--blue);stroke-width:3}.ix .nd:focus-visible .bx{stroke:var(--blue);stroke-width:3}
