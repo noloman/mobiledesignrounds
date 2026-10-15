@@ -147,4 +147,11 @@
 <updated>2026-10-15T00:00:00Z</updated>
 <summary>Explicit states and events for a checkout, double taps that do nothing, and a recovery path when the app is killed mid-payment.</summary>
 </entry>
+<entry>
+<title>Design patterns in mobile system design rounds</title>
+<link href="https://mobiledesignrounds.com/patterns/"/>
+<id>https://mobiledesignrounds.com/patterns/</id>
+<updated>2026-10-15T00:00:00Z</updated>
+<summary>Eleven patterns that the rounds use, where each one appears, and the Android and iOS habits an interviewer listens for.</summary>
+</entry>
 </feed>
