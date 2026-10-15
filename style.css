@@ -390,3 +390,7 @@ input[type=radio],input[type=checkbox]{width:22px;height:22px;flex:none}
 
 .ix .mn{transition:none}.ix.ixon .mn{opacity:.4}.ix.ixon .mn.hot{opacity:1}.ix .mn.hot .b{stroke:var(--blue);stroke-width:3}
 .ix .nd:hover .bx,.ix .nd.sel .bx{stroke:var(--blue);stroke-width:3}.ix .nd:focus-visible .bx{stroke:var(--blue);stroke-width:3}
+.dg.an.ixs .a{animation:none!important;transform:none!important;opacity:.22!important}
+.dg.an.ixs .a.seen,.dg.an.ixs .a.hot{opacity:var(--fo,1)!important}
+.dg.an.ixs .a.tr{display:none}
+.dg.an.ixs .a.hot .b,.dg.an.ixs .a.hot .bd{stroke:var(--blue);stroke-width:3}
