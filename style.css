@@ -387,3 +387,5 @@ input[type=radio],input[type=checkbox]{width:22px;height:22px;flex:none}
 .dgl li.ed.hot{font-weight:700;color:var(--blue)}.dgl li.ed.seen{opacity:.8}.ix.ixon .dgl li.ed{opacity:.5}.ix.ixon .dgl li.ed.hot,.ix.ixon .dgl li.ed.seen{opacity:1}
 @media(prefers-reduced-motion:no-preference){.ix .nd,.ix .ed{transition:opacity .2s}}
 @media print{.ixc{display:none}.ix.ixon .nd,.ix.ixon .ed{opacity:1}}
+
+.ix .mn{transition:none}.ix.ixon .mn{opacity:.4}.ix.ixon .mn.hot{opacity:1}.ix .mn.hot .b{stroke:var(--blue);stroke-width:3}

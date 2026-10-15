@@ -11,6 +11,7 @@
   function init(fig) {
     var cfg;
     try { cfg = JSON.parse(fig.getAttribute('data-ix')); } catch (e) { return; }
+    if (cfg.machine) return machine(fig, cfg.machine);
     var flows = cfg.flows || [];
     var items = [].slice.call(fig.querySelectorAll('[data-id]'));
     var nodes = [].slice.call(fig.querySelectorAll('.nd'));
@@ -87,6 +88,43 @@
     });
     fig.classList.add('ix');
     render();
+  }
+  /* Machine mode: send events, watch the state change. cfg.machine = {start, states:{id:{node,name,t,ev:{label:next}}}} */
+  function machine(fig, m) {
+    var cur = m.start, trail = [m.states[m.start].name];
+    var items = [].slice.call(fig.querySelectorAll('[data-id]'));
+    var box = h('div', 'ixc');
+    var lab = h('p', 'ixn', 'Send an event:');
+    var evs = h('div', 'ixt');
+    evs.setAttribute('role', 'group'); evs.setAttribute('aria-label', 'Events you can send');
+    var reset = h('button', '', 'Restart'); reset.type = 'button';
+    var panel = h('p', 'ixp'); panel.setAttribute('role', 'status');
+    var path = h('p', 'ixn');
+    box.appendChild(lab); box.appendChild(evs); box.appendChild(panel); box.appendChild(path);
+    fig.insertBefore(box, fig.querySelector('figcaption'));
+    function go(next) { cur = next; trail.push(m.states[cur].name); render(true); }
+    function render(focus) {
+      var st = m.states[cur];
+      fig.classList.add('ixon');
+      items.forEach(function (e) { e.classList.toggle('hot', e.getAttribute('data-id') === st.node); });
+      panel.textContent = '';
+      panel.appendChild(h('strong', '', st.name + '. '));
+      panel.appendChild(document.createTextNode(st.t));
+      evs.textContent = '';
+      var keys = Object.keys(st.ev || {});
+      keys.forEach(function (k) {
+        var b = h('button', '', k); b.type = 'button';
+        b.addEventListener('click', function () { go(st.ev[k]); });
+        evs.appendChild(b);
+      });
+      lab.textContent = keys.length ? 'Send an event:' : 'No more events. This path has ended.';
+      evs.appendChild(reset);
+      path.textContent = 'Path: ' + trail.join(' > ');
+      if (focus) (evs.firstChild || reset).focus();
+    }
+    reset.addEventListener('click', function () { cur = m.start; trail = [m.states[cur].name]; render(true); });
+    fig.classList.add('ix');
+    render(false);
   }
   [].slice.call(document.querySelectorAll('figure[data-ix]')).forEach(init);
 })();
