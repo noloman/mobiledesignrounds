@@ -41,6 +41,7 @@
 - [Live data and payments](https://mobiledesignrounds.com/mobile-system-design/live-data-and-payments/): Data that changes live, and actions that must happen once.
 
 ## Guides
+- [Design patterns in mobile system design rounds](https://mobiledesignrounds.com/patterns/): Eleven patterns that the rounds use, where each one appears, and the Android and iOS habits an interviewer listens for, such as delegation.
 - [Idempotency keys on mobile: how to retry without sending twice](https://mobiledesignrounds.com/guides/idempotency-keys/): One ID for one action, sent with every retry, so a lost reply never charges or sends twice.
 - [Cursor versus offset paging on mobile: why page numbers break](https://mobiledesignrounds.com/guides/cursor-vs-offset/): Why items repeat or vanish when a list changes while you scroll, and why a cursor fixes it.
 - [WorkManager vs BGTaskScheduler: what runs your background work](https://mobiledesignrounds.com/guides/workmanager-vs-bgtaskscheduler/): Android keeps your job and runs it when the rules are true. iOS only gives you a chance to run.
