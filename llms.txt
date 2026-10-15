@@ -57,6 +57,7 @@
 - [Offline chat simulator](https://mobiledesignrounds.com/simulators/offline-chat/): Send a chat message with no connection and lose a reply. Watch the outbox and the server.
 
 ## Compare and look up
+- [Concepts and reference](https://mobiledesignrounds.com/concepts/): a hub for design patterns, failure modes, comparisons, guides and the glossary
 - [Compare the main design choices](https://mobiledesignrounds.com/compare/): tables that put polling, push and WebSocket, offset and cursor paging, retry keys, background work and conflict rules side by side, with the case that uses each
 - [Failure modes](https://mobiledesignrounds.com/failure-modes/): an index of how a mobile app fails, such as a lost reply, process death, stale data and an expired token, with links to the case sections that handle each one
 - [Mobile system design interview prep options compared](https://mobiledesignrounds.com/alternatives/): a fair, dated comparison of books, courses, free pages and mock interview services for mobile system design interview prep, with price and platforms as each official page shows them, and where this site is different
