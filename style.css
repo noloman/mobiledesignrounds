@@ -1,6 +1,6 @@
 
 /* Bricolage Grotesque, Copyright 2022 The Bricolage Grotesque Project Authors, SIL Open Font License 1.1, /fonts/OFL.txt */
-@font-face{font-family:"Bricolage Grotesque";src:url(/fonts/bricolage.woff2) format("woff2");font-weight:200 800;font-display:swap}
+@font-face{font-family:"Bricolage Grotesque";src:url(/fonts/bricolage-700-800.woff2) format("woff2");font-weight:700 800;font-display:swap}
 :root{--paper:#F5F7FA;--panel:#fff;--ink:#0E1A2B;--ink2:#465870;--line:#D9E0EA;--grid:#E4EAF2;
 --blue:#2F5BFF;--on-blue:#fff;--amber:#8A5A00;--amber-bg:#FFF1CF;--green:#14703A;--green-bg:#DBF3E3;
 --code-bg:#0E1A2B;--code-fg:#DCE6F5;--tint:#EAF0FF;
