@@ -1,6 +1,6 @@
 
 /* Bricolage Grotesque, Copyright 2022 The Bricolage Grotesque Project Authors, SIL Open Font License 1.1, /fonts/OFL.txt */
-@font-face{font-family:"Bricolage Grotesque";src:url(/fonts/bricolage.woff2) format("woff2");font-weight:200 800;font-display:swap}
+@font-face{font-family:"Bricolage Grotesque";src:url(/fonts/bricolage-700-800.woff2) format("woff2");font-weight:700 800;font-display:swap}
 :root{--paper:#F5F7FA;--panel:#fff;--ink:#0E1A2B;--ink2:#465870;--line:#D9E0EA;--grid:#E4EAF2;
 --blue:#2F5BFF;--on-blue:#fff;--amber:#8A5A00;--amber-bg:#FFF1CF;--green:#14703A;--green-bg:#DBF3E3;
 --code-bg:#0E1A2B;--code-fg:#DCE6F5;--tint:#EAF0FF;
@@ -121,6 +121,7 @@ td.sent{color:var(--green)}td.pending{color:var(--amber)}
 .toc a:hover{color:var(--blue)}
 .toc summary{cursor:pointer;font-weight:600;padding:8px 0}
 @media(min-width:1040px){.toc{position:sticky;top:20px;align-self:start}.toc summary{display:none}}
+.prose>:not(h2):not(h3){content-visibility:auto;contain-intrinsic-size:auto 120px}
 .prose h2{font:800 1.65rem/1.2 var(--display);letter-spacing:-.015em;margin:2.4em 0 .5em;scroll-margin-top:20px}
 .prose h3{font:700 1.2rem var(--display);margin:1.8em 0 .4em}
 .prose p,.prose li{max-width:68ch;overflow-wrap:anywhere}
