@@ -26,6 +26,7 @@ a{color:var(--blue)}
 .nav{display:flex;flex-wrap:wrap;gap:0 16px}
 .nav a{color:var(--ink2);text-decoration:none;font-weight:500;font-size:.95rem;padding:8px 0;white-space:nowrap}
 .nav a:hover{color:var(--ink)}
+.nav .navcta{color:var(--blue);font-weight:700;border:1.5px solid var(--blue);border-radius:999px;padding:5px 12px;margin:3px 0}.nav .navcta:hover{color:var(--ink);border-color:var(--ink)}
 
 .hero{position:relative;padding:36px 0 56px}
 .hero::before{content:"";position:absolute;inset:0 -100vw;z-index:-1;
