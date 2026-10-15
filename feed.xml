@@ -106,6 +106,13 @@
 <summary>One ID for one action, sent with every retry, so a lost reply never charges or sends twice.</summary>
 </entry>
 <entry>
+<title>Caching and eviction on mobile: what to keep, when it expires, what to drop</title>
+<link href="https://mobiledesignrounds.com/guides/caching-and-eviction/"/>
+<id>https://mobiledesignrounds.com/guides/caching-and-eviction/</id>
+<updated>2026-10-15T00:00:00Z</updated>
+<summary>When a cached value is too old, and what to remove when the cache is full. LRU, TTL and the trade-offs, with a diagram.</summary>
+</entry>
+<entry>
 <title>Cursor versus offset paging on mobile: why page numbers break</title>
 <link href="https://mobiledesignrounds.com/guides/cursor-vs-offset/"/>
 <id>https://mobiledesignrounds.com/guides/cursor-vs-offset/</id>
