@@ -121,6 +121,7 @@ td.sent{color:var(--green)}td.pending{color:var(--amber)}
 .toc a:hover{color:var(--blue)}
 .toc summary{cursor:pointer;font-weight:600;padding:8px 0}
 @media(min-width:1040px){.toc{position:sticky;top:20px;align-self:start}.toc summary{display:none}}
+.prose>:not(h2):not(h3){content-visibility:auto;contain-intrinsic-size:auto 120px}
 .prose h2{font:800 1.65rem/1.2 var(--display);letter-spacing:-.015em;margin:2.4em 0 .5em;scroll-margin-top:20px}
 .prose h3{font:700 1.2rem var(--display);margin:1.8em 0 .4em}
 .prose p,.prose li{max-width:68ch;overflow-wrap:anywhere}
