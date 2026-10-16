@@ -402,3 +402,7 @@ details.notes ul{margin:.4em 0 .6em 1.1em;padding:0;font-size:.9rem;color:var(--
 .progress-box{margin:16px 0}
 .progress-box p+p{margin-top:6px}
 @media print{.mark-read,.progress-box{display:none!important}}
+details.quiz{background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:12px 16px;margin:12px 0}
+details.quiz summary{cursor:pointer;font-weight:600;min-height:24px}
+details.quiz[open]{border-color:var(--blue)}
+details.quiz p{margin:.8em 0 0;color:var(--ink2)}
