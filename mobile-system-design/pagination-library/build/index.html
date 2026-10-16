@@ -15,7 +15,7 @@
 <article class="prose"><p>This is the build material behind the <a href="/mobile-system-design/pagination-library/">pagination library interview case</a>. It covers:</p>
 <ul><li>The public surface and key styles</li><li>The state model and engine rules</li><li>The mediator (the hook that writes fetched pages into a database) and versioning</li><li>The Swift side and platform limits</li></ul>
 <p>None of it belongs in a 45-minute round (the length I assume). I draw it only if asked.</p>
-<p>The sketches are simplified. They are not the real <a class="gl" href="/glossary/#paging" title="Loading a long list in small parts.">Paging</a> 3 signatures. I compiled them against Paging 3.4.2. Paging 3.5.3 is current as of 2026-10-14. <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> (Android's database library) appears only in prose here. The official Room guide now shows Room 3 (<code>androidx.room3</code>). The design is the same with either version.</p>
+<p>The sketches are simplified. They are not the real <a class="gl" href="/glossary/#paging" title="Loading a long list in small parts.">Paging</a> 3 signatures. I checked the Kotlin ones against a recent Paging 3 release. <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> (Android's database library) appears only in prose here. The official Room guide now shows Room 3 (<code>androidx.room3</code>). The design is the same with either version.</p>
 <h2 id="1-public-api-surface-and-what-stays-internal">1. Public API surface and what stays internal</h2>
 <p>The rule: show the fewest types that let a user of the library do everything. Every extra public type must earn its place.</p>
 <p><strong>Public:</strong></p>
@@ -154,10 +154,26 @@ public actor Pager&lt;Key: Sendable, Item: Sendable&gt; {
     public func refresh() async
     public func retry() async
 }</code></pre>
+<p>Here is how a SwiftUI screen would use it. This is a sketch I did not compile. It assumes the snapshot has an <code>items</code> array.</p>
+<pre tabindex="0"><code>// Sketch: a model that owns the pager (not compiled)
+@MainActor @Observable final class FeedModel {
+    private let pager: Pager&lt;String, Post&gt;
+    var posts: [Post] = []
+    init(pager: Pager&lt;String, Post&gt;) {
+        self.pager = pager
+        Task { [weak self] in
+            let stream = await pager.updates()
+            for await snapshot in stream { self?.posts = snapshot.items }
+        }
+    }
+    func rowAppeared(_ index: Int) { Task { await pager.loadMoreIfNeeded(visibleIndex: index) } }
+}
+// In the view: ForEach(model.posts.indices, id: \.self) { i in Row(model.posts[i]).onAppear { model.rowAppeared(i) } }</code></pre>
+<p>The model, not the view, owns the pager. So a rotation or a view rebuild does not restart the load.</p>
 <p>What changes on iOS:</p>
 <ul><li><strong>One stream per subscriber.</strong> An <code>AsyncStream</code> is meant for a single consumer. Apple's page does not say this directly. But the proposal that added it, <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0314-async-stream.md">SE-0314</a>, calls concurrent iteration a programmer error. If two views, or a view and a test, read the same stream, they compete for items.</li><li><strong>So <code>updates()</code> is meant to create a stream on each call.</strong> The sketch shows signatures only. The real code keeps the continuations inside the actor and uses <code>.bufferingNewest(1)</code>, because only the latest snapshot matters. An <code>@Observable</code> snapshot is the other option.</li><li><strong>Swift cancellation is cooperative.</strong> Cancelling the task that reads an <code>AsyncSequence</code> does not force the source to stop. Document that sources must check for cancellation. Clean up in the continuation's <code>onTermination</code> callback, which Apple documents as called when iteration is cancelled. Keep that callback non-blocking. Apple says it has the same deadlock risks as <code>withTaskCancellationHandler</code>.</li><li><strong><code>Sendable</code> appears in the API.</strong> Key and item types must be <code>Sendable</code> (safe to pass between threads) to cross the actor boundary. State this requirement in the public signature. Do not let a user find it in their own build.</li><li><strong>No built-in list integration.</strong> You ship thin adapters in a separate module, so the core stays free of any UI toolkit. One is a SwiftUI helper that calls <code>loadMoreIfNeeded</code> from <code>onAppear</code>. The other is a UIKit prefetching delegate.</li><li><strong>Prefetch is a hint.</strong> Apple's prefetching page says the callback is not necessarily called for every cell. The cell provider must handle data that is ready, running or never requested. The page for the lazy vertical stack says nothing about appear callbacks. So the SwiftUI trigger is design intent.</li><li><strong>Binary distribution has stricter rules.</strong> If you ship an XCFramework, library evolution limits what you can change. If you ship source through Swift Package Manager, source compatibility is the main concern. Decide which one you offer.</li></ul>
 <p><strong>Platform limits that change the design.</strong></p>
-<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Limit</th><th>Android</th><th>iOS</th><th>So the design changes by</th></tr></thead><tbody><tr><td>Prefetch signal</td><td>Index distance from the loaded edge, default one page</td><td>UIKit prefetch is not called for every cell; SwiftUI appear callbacks undocumented</td><td>The engine triggers by index, and row appearance can call the same load; never rely on the callback alone</td></tr><tr><td>Result stream</td><td>A <code>PagingData</code> is single use unless cached with <code>cachedIn</code></td><td>An <code>AsyncStream</code> suits one consumer (SE-0314)</td><td>One owner scope on Android; one stream per subscriber on iOS</td></tr><tr><td>Cancellation</td><td>Cooperative; sources must not swallow <code>CancellationException</code></td><td>Cooperative; <code>onTermination</code> fires on cancellation, with a deadlock caution</td><td>Document that sources check for cancellation, and drop late results by generation anyway</td></tr><tr><td>Shared code</td><td>Common Paging modules compile for iOS targets</td><td>None that I know of</td><td>A shared Kotlin core is an option to test before building a second engine</td></tr></tbody></table></div>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Limit</th><th>Android</th><th>iOS</th><th>So the design changes by</th></tr></thead><tbody><tr><td>Prefetch signal</td><td>Index distance from the loaded edge, default one page</td><td>UIKit prefetch is not called for every cell; SwiftUI <code>onAppear</code> on lazy rows works in practice but is not documented as a prefetch API</td><td>The engine triggers by index, and row appearance can call the same load; never rely on the callback alone</td></tr><tr><td>Result stream</td><td>A <code>PagingData</code> is single use unless cached with <code>cachedIn</code></td><td>An <code>AsyncStream</code> suits one consumer (SE-0314)</td><td>One owner scope on Android; one stream per subscriber on iOS</td></tr><tr><td>Cancellation</td><td>Cooperative; sources must not swallow <code>CancellationException</code></td><td>Cooperative; <code>onTermination</code> fires on cancellation, with a deadlock caution</td><td>Document that sources check for cancellation, and drop late results by generation anyway</td></tr><tr><td>Shared code</td><td>Common Paging modules compile for iOS targets</td><td>None that I know of</td><td>A shared Kotlin core is an option to test before building a second engine</td></tr></tbody></table></div>
 <h2 id="9-failure-modes-and-edge-cases">9. Failure modes and edge cases</h2>
 <div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Scenario</th><th>Handling</th></tr></thead><tbody><tr><td>Fast scroll fires many append requests</td><td>One running load per direction; extra requests join or drop</td></tr><tr><td>Refresh while an append is running</td><td>Cancel the append; raise the generation number; discard late results</td></tr><tr><td>Source returns a short or empty page with a <code>nextKey</code></td><td>Treat as valid; guard against endless empty-page loops with a limit</td></tr><tr><td>Source returns the same <code>nextKey</code> as the current key</td><td>Detect it and end paging with an error, not a loop</td></tr><tr><td>Cursor expires</td><td>Source returns a typed error; library calls <code>refresh</code> with a restart key</td></tr><tr><td>Duplicate items across pages</td><td>The library does not remove duplicates by ID; the app must (document it) or use a database keyed by ID</td></tr><tr><td>Server answers 429 or 5xx</td><td>Source throws a typed error. Temporary means <code>IOException</code>, 408, 429 and 5xx. These can be retried with <code>retry()</code>, honouring <code>Retry-After</code> when present. Other 4xx are permanent and show as an error</td></tr><tr><td>Page error mid-list</td><td>Append state becomes <code>Error</code>; list stays; <code>retry()</code> repeats only that load</td></tr><tr><td>Memory pressure</td><td>Bounded <code>maxSize</code>; drop far pages; reload on scroll back</td></tr><tr><td>Collector leaves (rotation, navigation)</td><td>Cache the stream in the owner's scope (<code>cachedIn(viewModelScope)</code>) so state survives; stop loading with no owner</td></tr><tr><td>Exception types leak from internals</td><td>Wrap in a documented error type; never expose third-party exceptions</td></tr><tr><td>User calls from the wrong thread</td><td>Document it and, where cheap, assert in debug builds</td></tr></tbody></table></div>
 <h2 id="10-more-practice-prompts">10. More practice prompts</h2>
@@ -169,109 +185,14 @@ public actor Pager&lt;Key: Sendable, Item: Sendable&gt; {
 <p>Prep material I used as references for the questions, not for wording:</p>
 <ul><li>The ByteByteGo mobile system design book (library chapter)</li><li>DesignGurus (the library-prompt article and pagination lesson, public parts only)</li><li>The weeeBox mobile design repository (its library notes on caller ergonomics, stability and resource handling)</li><li>The Educative mobile course</li></ul>
 <details class="notes words" id="words"><summary>Words on this page (14)</summary><dl><dt><a href="/glossary/#actor">Actor</a></dt><dd>A Swift type that runs one task at a time. This keeps its data safe when many tasks use it.</dd><dt><a href="/glossary/#coroutine">Coroutine</a></dt><dd>A light background task in Kotlin. It can pause and continue later without blocking a thread.</dd><dt><a href="/glossary/#cursor">Cursor</a></dt><dd>A saved place in a list. The server gives it to the app, and the app sends it back to get the next part.</dd><dt><a href="/glossary/#dedupe">Dedupe</a></dt><dd>To keep only one copy of the same item. For example, a message that arrives twice is stored once.</dd><dt><a href="/glossary/#host-app">Host app</a></dt><dd>The app that contains an SDK. You write the SDK, and another team writes the host app.</dd><dt><a href="/glossary/#main-thread">Main thread</a></dt><dd>The thread that draws the screen. If slow work runs on it, the screen freezes.</dd><dt><a href="/glossary/#offline-first">Offline-first</a></dt><dd>A design where the app works without a network. It saves each change on the phone first and sends it later.</dd><dt><a href="/glossary/#paging">Paging</a></dt><dd>Loading a long list in small parts. The app asks for one page at a time.</dd><dt><a href="/glossary/#prefetch">Prefetch</a></dt><dd>Loading data before the user asks for it. It makes scrolling smooth, but it can waste data.</dd><dt><a href="/glossary/#repository">Repository</a></dt><dd>The class that reads and writes data for the rest of the app. It hides whether the data comes from the network or the database.</dd><dt><a href="/glossary/#room">Room</a></dt><dd>Android&#x27;s library for the database on the phone. You use a DAO to read and write the data.</dd><dt><a href="/glossary/#snapshot">Snapshot</a></dt><dd>A copy of the data as it was at one moment. It is not a list of changes.</dd><dt><a href="/glossary/#source-of-truth">Source of truth</a></dt><dd>The one copy of the data that the app trusts. In these cases it is the database on the phone, and the screen only reads it.</dd><dt><a href="/glossary/#swiftdata">SwiftData</a></dt><dd>Apple&#x27;s library for saving data on an iPhone. It has the same role as Room on Android.</dd></dl><p class="mut"><a href="/glossary/">Read the whole glossary</a></p></details><aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> 17 official pages (<a href="#notes">notes below</a>).</p><p>Kotlin 2.3.21 compiled, Swift 6.4 type-checked.</p><p>Not verified:</p><ul><li>BufferingNewest policy page</li><li>Late edits (not compiled)</li></ul><p>No outside reviewer yet. Checked 14 Oct 2026.</p></aside><details class="notes" id="notes"><summary>Verification notes (last reviewed 14 Oct 2026)</summary>
-<p><strong>What this page is.</strong></p>
 <ul>
-<li>This is the build guide split off the pagination library case on 2026-10-14.</li>
-<li>The code blocks are unchanged from the live page of 2026-10-13 (byte-identical, diffed on the split).</li>
-<li>These are new prose: the "known gaps" list, the config defaults table, the platform limits table, the Paging 3.5.3 note and the practice prompts 1 to 5.</li>
-<li>The platform limits table restates facts verified elsewhere on this page. Its last column is design intent.</li>
-</ul>
-<p><strong>Android design.</strong></p>
-<ul>
-<li>Android design was checked against the official guidance on 2026-10-13.</li>
-<li>The Paging overview assigns <code>Pager</code> to the ViewModel layer.</li>
-<li>The load-and-display and transform pages (fetched 2026-10-14) show <code>cachedIn(viewModelScope)</code> in the ViewModel. They say each <code>PagingData</code> instance can be used once unless cached, so <code>cachedIn</code> is documented now.</li>
-</ul>
-<p><strong>Verified by fetching on 2026-10-13.</strong></p>
-<ul>
-<li>Paging 3 overview (components, built-in caching and deduplication), load state page, test page and network-plus-database page.</li>
-<li>The <code>PagingConfig</code> source:
-<ul>
-<li><code>prefetchDistance</code> defaults to <code>pageSize</code>.</li>
-<li><code>initialLoadSize</code> defaults to three pages.</li>
-<li><code>maxSize</code> is unbounded.</li>
-<li><code>maxSize</code> must be at least <code>pageSize + 2 * prefetchDistance</code>, otherwise <code>IllegalArgumentException</code>.</li>
-<li>The <code>jumpThreshold</code> default is undefined and must be positive.</li>
-<li><code>enablePlaceholders</code> defaults to true.</li>
-</ul></li>
-<li>Via the Apple docs JSON: the <code>AsyncStream</code> continuation is <code>Sendable</code>, the buffer is unbounded by default, and <code>onTermination</code> is called on task cancellation with a deadlock note pointing at <code>withTaskCancellationHandler</code>.</li>
-</ul>
-<p><strong>Verified on 2026-10-14.</strong></p>
-<ul>
-<li>The Paging release notes:
-<ul>
-<li>3.3 moved the common modules to multiplatform including iOS.</li>
-<li>3.4 added more native targets and <code>closestItemAroundPosition</code>.</li>
-<li>3.5.0 added <code>asItemSnapshotListFlow</code> and <code>Pager.append</code>, <code>Pager.prepend</code> and <code>Pager.refresh</code>.</li>
-<li>I did not quote a <code>retry</code> signature because the page names it inconsistently.</li>
-<li>3.5.2 made an early append a no-op.</li>
-<li>3.5.3 keeps at least two pages over max size.</li>
-</ul></li>
-<li>The load-state page: footer items work only with placeholders off, and <code>retry()</code> appears only in click handlers.</li>
-<li>Apple's prefetching protocol page: the callback is not necessarily called for every cell.</li>
-</ul>
-<p><strong>Fact-check on 2026-10-14, fetched again.</strong></p>
-<ul>
-<li>The release notes (3.3, 3.4, 3.5.0, 3.5.2 and 3.5.3 as listed above). 3.4 describes the closest-item helper as taking a predicate.</li>
-<li>The overview:
-<ul>
-<li>Source and mediator in the repository layer, Pager and PagingData in the ViewModel layer, LazyPagingItems in the UI.</li>
-<li>In-memory caching and request deduplication listed as features.</li>
-</ul></li>
-<li>The load-and-display page.</li>
-<li>The transform page.</li>
-<li>The load-state page: three states, the source and mediator split, no refresh contrast.</li>
-<li>The network-and-database page: initialize, append and prepend wait for the refresh, Success and Error results, one transaction.</li>
-<li>The test page: TestPager, asSnapshot, asPagingSourceFactory. Each emission of a flow is a new generation. Mediator tests cover valid data, empty response and an exception on an in-memory database.</li>
-<li>The Play help page.</li>
-<li>The developer.android.com license page: code samples are Apache 2.0.</li>
-<li>Apple's AsyncStream onTermination page: called on task cancellation, deadlock caution.</li>
-<li>SE-0314: concurrent iteration is a programmer error, which now backs the single-consumer claim.</li>
-<li>The Kotlin backward compatibility guidelines: binary compatibility validator, explicit API mode section, "avoid using data classes in your API".</li>
-<li>The SwiftPM source: the <code>diagnose-api-breaking-changes</code> command exists.</li>
-</ul>
-<p><strong>Changes by review pass.</strong></p>
-<ul>
-<li>Changed in the 2026-10-14 fact-check pass:
-<ul>
-<li>The single-consumer claim cites SE-0314.</li>
-<li>The "no Apple paging library" claim is changed to a claim that I know of none.</li>
-<li>The prefetch trigger row says item access, since the Android docs use LazyPagingItems and not an adapter.</li>
-<li>The data-class advice carries the Kotlin guideline.</li>
-<li>The news feed link points at the news feed build guide, where the mediator now lives.</li>
-</ul></li>
-<li>A plain-English pass was done on 2026-10-14: common words, defined terms and no idioms. No code block, number, link or evidence marker was changed.</li>
-<li>Source-check pass, 2026-10-14:
-<ul>
-<li>I corrected the repository name to weeeBox.</li>
-<li>I said that the 45-minute length is my assumption.</li>
-</ul></li>
-</ul>
-<p><strong>Code checks.</strong></p>
-<ul>
-<li>Kotlin snippets were compile-checked offline on 2026-10-13 against Kotlin 2.3.21 (AGP 9.1.0, compileSdk 36), Paging 3.4.2 (newer releases exist, Paging 3.5.3 as of 2026-10-14), with stubs only for app-defined placeholders.</li>
-<li>The consumer snippet in section 7 and the Swift <code>updates()</code> change were added afterwards and not compiled.</li>
-<li>The mediator sketch was checked with stubbed <code>InitializeAction</code> and <code>MediatorResult</code>, because the real ones are nested in <code>RemoteMediator</code>.</li>
-<li>Swift snippets were type-checked on 2026-10-13 against the iOS 27 simulator SDK (Swift 6.4, language modes 5 and 6) with stubs only for app-defined placeholders, before the <code>updates()</code> change.</li>
-<li>The Swift public surface is declaration-only.</li>
-</ul>
-<p><strong>Not verified.</strong></p>
-<ul>
-<li>The <code>bufferingNewest</code> policy page.</li>
-<li>Sendable requirements for the Pager actor.</li>
-<li>Library evolution details.</li>
-<li>UIKit prefetching adapter details.</li>
-<li>The 408 retry classification.</li>
-<li>That Apple ships no paging library.</li>
-<li>Ask an iOS engineer to review section 8.</li>
-</ul>
-<p><strong>My own opinion or design.</strong></p>
-<ul>
-<li>No source found that describes what interviewers expect for library-design questions. The follow-ups are my own reading.</li>
-<li>The checklist in sections 1, 4 and 7 (explicit API mode, binary compatibility validator, deprecation windows, threading contract) is my synthesis.</li>
-<li>Deprecation window lengths and the example config values are examples, not rules.</li>
-<li>The 429/5xx row follows the retry rule used across the other case studies.</li>
-<li>The mediator sketch's shape is adapted from the Paging 3 network-and-database sample (Apache License 2.0), as its code comment says.</li>
+<li>I read 17 official pages: the Paging guides, release notes and PagingConfig source, Apple's AsyncStream and prefetching pages, SE-0314, and the Kotlin library-author guidelines.</li>
+<li>Documented: the max size rule and the defaults (prefetch equals page size, initial load three pages, max size unbounded), the refresh key, the invalid result, the load-state types and the mediator contract.</li>
+<li>Documented: the Paging release notes list iOS among the native targets of the common modules. Apple says the prefetch callback is not called for every cell.</li>
+<li>Compiled: the Kotlin sketches, against a recent Paging 3 release, with stubs for app types. Type-checked only: the Swift sketch. Not compiled: the Kotlin usage example and the SwiftUI model.</li>
+<li>My design, not from docs: retry and refresh as two verbs, generations, the events listener, the deprecation window and the threading contract.</li>
+<li>Not verified: the 408 retry rule, the <code>bufferingNewest</code> policy page, and any runtime behavior of the Swift actor.</li>
+<li>No iOS engineer has reviewed section 8 yet. Ask one to check it before you rely on it.</li>
 </ul>
 </details>
 <div class="cta-card"><h2>Questions or corrections?</h2><p>Add them to the <a href="https://github.com/noloman/mobiledesignrounds/discussions/4">discussion thread for this case</a> on GitHub. To post, you need a free GitHub account. What you write there is public and follows GitHub's terms. Good answers are added to this page.</p></div>
