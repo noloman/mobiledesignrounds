@@ -396,3 +396,4 @@ input[type=radio],input[type=checkbox]{width:22px;height:22px;flex:none}
 .dg.an.ixs .a.hot .b,.dg.an.ixs .a.hot .bd{stroke:var(--blue);stroke-width:3}
 .prose blockquote ul{margin:.3em 0 .3em 1.1em;padding:0}.prose blockquote li{margin:.15em 0}
 aside.checks ul{margin:.1em 0 .25em 1.1em;padding:0}aside.checks li{margin:.05em 0}
+details.notes ul{margin:.4em 0 .6em 1.1em;padding:0;font-size:.9rem;color:var(--ink2)}details.notes li{margin:.25em 0}details.notes p:has(>strong:only-child){margin:1em 0 0}
