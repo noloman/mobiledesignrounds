@@ -67,6 +67,7 @@
 ## Practice kit
 - [Mock interview script](https://mobiledesignrounds.com/practice/mock-interview-script/): a minute-by-minute script for a 45-minute mock round with a friend, with the prompt, the time calls, six follow-up questions and rules for the interviewer
 - [Score sheet](https://mobiledesignrounds.com/practice/score-sheet/): a six-row score sheet from 1 to 4 for a practice round, with plain meanings for each score and a way to read the total
+- [Quick drills](https://mobiledesignrounds.com/practice/quick-drills/): 29 short practice prompts with what to ask first and the case study to read next
 - [Study plans](https://mobiledesignrounds.com/practice/study-plans/): a 3-week and a 4-week study plan in 2, 5 and 10 hour sizes, with the case, the guide and the tool for each week
 - [Weak and strong answer](https://mobiledesignrounds.com/practice/weak-vs-strong/): a weak and a strong answer to the chat app send path, side by side, with what the weak one skips
 
