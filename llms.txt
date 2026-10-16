@@ -34,6 +34,7 @@
 - [Design a state machine for a mobile flow](https://mobiledesignrounds.com/mobile-system-design/state-machine/): Explicit states and events for a checkout, double taps that do nothing, and a recovery path when the app is killed mid-payment.
 - [Build it: a state machine for a mobile flow on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/state-machine/build/): the types, reducer, store, saved attempt record, tests and platform limits for the design a state machine answer
 - [Design in-app purchases and subscriptions (Android and iOS)](https://mobiledesignrounds.com/mobile-system-design/in-app-purchases/): The server decides who owns what, a paid user is never left without access, and renewals and refunds arrive on their own. The iOS side has not yet been reviewed by an iOS engineer.
+- [Build it: in-app purchases and subscriptions on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/in-app-purchases/build/): the server tables and SQL, a purchase manager in Kotlin and Swift, tests and platform limits. The Kotlin and SQL were run; the Swift was not compiled and no iOS engineer has reviewed it.
 
 ## Case studies by topic
 - [Offline and sync](https://mobiledesignrounds.com/mobile-system-design/offline-and-sync/): Apps that keep working with no network, and sync later.
