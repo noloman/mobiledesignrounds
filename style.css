@@ -397,3 +397,8 @@ input[type=radio],input[type=checkbox]{width:22px;height:22px;flex:none}
 .prose blockquote ul{margin:.3em 0 .3em 1.1em;padding:0}.prose blockquote li{margin:.15em 0}
 aside.checks ul{margin:.1em 0 .25em 1.1em;padding:0}aside.checks li{margin:.05em 0}
 details.notes ul{margin:.4em 0 .6em 1.1em;padding:0;font-size:.9rem;color:var(--ink2)}details.notes li{margin:.25em 0}details.notes p:has(>strong:only-child){margin:1em 0 0}
+.prose>.mark-read{content-visibility:visible;contain-intrinsic-size:none;display:block;margin:32px 0 0;padding:12px 18px;min-height:44px;border:1.5px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font:600 1rem var(--body);cursor:pointer}
+.mark-read[aria-pressed=true]{border-color:var(--green);color:var(--green)}
+.progress-box{margin:16px 0}
+.progress-box p+p{margin-top:6px}
+@media print{.mark-read,.progress-box{display:none!important}}
