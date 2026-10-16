@@ -1,5 +1,5 @@
 (function(){
-var KEY='mdr-progress',HUBS=['feeds-and-media','sdks-and-libraries','live-data-and-payments','offline-and-sync'],TOTAL=14;
+var KEY='mdr-progress',HUBS=['feeds-and-media','sdks-and-libraries','live-data-and-payments','offline-and-sync'],TOTAL=15;
 function load(){try{var d=JSON.parse(localStorage.getItem(KEY)||'{}');return{read:d.read||[],last:d.last||null}}catch(e){return{read:[],last:null}}}
 function save(d){try{localStorage.setItem(KEY,JSON.stringify(d))}catch(e){}}
 var p=location.pathname,m=p.match(/^\/mobile-system-design\/([a-z0-9-]+)\/$/),g=p.match(/^\/guides\/([a-z0-9-]+)\/$/);
