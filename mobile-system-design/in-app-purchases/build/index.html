@@ -1,0 +1,345 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-WJDm62DDE4MZD9v2EoCFL7mWS2pksWjW0iId/jEDZH4=' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Build In-App Purchases in Kotlin and Swift: Server, Client</title><meta name="description" content="Build in-app purchases and subscriptions: server tables and SQL, a purchase manager that reconciles on every start, tests, and Android and iOS wiring.">
+<link rel="canonical" href="https://mobiledesignrounds.com/mobile-system-design/in-app-purchases/build/"><meta property="og:title" content="Build In-App Purchases in Kotlin and Swift: Server, Client"><meta property="og:description" content="Build in-app purchases and subscriptions: server tables and SQL, a purchase manager that reconciles on every start, tests, and Android and iOS wiring."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/mobile-system-design/in-app-purchases/build/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/live-data-and-payments.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Build In-App Purchases in Kotlin and Swift: Server, Client">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage-700-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Build it: in-app purchases and subscriptions on Android and iOS", "description": "Build in-app purchases and subscriptions: server tables and SQL, a purchase manager that reconciles on every start, tests, and Android and iOS wiring.", "datePublished": "2026-10-16", "dateModified": "2026-10-16", "mainEntityOfPage": "https://mobiledesignrounds.com/mobile-system-design/in-app-purchases/build/", "image": ["https://mobiledesignrounds.com/og/live-data-and-payments.png"], "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/", "sameAs": ["https://manulorenzo.me", "https://github.com/noloman"]}, "publisher": {"@type": "Organization", "name": "Mobile Design Rounds", "url": "https://mobiledesignrounds.com/", "logo": {"@type": "ImageObject", "url": "https://mobiledesignrounds.com/icon-512.png"}}, "inLanguage": "en"}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://mobiledesignrounds.com/mobile-system-design/"}, {"@type": "ListItem", "position": 3, "name": "Design in-app purchases and subscriptions", "item": "https://mobiledesignrounds.com/mobile-system-design/in-app-purchases/"}, {"@type": "ListItem", "position": 4, "name": "Build guide", "item": "https://mobiledesignrounds.com/mobile-system-design/in-app-purchases/build/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/concepts/">Concepts</a><a href="/practice/">Practice</a><a href="/about/">About</a><a class="navcta" href="/#cheat-sheet-signup">Free cheat sheet</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/mobile-system-design/">Case studies</a></li><li><a href="/mobile-system-design/in-app-purchases/">Design in-app purchases and subscriptions</a></li><li aria-current="page">Build guide</li></ol></nav><div class="chips"><span>Build guide</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>Android</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>iOS</span><span>16 min read</span></div><h1>Build it: in-app purchases and subscriptions on Android and iOS</h1><p class="meta">Last reviewed <time datetime="2026-10-16">16 Oct 2026</time>. Drafted with AI assistance. Checked against official documentation where noted (<a href="/about/#how">how this is checked</a>). Kotlin and SQL run; Swift and the real store libraries not compiled. Not reviewed by an iOS engineer. Part of: <a href="/mobile-system-design/in-app-purchases/">Design in-app purchases and subscriptions (Android and iOS)</a> &middot; <a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a> &middot; <a href="/mobile-system-design/#method">The five-step method</a>.</p></div><div class="layout"><aside class="toc"><details open><summary>On this page</summary><ol><li><a href="#1-the-server-tables">1. The server tables</a></li><li><a href="#2-the-api">2. The API</a></li><li><a href="#3-the-purchase-manager">3. The purchase manager</a></li><li><a href="#4-the-store-adapters">4. The store adapters</a></li><li><a href="#5-tests">5. Tests</a></li><li><a href="#6-platform-limits">6. Platform limits</a></li><li><a href="#7-more-practice-prompts">7. More practice prompts</a></li><li><a href="#further-reading-official-docs">Further reading (official docs)</a></li></ol></details></aside><article class="prose"><p>This is the implementation material behind the <a href="/mobile-system-design/in-app-purchases/">in-app purchases interview case</a>. It covers:</p><ul><li>the three server tables and the SQL that saves a purchase</li><li>the four API calls and how the app reads their answers</li><li>a purchase manager that reconciles with the store on every start</li><li>the Android and iOS adapters</li><li>tests for the lost-answer and double-send paths</li><li>platform limits</li></ul><p>None of it belongs in a 45-minute round (the length I assume). I draw the tables and the states, and write code only if asked. <strong>Checked on 16 October 2026:</strong></p><ul><li>The SQL ran in SQLite and six checks passed: the same token twice gives one row, the longest purchase wins, a refund of one purchase keeps the other, and a pending purchase grants nothing. It was not run on Postgres.</li><li>The Kotlin manager and seven tests compiled with Kotlin 2.0.21 and all seven passed. They run against fake store, server and cache classes.</li><li><strong>The Android adapter was not compiled</strong> against the real Play Billing library. <strong>The Swift was not compiled</strong>, because I had no Swift toolchain. Compile both before you copy them.</li><li>No iOS engineer has reviewed this page.</li></ul><h2 id="1-the-server-tables">1. The server tables</h2><p>Three tables. The key of <code>purchases</code> is the store's own token, so a repeat is harmless. <code>entitlements</code> is worked out from the purchases and never edited by hand.</p><pre tabindex="0"><code>CREATE TABLE products (
+  product_id TEXT PRIMARY KEY,
+  feature    TEXT NOT NULL            -- what this product unlocks, e.g. 'pro'
+);
+
+CREATE TABLE purchases (
+  token       TEXT PRIMARY KEY,       -- Google purchaseToken, or Apple transaction id
+  user_id     TEXT NOT NULL,
+  product_id  TEXT NOT NULL REFERENCES products(product_id),
+  store       TEXT NOT NULL,          -- 'google' or 'apple'
+  state       TEXT NOT NULL,          -- 'pending', 'active', 'expired', 'revoked'
+  expires_at  TEXT NOT NULL,          -- ISO time; a far date for a one-time unlock
+  updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE entitlements (
+  user_id     TEXT NOT NULL,
+  feature     TEXT NOT NULL,
+  valid_until TEXT NOT NULL,
+  PRIMARY KEY (user_id, feature)
+);</code></pre><p>Saving a purchase is two steps in one transaction. Step 1 is an upsert on the token. Step 2 rebuilds what this user owns from all their active purchases.</p><pre tabindex="0"><code>-- 1. Save the purchase. The same token twice is one row.
+INSERT INTO purchases (token, user_id, product_id, store, state, expires_at, updated_at)
+VALUES (:token, :user, :product, :store, :state, :expires, :now)
+ON CONFLICT (token) DO UPDATE SET
+  state = excluded.state, expires_at = excluded.expires_at, updated_at = excluded.updated_at;
+
+-- 2. Work out what the user owns, from all their purchases.
+DELETE FROM entitlements WHERE user_id = :user;
+INSERT INTO entitlements (user_id, feature, valid_until)
+SELECT p.user_id, pr.feature, MAX(p.expires_at)
+FROM purchases p JOIN products pr ON pr.product_id = p.product_id
+WHERE p.user_id = :user AND p.state = 'active'
+GROUP BY p.user_id, pr.feature;</code></pre><p>What the six SQLite checks show:</p><ul><li>Sending token T1 twice leaves one row.</li><li>A monthly purchase and a lifetime purchase for the same feature: the later end date wins.</li><li>The lifetime purchase is refunded: access follows the monthly one.</li><li>Both are refunded: the user owns nothing.</li><li>A pending purchase grants nothing.</li></ul><p>The server must also check the token with the store before step 1, and read the product and the end date from the store's answer, never from the app. That call is not shown here because it differs for each store.</p><h2 id="2-the-api">2. The API</h2><p>Four calls. The app uses the first two. The stores call the third. The fourth is for buyers who sign in later.</p><pre tabindex="0"><code>POST /v1/purchases
+{ "store": "google", "productId": "pro_monthly", "token": "&lt;purchaseToken&gt;" }
+200 { "entitlements": { "pro": "2026-11-16T00:00:00Z" }, "serverTime": "2026-10-16T08:00:00Z" }
+422 { "error": "not_valid" }        the store says this token is not real
+503                                 the store or my database is down
+
+GET /v1/entitlements
+200 { "entitlements": { "pro": "2026-11-16T00:00:00Z" }, "serverTime": "2026-10-16T08:00:00Z" }
+
+POST /v1/store-notifications/google
+POST /v1/store-notifications/apple
+    called by the stores on a renewal, a refund or a change; the body is signed, so check it
+
+POST /v1/accounts/link
+{ "token": "&lt;purchaseToken&gt;" }       attach an earlier purchase to the signed-in user</code></pre><p>How the app reads the answers:</p><ul><li>200 is <code>Granted</code>. The app saves the answer and then acknowledges.</li><li>422 is <code>Rejected</code>. The app never acknowledges it.</li><li>A timeout or a 5xx is <code>TryLater</code>. The store still shows the purchase as unfinished, so the next reconcile sends it again.</li><li>The notification endpoints call the same save code as step 1 and 2. Each store has its own notification service. I did not check the details of either one.</li></ul><h2 id="3-the-purchase-manager">3. The purchase manager</h2><p>One class that lives as long as the app. It has three jobs: reconcile with the store, save the server's answer, and answer "does this user have access?" from the saved answer. The store, the server and the cache are interfaces, so tests can replace them.</p><h3 id="3-1-kotlin">3.1 Kotlin</h3><pre tabindex="0"><code>package purchases
+
+enum class StoreState { Pending, Purchased }
+
+data class StorePurchase(
+    val token: String,
+    val productId: String,
+    val state: StoreState,
+    val acknowledged: Boolean,
+)
+
+data class Entitlements(
+    val validUntil: Map&lt;String, Long&gt;, // feature -&gt; epoch millis
+    val fetchedAt: Long,
+)
+
+sealed interface ServerAnswer {
+    data class Granted(val entitlements: Entitlements) : ServerAnswer
+    data object Rejected : ServerAnswer // the store says this token is not real
+    data object TryLater : ServerAnswer // no network, or a server error
+}
+
+interface Store {
+    suspend fun owned(): List&lt;StorePurchase&gt;
+    suspend fun acknowledge(token: String) // Android: acknowledge. iOS: finish.
+}
+
+interface Server {
+    suspend fun submit(purchase: StorePurchase): ServerAnswer
+}
+
+interface EntitlementCache {
+    suspend fun read(): Entitlements?
+    suspend fun write(entitlements: Entitlements)
+}
+
+class PurchaseManager(
+    private val store: Store,
+    private val server: Server,
+    private val cache: EntitlementCache,
+    private val now: () -&gt; Long,
+) {
+    /** Call on app start, on every resume, and after the store reports a purchase. */
+    suspend fun reconcile() {
+        for (p in store.owned()) {
+            if (p.state == StoreState.Pending) continue // grant nothing, acknowledge nothing
+            when (val answer = server.submit(p)) {
+                is ServerAnswer.Granted -&gt; {
+                    cache.write(answer.entitlements)           // 1. keep the server's answer
+                    if (!p.acknowledged) store.acknowledge(p.token) // 2. only now tell the store
+                }
+                ServerAnswer.Rejected -&gt; Unit        // never acknowledge what the server refused
+                ServerAnswer.TryLater -&gt; return      // the store still shows it; next reconcile retries
+            }
+        }
+    }
+
+    /** What the screens ask. It reads the saved answer, never the store. */
+    suspend fun hasAccess(feature: String, offlineWindowMs: Long = 72L * 60 * 60 * 1000): Boolean {
+        val e = cache.read() ?: return false
+        val t = now()
+        if (t &gt; e.fetchedAt + offlineWindowMs) return false
+        return (e.validUntil[feature] ?: return false) &gt; t
+    }
+}</code></pre><p>Three rules sit in <code>reconcile()</code>:</p><ul><li>A pending purchase is skipped. Nothing is granted and nothing is acknowledged.</li><li>The order is fixed: the server answers, the app saves the answer, and only then does it tell the store.</li><li>If the server cannot answer, the function stops. The store still shows the purchase, so the next start tries again.</li></ul><h3 id="3-2-swift">3.2 Swift</h3><p>The same shape. <code>Transaction.updates</code> has to be listened to from launch, because a purchase can finish outside the app. <code>finish()</code> plays the role of <code>acknowledge</code>. <strong>Not compiled.</strong></p><pre tabindex="0"><code>import StoreKit
+
+enum ServerAnswer {
+    case granted(Entitlements)
+    case rejected
+    case tryLater
+}
+
+protocol PurchaseServer {
+    func submit(signedTransaction: String) async -&gt; ServerAnswer
+}
+
+protocol EntitlementCache {
+    func read() async -&gt; Entitlements?
+    func write(_ entitlements: Entitlements) async
+}
+
+struct Entitlements: Codable {
+    var validUntil: [String: Date]
+    var fetchedAt: Date
+}
+
+actor PurchaseManager {
+    private let server: PurchaseServer
+    private let cache: EntitlementCache
+    private var listener: Task&lt;Void, Never&gt;?
+
+    init(server: PurchaseServer, cache: EntitlementCache) {
+        self.server = server
+        self.cache = cache
+    }
+
+    /// Call once, when the app starts.
+    func start() {
+        listener = Task { [weak self] in
+            // Purchases can finish outside the app, so something must always be listening.
+            for await result in Transaction.updates { await self?.handle(result) }
+        }
+        Task { await reconcile() }
+    }
+
+    /// Call on start and whenever the scene becomes active.
+    func reconcile() async {
+        for await result in Transaction.unfinished { await handle(result) }
+        for await result in Transaction.currentEntitlements { await handle(result) }
+    }
+
+    private func handle(_ result: VerificationResult&lt;Transaction&gt;) async {
+        // The check on the device is only a hint. The server still verifies.
+        guard case .verified(let transaction) = result else { return }
+        switch await server.submit(signedTransaction: result.jwsRepresentation) {
+        case .granted(let entitlements):
+            await cache.write(entitlements)   // 1. keep the server's answer
+            await transaction.finish()        // 2. only now tell the store
+        case .rejected, .tryLater:
+            break                             // not finished: it comes back next time
+        }
+    }
+
+    func hasAccess(_ feature: String, offlineWindow: TimeInterval = 72 * 3600) async -&gt; Bool {
+        guard let e = await cache.read() else { return false }
+        let now = Date()
+        guard now &lt; e.fetchedAt.addingTimeInterval(offlineWindow),
+              let until = e.validUntil[feature] else { return false }
+        return until &gt; now
+    }
+}</code></pre><h2 id="4-the-store-adapters">4. The store adapters</h2><p>On Android, one small class turns Play Billing purchases into <code>StorePurchase</code> and calls acknowledge. The purchase listener only calls <code>reconcile()</code>, so one path handles a new purchase, an old one and a purchase that finished while the app was closed. <strong>Not compiled</strong> against the real library. It assumes the Play Billing Kotlin extensions, and you should check the calls against the version you use.</p><pre tabindex="0"><code>class AndroidStore(private val billing: BillingClient) : Store {
+
+    override suspend fun owned(): List&lt;StorePurchase&gt; =
+        listOf(BillingClient.ProductType.SUBS, BillingClient.ProductType.INAPP).flatMap { type -&gt;
+            val params = QueryPurchasesParams.newBuilder().setProductType(type).build()
+            billing.queryPurchasesAsync(params).purchasesList.map { p -&gt;
+                StorePurchase(
+                    token = p.purchaseToken,
+                    productId = p.products.first(),
+                    state = if (p.purchaseState == Purchase.PurchaseState.PURCHASED)
+                        StoreState.Purchased else StoreState.Pending,
+                    acknowledged = p.isAcknowledged,
+                )
+            }
+        }
+
+    override suspend fun acknowledge(token: String) {
+        val params = AcknowledgePurchaseParams.newBuilder().setPurchaseToken(token).build()
+        billing.acknowledgePurchase(params)
+    }
+}
+
+// In the Application or the activity:
+// - the purchase listener only calls reconcile(), so one path handles every purchase
+val billing = BillingClient.newBuilder(context)
+    .setListener { _, _ -&gt; appScope.launch { manager.reconcile() } }
+    // enable pending purchases here; the call depends on your Play Billing version
+    .build()
+
+// And on every resume:
+override fun onResume() {
+    super.onResume()
+    lifecycleScope.launch { manager.reconcile() }
+}</code></pre><p>On iOS the adapter is already inside the Swift manager above. <code>Transaction.unfinished</code> and <code>Transaction.currentEntitlements</code> play the role of <code>owned()</code>.</p><h2 id="5-tests">5. Tests</h2><p>Seven tests, written as plain checks that run in a <code>main</code> function. They use a fake store, a fake server that keeps rows by token, and a cache in memory. All seven passed on 16 October 2026.</p><ul><li>A pending purchase leaves the call log empty.</li><li>The call log reads <code>submit</code> then <code>ack</code>, in that order.</li><li>The app is killed between submit and acknowledge. The next reconcile finishes it, and the server has one row.</li><li>The server says try later: nothing is acknowledged.</li><li>The server rejects: nothing is acknowledged and the user has no access.</li><li>A purchase that is already acknowledged is sent again and is acknowledged only once.</li><li>The saved answer is trusted at 71 hours and not at 73.</li></ul><pre tabindex="0"><code>package purchases
+
+import kotlinx.coroutines.runBlocking
+
+class FakeStore(var items: MutableList&lt;StorePurchase&gt;, var failAck: Boolean = false) : Store {
+    val log = mutableListOf&lt;String&gt;()
+    override suspend fun owned() = items.toList()
+    override suspend fun acknowledge(token: String) {
+        if (failAck) throw RuntimeException("app killed")
+        log += "ack:$token"
+        items = items.map { if (it.token == token) it.copy(acknowledged = true) else it }.toMutableList()
+    }
+}
+
+class FakeServer(val store: FakeStore, var answer: (StorePurchase) -&gt; ServerAnswer) : Server {
+    val rows = mutableMapOf&lt;String, StorePurchase&gt;() // the token is the unique key
+    override suspend fun submit(purchase: StorePurchase): ServerAnswer {
+        store.log += "submit:${purchase.token}"
+        val a = answer(purchase)
+        if (a is ServerAnswer.Granted) rows[purchase.token] = purchase
+        return a
+    }
+}
+
+class MemoryCache : EntitlementCache {
+    var value: Entitlements? = null
+    override suspend fun read() = value
+    override suspend fun write(entitlements: Entitlements) { value = entitlements }
+}
+
+const val HOUR = 3_600_000L
+fun granted(at: Long) = ServerAnswer.Granted(Entitlements(mapOf("pro" to at + 30 * 24 * HOUR), at))
+fun p(token: String, state: StoreState = StoreState.Purchased, ack: Boolean = false) =
+    StorePurchase(token, "pro_monthly", state, ack)
+
+fun test(name: String, body: suspend () -&gt; Unit) {
+    runBlocking { body() }
+    println("PASS $name")
+}
+
+fun main() {
+    var clock = 0L
+    val now = { clock }
+
+    test("pending grants and acknowledges nothing") {
+        val s = FakeStore(mutableListOf(p("T1", StoreState.Pending)))
+        val srv = FakeServer(s) { granted(0) }
+        PurchaseManager(s, srv, MemoryCache(), now).reconcile()
+        check(s.log.isEmpty()) { s.log.toString() }
+    }
+    test("submit comes before acknowledge") {
+        val s = FakeStore(mutableListOf(p("T1")))
+        val srv = FakeServer(s) { granted(0) }
+        val m = PurchaseManager(s, srv, MemoryCache(), now)
+        m.reconcile()
+        check(s.log == listOf("submit:T1", "ack:T1")) { s.log.toString() }
+        check(m.hasAccess("pro"))
+    }
+    test("killed between submit and acknowledge: the next reconcile finishes, one row") {
+        val s = FakeStore(mutableListOf(p("T1")), failAck = true)
+        val srv = FakeServer(s) { granted(0) }
+        val m = PurchaseManager(s, srv, MemoryCache(), now)
+        runCatching { m.reconcile() } // the app dies here
+        s.failAck = false
+        m.reconcile()                  // next start
+        check(srv.rows.size == 1)
+        check(s.items.single().acknowledged)
+        check(s.log.last() == "ack:T1")
+    }
+    test("server says try later: nothing is acknowledged") {
+        val s = FakeStore(mutableListOf(p("T1")))
+        val srv = FakeServer(s) { ServerAnswer.TryLater }
+        PurchaseManager(s, srv, MemoryCache(), now).reconcile()
+        check(s.log == listOf("submit:T1"))
+    }
+    test("server rejects: nothing is acknowledged and no access") {
+        val s = FakeStore(mutableListOf(p("T1")))
+        val srv = FakeServer(s) { ServerAnswer.Rejected }
+        val m = PurchaseManager(s, srv, MemoryCache(), now)
+        m.reconcile()
+        check(s.log == listOf("submit:T1"))
+        check(!m.hasAccess("pro"))
+    }
+    test("already acknowledged: submitted again, acknowledged once") {
+        val s = FakeStore(mutableListOf(p("T1", ack = true)))
+        val srv = FakeServer(s) { granted(0) }
+        val m = PurchaseManager(s, srv, MemoryCache(), now)
+        m.reconcile(); m.reconcile()
+        check(srv.rows.size == 1)
+        check(s.log.none { it.startsWith("ack") })
+    }
+    test("saved answer is trusted for 72 hours, then access stops") {
+        val s = FakeStore(mutableListOf(p("T1")))
+        val srv = FakeServer(s) { granted(0) }
+        val m = PurchaseManager(s, srv, MemoryCache(), now)
+        m.reconcile()
+        clock = 71 * HOUR; check(m.hasAccess("pro"))
+        clock = 73 * HOUR; check(!m.hasAccess("pro"))
+    }
+}</code></pre><h2 id="6-platform-limits">6. Platform limits</h2><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Topic</th><th>Android</th><th>iOS</th><th>Basis</th></tr></thead><tbody><tr><td>Listening</td><td>Without an active billing connection, <code>onPurchasesUpdated</code> is not called. Keep one active BillingClient.</td><td>Purchases can finish outside the app, on another device. They arrive through <code>Transaction.updates</code>, which only works if something listens from launch.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Finding missed purchases</td><td>Call <code>queryPurchasesAsync()</code> on start and in <code>onResume()</code>.</td><td>Read <code>Transaction.currentEntitlements</code> and the unfinished transactions.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Telling the store</td><td>Acknowledge within three days, or the purchase is refunded and the entitlement is revoked. Acknowledge right after granting access.</td><td>Finish the transaction after the app delivers the content.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Pending</td><td>Grant access only in the PURCHASED state. The three-day window starts when a pending purchase becomes PURCHASED.</td><td>Not checked here.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a></td></tr><tr><td>The unique key</td><td><code>purchaseToken</code> is globally unique. Do not use the order id, because not every purchase has one.</td><td>The transaction id. Apple also offers server tools to verify signed transactions.</td><td><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Trusting the app</td><td>Always verify a purchase before you grant a benefit.</td><td>The check on the device is a hint. Verify on the server.</td><td><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr></tbody></table></div><p>The rows come from the same three pages I read for the case page on 16 October 2026. Two things I did not check: whether Apple has a deadline like Google's three days, and how the notification services work in detail.</p><h2 id="7-more-practice-prompts">7. More practice prompts</h2><ol><li>Add a consumable product, such as 100 credits. Which table changes, and what does the server do when the same token arrives twice?</li><li>The user buys on Android and signs in on an iPhone. Which call links the purchase, and what must a refund on one store remove?</li><li>The server is down for an hour. What does the app show, and what keeps the user's access?</li><li>Change the 72 hour offline window to 7 days. What do you gain and what do you risk?</li><li>A notification from a store arrives before the app has sent the token. What does the server save?</li></ol><h2 id="further-reading-official-docs">Further reading (official docs)</h2><ul><li><a href="/mobile-system-design/in-app-purchases/">The interview part of this case</a>: scope, decisions, failures, follow-ups and levels</li><li><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a></li><li><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a></li><li><a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></li></ul><details class="notes" id="notes"><summary>Verification notes (last reviewed 16 Oct 2026)</summary><p><strong>Facts from the three official pages</strong> (the same pages as the case page, read on 2026-10-16):</p><ul><li>Play Billing integrate: no active connection means no <code>onPurchasesUpdated</code>; one BillingClient; query purchases on start and resume; acknowledge within three days.</li><li>Play Billing security: verify before granting; the purchase token is globally unique; the order id is not on every purchase.</li><li>StoreKit Transaction: updates, current entitlements, unfinished transactions and finish.</li></ul><p><strong>Code checks.</strong></p><ul><li>The SQL ran in SQLite. It was not run on Postgres.</li><li>The Kotlin manager and seven tests compiled with Kotlin 2.0.21 and kotlinx-coroutines 1.6.4, and all seven passed.</li><li>The Android adapter was not compiled. The Swift was not compiled.</li></ul><p><strong>Not verified.</strong></p><ul><li>The exact Play Billing calls for your library version, including how pending purchases are enabled.</li><li>How the stores' notification services work in detail.</li><li>Whether Apple has a deadline like Google's three days.</li></ul><p><strong>My own opinion or design.</strong></p><ul><li>The tables, the SQL, the reconcile order, the 72 hour window, the API shape and the tests are my design.</li></ul></details><nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/in-app-purchases/"><small>Read first</small>Design in-app purchases and subscriptions</a><a class="nx" href="/start/"><small>Done with this one?</small>Back to the reading paths</a></nav><div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You get a short note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">All case studies</a></li><li><a href="/compare/">Compare design choices</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Concepts</p><ul><li><a href="/concepts/">All concepts</a></li><li><a href="/patterns/">Design patterns</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/guides/">Guides</a></li><li><a href="/mobile-system-design/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/practice/">Practice timer</a></li><li><a href="/practice/#kit">Practice kit</a></li><li><a href="/simulators/">Interactive tools</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li><li><a href="/simulators/cache/">Cache explorer</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "547404bc5ae84ae7bcb0a39fce029e3e"}'></script><script>(()=>{
+if(innerWidth<1040){var d=document.querySelector('.toc details');if(d)d.open=false}
+var L=[].slice.call(document.querySelectorAll('.steps a'));
+if(L.length&&window.IntersectionObserver){
+ var H=L.map(a=>document.getElementById(a.hash.slice(1))),cur=-1,inb={};
+ var set=i=>{if(i===cur)return;cur=i;L.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current')})};
+ var io=new IntersectionObserver(es=>es.forEach(e=>{var i=H.indexOf(e.target);
+  if(e.isIntersecting){inb[i]=1;set(i)}
+  else if(e.boundingClientRect.top<0)set(Math.max(cur,i));
+  else if(inb[i]){inb[i]=0;set(i-1)}}),{rootMargin:'0px 0px -75% 0px'});
+ H.forEach(h=>h&&io.observe(h))}
+var F=[].slice.call(document.querySelectorAll('.dg.an'));
+if(F.length&&window.IntersectionObserver&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+ var go=f=>{f.classList.remove('go');void f.getBoundingClientRect();f.classList.add('go')},
+ fo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){fo.unobserve(e.target);go(e.target)}}),{threshold:.4});
+ F.forEach(f=>{f.classList.add('rdy');f.querySelector('.replay').onclick=()=>go(f);fo.observe(f)})}
+if(!(navigator.clipboard&&navigator.clipboard.writeText))return;
+document.querySelectorAll('.prose pre').forEach(p=>{
+ var w=document.createElement('div'),b=document.createElement('button');
+ w.className='code';b.className='copy';b.type='button';b.textContent='Copy';b.setAttribute('aria-label','Copy code to clipboard');
+ b.onclick=()=>{var done=t=>{b.textContent=t;setTimeout(()=>{b.textContent='Copy'},1500)};
+  try{navigator.clipboard.writeText(p.innerText).then(()=>done('Copied'),()=>done('Copy failed'))}catch(e){done('Copy failed')}};
+ p.before(w);w.append(p,b)})
+})();</script></body></html>
