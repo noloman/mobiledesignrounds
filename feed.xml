@@ -162,6 +162,13 @@
 <summary>The server decides who owns what, a paid user is never left without access, and renewals and refunds arrive on their own.</summary>
 </entry>
 <entry>
+<title>Design a run or trip recording app</title>
+<link href="https://mobiledesignrounds.com/mobile-system-design/run-recording-app/"/>
+<id>https://mobiledesignrounds.com/mobile-system-design/run-recording-app/</id>
+<updated>2026-10-16T00:00:00Z</updated>
+<summary>Keep recording with the screen locked, survive a killed app, and turn noisy GPS points into a believable distance.</summary>
+</entry>
+<entry>
 <title>Design patterns in mobile system design rounds</title>
 <link href="https://mobiledesignrounds.com/patterns/"/>
 <id>https://mobiledesignrounds.com/patterns/</id>
