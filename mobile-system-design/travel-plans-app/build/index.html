@@ -27,14 +27,15 @@ data class ItineraryItemEntity(
     val tripId: String,
     val title: String,
     val sortKey: String,                             // fractional index
-    val startInstant: Long,                          // epoch millis
+    val startLocal: String,                          // what the person meant, e.g. &quot;2027-06-10T10:00&quot;
     val startZoneId: String,                         // IANA id, e.g. &quot;Europe/Lisbon&quot;
+    val startInstant: Long,                          // epoch millis; a cache computed from the two fields above
     val serverRev: Long,                             // last revision the server confirmed
     val deletedAt: Long? = null,                     // tombstone: hidden in the UI, kept until the server confirms
     @ColumnInfo(defaultValue = &quot;0&quot;) val dirty: Boolean = false,
 )</code></pre>
 <p>I show the entity itself to keep the snippet short. In a larger app, I would map it to a UI model. <code>itemId</code> is made on the device. So creating an item offline needs no round trip, and a retried create does no harm. The chat case does the same with <code>clientId</code>.</p>
-<p><strong>A change since the compiled version.</strong> The interview page stores what the person meant: a local date and time plus a zone ID. The entity above, as compiled, stores the instant. To follow the interview page, add a text column such as <code>startLocal</code> (for example <code>2027-06-10T10:00</code>). Then treat <code>startInstant</code> as a cache that you can compute again. I did not compile this change.</p>
+<p>The entity stores what the person meant (<code>startLocal</code> plus <code>startZoneId</code>). <code>startInstant</code> is a cache that you compute again from them, for sorting and flight length. It is not the truth. I did not compile this version.</p>
 <h2 id="2-rest">2. REST</h2>
 <pre tabindex="0"><code>GET  /v1/trips/{id}/changes?cursor=&lt;opaque&gt;  → { changes[], nextCursor, hasMore } or 410 (cursor too old)
 GET  /v1/trips/{id}                          → full snapshot + cursor (bootstrap and resync)
@@ -61,9 +62,13 @@ fun mergeEdits(current: Map&lt;String, Field&gt;, edits: List&lt;Edit&gt;, newRe
     return MergeResult(out, conflicts)
 }</code></pre>
 <p>This code runs on the server in the real system. It is a sketch of the rule.</p>
-<p><strong>Known gap, found by reading.</strong> The sketch compares each edit's <code>baseRev</code> with the revision stored before the batch. Suppose one person edits the same field twice offline, and the two ops travel in two requests. The second op then sees the revision made by the first op. It looks like a conflict with the person's own change. There are two fixes:</p>
-<ul><li>Merge the waiting ops for a field into one, keeping the first <code>baseRev</code> and the last value.</li><li>Or move the <code>baseRev</code> forward when the server accepts an op.</li></ul>
-<p>I did not compile or test either fix. Write the two-request test first.</p>
+<p><strong>One case to handle: your own earlier edit.</strong> The sketch compares each edit's <code>baseRev</code> with the revision stored before the batch. Suppose one person edits the same field twice offline, and the two ops travel in two requests. The second op sees the revision made by the first op. It would look like a conflict with the person's own change. Two client rules fix this:</p>
+<ul><li>Before sending, merge the waiting ops for one field into one op. Keep the first <code>baseRev</code> and the last value.</li><li>When the server accepts an op, set the <code>baseRev</code> of later waiting ops for that field to the new revision.</li></ul>
+<pre tabindex="0"><code>fun coalesce(ops: List&lt;Edit&gt;): List&lt;Edit&gt; =
+    ops.groupBy { it.name }.map { (_, same) ->
+        Edit(same.first().name, same.last().value, same.first().baseRev)
+    }</code></pre>
+<p>I did not compile this. Write the two-request test first: two edits to one field, sent in two requests, must give no conflict.</p>
 <p>Per-field merge treats a field as one value. So two people typing in one long note still conflict. A <a class="gl" href="/glossary/#crdt" title="A data type that merges edits from many devices by itself.">CRDT</a> (a data type that merges edits by itself) can merge that. But both platforms must then follow its protocol exactly and keep its history.</p>
 <p>My position: per-field merge for structured fields, a text merge for the note only if the product needs it, and no CRDT for the whole trip. I have not checked any mobile CRDT library, so I do not recommend one.</p>
 <p>Do not merge two edits to the same field by joining the text. That invents text nobody wrote. "Your change was not applied, reapply?" is cheap and honest.</p>
@@ -102,17 +107,14 @@ private fun mid(a: String, b: String?): String {
 <h2 id="6-time-zones">6. Time zones</h2>
 <p>A trip crosses zones, so what does "10:00" mean? Store a local date and time plus an IANA zone ID such as <code>Europe/Lisbon</code>. Never store a fixed offset like <code>+01:00</code>, and never a display name. Apple says the same: values such as <code>America/Los_Angeles</code> are IDs, not names (<a href="https://developer.apple.com/documentation/foundation/timezone">TimeZone</a>).</p>
 <p>The instant is derived from those two values. An instant alone loses the place the user meant. Then the UI cannot show "10:00 in Lisbon" to a companion in New York.</p>
-<pre tabindex="0"><code>data class ItineraryTime(val instant: Instant, val zoneId: String) {
-    fun wallClock(): LocalDateTime = instant.atZone(ZoneId.of(zoneId)).toLocalDateTime()
-    companion object {
-        fun fromWallClock(local: LocalDateTime, zoneId: String) =
-            ItineraryTime(local.atZone(ZoneId.of(zoneId)).toInstant(), zoneId)
-    }
+<pre tabindex="0"><code>data class ItineraryTime(val local: LocalDateTime, val zoneId: String) {
+    // The stored value is local + zoneId. The instant is derived from it.
+    val instant: Instant get() = local.atZone(ZoneId.of(zoneId)).toInstant()
 }
 
 fun flightDuration(dep: ItineraryTime, arr: ItineraryTime): Duration =
     Duration.between(dep.instant, arr.instant)</code></pre>
-<p>The snippet builds the instant from a wall clock (<code>fromWallClock</code>) and reads the wall clock back (<code>wallClock()</code>). It holds the instant as the main value, as in the compiled version. With the model on the interview page, the stored local value is the truth, and you compute the instant again from it.</p>
+<p>The stored value is the local date and time plus the zone ID. The instant is computed from them each time, or cached in <code>startInstant</code>. If a zone rule changes, you recompute the cache and the local time stays what the person typed.</p>
 <ul><li><strong>Display in the item's own zone</strong>, with a switch for the viewer's zone.</li><li><strong>Duration is arithmetic on instants.</strong> Lisbon 10:00 to New York 13:00 on 10 June 2027 is eight hours with today's rules. Lisbon is UTC+1 and New York is UTC-4. Subtracting wall-clock times gives three.</li><li><strong>Group by the item's local date.</strong> For example, a 23:30 item in Tokyo belongs to that Tokyo day for every viewer.</li><li><strong>An unknown zone ID.</strong> <code>ZoneId.of</code> throws for an ID that this phone does not know, for example a new ID on an old phone. Catch it and show the stored local time with the ID. The Swift model falls back to GMT. I did not compile this handling.</li><li><strong>Take the zone from the place</strong>, not from the device. The device zone is wrong when you plan a trip from home.</li><li><strong>Gaps and overlaps.</strong> A local time may not exist (clocks go forward) or may happen twice (clocks go back). <code>ZonedDateTime</code> moves a time in a gap forward by the length of the gap. In an overlap, it keeps the earlier offset unless you ask for the later one (<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/ZonedDateTime.html">Java SE 17</a>).</li><li><strong>Rules change.</strong> A government can change a zone rule after you store an instant. RFC 9557 names the case of a future local time whose instant changes, and says it is outside its scope (<a href="https://www.rfc-editor.org/rfc/rfc9557.html">RFC 9557</a>). Android updates zone rules through a system module, and phones get an update at different times (<a href="https://source.android.com/docs/core/permissions/timezone-rules">Android</a>). That is why the local value is the truth.</li></ul>
 <h2 id="7-the-sync-cursor">7. The sync cursor</h2>
 <p>Pull sync needs an answer to "what changed since I last looked". Use a server-ordered change log and an opaque cursor, a value that the app never reads.</p>
@@ -129,27 +131,28 @@ fun flightDuration(dep: ItineraryTime, arr: ItineraryTime): Duration =
 <p>No <a class="gl" href="/glossary/#polling" title="Asking the server again and again if there is news.">polling</a> loop. Pull on open, on foreground, when the network returns and on a push hint.</p>
 <h2 id="10-platform-limits">10. Platform limits</h2>
 <p>The limits that shaped the design, side by side. Each fact comes from a page I read, or is marked as my reading.</p>
-<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Limit</th><th>Android</th><th>iOS</th><th>So the design changes by</th></tr></thead><tbody><tr><td>Work that must survive a restart</td><td><a class="gl" href="/glossary/#workmanager" title="Android&#x27;s tool for background work that must run later.">WorkManager</a> work persists across app restarts and reboots</td><td>No equivalent; the app drains its own <a class="gl" href="/glossary/#outbox" title="A saved list of changes that the server has not confirmed yet.">outbox</a></td><td>The outbox is a table, and a drain runs on edit, foreground, network return and push</td></tr><tr><td>Background upload</td><td>Persistent WorkManager work; Android 14 adds user-initiated transfer jobs, and the page speaks of downloads</td><td>A background session continues only uploads from a file, and a rate limiter delays new background download tasks (uploads assumed)</td><td>Write the photo to a file, use one session, and save the offset</td></tr><tr><td>After the app is ended</td><td>Not covered here</td><td>The system relaunches the app if it ended it; I did not confirm this for a force-quit</td><td>On launch, set a photo row to queued and ask the server for its offset</td></tr><tr><td>Retries</td><td><code>Result.retry()</code> with exponential backoff, 30 s by default and 10 s at the least</td><td>No equivalent; the outbox decides</td><td>Retry short failures; stop on a permanent rejection</td></tr><tr><td>Photo location</td><td>Hidden on Android 10 and later unless the app holds a permission</td><td>Not checked</td><td>Treat location as a product choice; make no promise</td></tr><tr><td>Zone rule updates</td><td>Come through a system module at different times</td><td><code>TimeZone</code> IDs are names of places; update timing not read</td><td>Store the local value and the zone ID</td></tr><tr><td>Invite links</td><td>Verified links open the app; re-checks on Android 15 take up to seven days</td><td>Not read in full</td><td>Link to a web page for people without the app</td></tr></tbody></table></div>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Limit</th><th>Android</th><th>iOS</th><th>So the design changes by</th></tr></thead><tbody><tr><td>Work that must survive a restart</td><td><a class="gl" href="/glossary/#workmanager" title="Android&#x27;s tool for background work that must run later.">WorkManager</a> work persists across app restarts and reboots</td><td>No equivalent; the app drains its own <a class="gl" href="/glossary/#outbox" title="A saved list of changes that the server has not confirmed yet.">outbox</a></td><td>The outbox is a table, and a drain runs on edit, foreground, network return and push</td></tr><tr><td>Background upload</td><td>Persistent WorkManager work; Android 14 adds user-initiated transfer jobs, and the page speaks of downloads</td><td>A background session supports download tasks and upload tasks from a file (not data tasks or in-memory uploads), and a rate limiter delays new background download tasks (uploads assumed)</td><td>Write the photo to a file, use one session, and save the offset</td></tr><tr><td>After the app is ended</td><td>Not covered here</td><td>The system relaunches the app if it ended it. I did not confirm what happens after a force-quit, so do not count on a relaunch</td><td>On launch, set a photo row to queued and ask the server for its offset</td></tr><tr><td>Retries</td><td><code>Result.retry()</code> with exponential backoff, 30 s by default and 10 s at the least</td><td>No equivalent; the outbox decides</td><td>Retry short failures; stop on a permanent rejection</td></tr><tr><td>Photo location</td><td>Hidden on Android 10 and later unless the app holds a permission</td><td>Not checked</td><td>Treat location as a product choice; make no promise</td></tr><tr><td>Zone rule updates</td><td>Come through a system module at different times</td><td><code>TimeZone</code> IDs are names of places; update timing not read</td><td>Store the local value and the zone ID</td></tr><tr><td>Invite links</td><td>Verified links open the app; re-checks on Android 15 take up to seven days</td><td>Not read in full</td><td>Link to a web page for people without the app</td></tr></tbody></table></div>
 <h2 id="11-how-to-build-an-offline-first-travel-plans-app-on-ios-swift">11. How to build an offline-first travel plans app on iOS (Swift)</h2>
-<p>Same design, different primitives. SwiftData or Core Data (or GRDB) replaces Room. SwiftUI watches it with <code>@Query</code>. A background <code>URLSession</code> replaces the upload worker.</p>
+<p>Same design, different primitives. SwiftData (iOS 17 and later) or Core Data (or GRDB) replaces Room. SwiftUI watches it with <code>@Query</code>. A background <code>URLSession</code> replaces the upload worker.</p>
 <p>What really differs:</p>
-<ul><li><strong>You drain the outbox yourself.</strong> There is no WorkManager equivalent. Start a drain on edit, on foreground, on network return (<code>NWPathMonitor</code>) and on push. If the user force-quits, do not count on a relaunch. Queued edits may wait for the next launch. I did not confirm this in the pages I read. The edits are in the database and the server ignores repeated <code>opId</code>s, so nothing is lost.</li><li><strong>The system owns background transfers.</strong> Apple's background <code>URLSession</code> runs in a separate process. It supports only upload tasks from a file, so write each photo to a file and use <code>uploadTask(with:fromFile:)</code>. If the system ended the app, it relaunches the app. Create the session again with the same identifier. Use one session. Apple documents a growing delay for new background download tasks. I assume uploads match.</li><li><strong><code>BGProcessingTask</code> is a bonus, not a plan.</strong> It runs only when the device is idle, and it can be interrupted. It needs the <code>processing</code> background mode. Set <code>requiresNetworkConnectivity</code>, and do the cheap work on launch and foreground.</li><li><strong><code>BGContinuedProcessingTask</code> (iOS 26)</strong> starts in the foreground and may continue after. The person can cancel it, and the system can end it at once. Save the offset. The page I read does not name uploads.</li><li><strong><code>CKSyncEngine</code> (iOS 17)</strong> syncs local records with CloudKit. It fits only when every companion uses Apple's cloud. A trip shared with Android phones needs your own server and outbox. That is my reading.</li><li><strong>SwiftData upsert.</strong> Apple documents <code>@Attribute(.unique)</code> as keeping a value unique across instances. Test upsert-on-save on your target OS before you rely on it.</li></ul>
+<ul><li><strong>You drain the outbox yourself.</strong> There is no WorkManager equivalent. Start a drain on edit, on foreground, on network return (<code>NWPathMonitor</code>) and on push. If the user force-quits, do not count on a relaunch. Queued edits may wait for the next launch. I did not confirm this in the pages I read. The edits are in the database and the server ignores repeated <code>opId</code>s, so nothing is lost.</li><li><strong>The system owns background transfers.</strong> Apple's background <code>URLSession</code> runs in a separate process. It supports download tasks and upload tasks from a file. It does not support data tasks or uploads from memory, so write each photo to a file and use <code>uploadTask(with:fromFile:)</code>. If the system ended the app, it relaunches the app. Create the session again with the same identifier. Use one session. Apple documents a growing delay for new background download tasks. I assume uploads match.</li><li><strong><code>BGProcessingTask</code> is a bonus, not a plan.</strong> It runs only when the device is idle, and it can be interrupted. It needs the <code>processing</code> background mode, the task identifier listed in <code>BGTaskSchedulerPermittedIdentifiers</code> in Info.plist, and a handler registered before launch finishes. Set <code>requiresNetworkConnectivity</code>, and do the cheap work on launch and foreground.</li><li><strong><code>BGContinuedProcessingTask</code> (iOS 26)</strong> starts in the foreground and may continue after. The person can cancel it, and the system can end it at once. Save the offset. The page I read does not name uploads.</li><li><strong><code>CKSyncEngine</code> (iOS 17)</strong> syncs local records with CloudKit. It fits only when every companion uses Apple's cloud. A trip shared with Android phones needs your own server and outbox. That is my reading.</li><li><strong>SwiftData upsert.</strong> Apple documents <code>@Attribute(.unique)</code> as keeping a value unique across instances. Test upsert-on-save on your target OS before you rely on it.</li></ul>
 <pre tabindex="0"><code>@Model
 final class ItineraryItem {
     @Attribute(.unique) var itemId: String      // client-generated UUID
     var tripId: String
     var title: String
     var sortKey: String                         // fractional index
-    var startInstant: Date
+    var startLocal: String                      // what the person meant, e.g. &quot;2027-06-10T10:00&quot;
     var startZoneId: String                     // IANA id, e.g. &quot;Europe/Lisbon&quot;
+    var startInstant: Date                      // cache, computed from the two fields above
     var serverRev: Int64
     var deletedAt: Date?                        // tombstone
     var dirty: Bool
 
     init(itemId: String, tripId: String, title: String, sortKey: String,
-         startInstant: Date, startZoneId: String) {
+         startLocal: String, startZoneId: String, startInstant: Date) {
         self.itemId = itemId; self.tripId = tripId; self.title = title; self.sortKey = sortKey
-        self.startInstant = startInstant; self.startZoneId = startZoneId
+        self.startLocal = startLocal; self.startZoneId = startZoneId; self.startInstant = startInstant
         self.serverRev = 0; self.deletedAt = nil; self.dirty = true
     }
 
@@ -161,77 +164,24 @@ final class ItineraryItem {
 <h2 id="further-reading-official-docs">Further reading (official docs)</h2>
 <ul><li><a href="/mobile-system-design/travel-plans-app/">The interview part of this case</a>: scope, decisions, failures, follow-ups and levels</li><li><a href="https://developer.android.com/topic/architecture/data-layer/offline-first">Build an offline-first app (Android)</a>: write strategies, pull, push and hybrid sync, last write wins, queues</li><li><a href="https://developer.android.com/topic/architecture/recommendations">Architecture recommendations (Android)</a></li><li><a href="https://developer.android.com/develop/background-work/background-tasks/persistent">Task scheduling and WorkManager (Android)</a></li><li><a href="https://developer.android.com/develop/background-work/background-tasks/persistent/how-to/manage-work">Manage work (WorkManager)</a>: unique work and <code>ExistingWorkPolicy</code></li><li><a href="https://developer.android.com/develop/background-work/background-tasks/uidt">User-initiated data transfer jobs (Android)</a></li><li><a href="https://source.android.com/docs/core/permissions/timezone-rules">Time zone rules (Android)</a></li><li><a href="https://developer.android.com/training/data-storage/shared/media">Access media files and photo location (Android)</a></li><li><a href="https://developer.android.com/training/app-links/verify-android-applinks">Verify Android App Links</a></li><li><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/ZonedDateTime.html">ZonedDateTime (Java SE 17)</a></li><li><a href="https://developer.apple.com/documentation/foundation/timezone">TimeZone (Apple)</a></li><li><a href="https://developer.apple.com/documentation/foundation/downloading-files-in-the-background">Downloading files in the background (Apple)</a>: background sessions, file-based uploads, relaunch</li><li><a href="https://developer.apple.com/documentation/backgroundtasks/bgprocessingtask">BGProcessingTask (Apple)</a></li><li><a href="https://developer.apple.com/documentation/backgroundtasks/bgprocessingtaskrequest">BGProcessingTaskRequest (Apple)</a></li><li><a href="https://developer.apple.com/documentation/backgroundtasks/bgcontinuedprocessingtask">BGContinuedProcessingTask (Apple)</a></li><li><a href="https://developer.apple.com/documentation/swiftdata/preserving-your-apps-model-data-across-launches">Preserving your app's model data across launches (Apple)</a></li><li><a href="https://www.rfc-editor.org/rfc/rfc9557.html">RFC 9557</a> and <a href="https://www.rfc-editor.org/rfc/rfc6578.html">RFC 6578</a></li><li><a href="/guides/offline-first-hub/">Offline-first hub</a> on this site</li><li>Related case studies: <a href="/mobile-system-design/chat-app/">Chat app</a>, <a href="/mobile-system-design/photo-file-sync/">Photo and file sync</a>, <a href="/mobile-system-design/booking-app/">Booking app</a></li></ul>
 <details class="notes words" id="words"><summary>Words on this page (15)</summary><dl><dt><a href="/glossary/#bgprocessingtask">BGProcessingTask</a></dt><dd>A kind of iOS background task for long work. The system decides when it runs, often when the phone is idle.</dd><dt><a href="/glossary/#crdt">CRDT</a></dt><dd>A data type that merges edits from many devices by itself. Every device ends with the same result.</dd><dt><a href="/glossary/#cursor">Cursor</a></dt><dd>A saved place in a list. The server gives it to the app, and the app sends it back to get the next part.</dd><dt><a href="/glossary/#exponential-backoff">Exponential backoff</a></dt><dd>Waiting longer after each failure. For example, wait 1 second, then 2, then 4.</dd><dt><a href="/glossary/#outbox">Outbox</a></dt><dd>A saved list of changes that the server has not confirmed yet. The app sends them later, even after it restarts.</dd><dt><a href="/glossary/#polling">Polling</a></dt><dd>Asking the server again and again if there is news. It costs battery and data.</dd><dt><a href="/glossary/#room">Room</a></dt><dd>Android&#x27;s library for the database on the phone. You use a DAO to read and write the data.</dd><dt><a href="/glossary/#sequence-number">Sequence number</a></dt><dd>A number that grows by one with each message. It shows the order, and it shows a gap when a number is missing.</dd><dt><a href="/glossary/#snapshot">Snapshot</a></dt><dd>A copy of the data as it was at one moment. It is not a list of changes.</dd><dt><a href="/glossary/#source-of-truth">Source of truth</a></dt><dd>The one copy of the data that the app trusts. In these cases it is the database on the phone, and the screen only reads it.</dd><dt><a href="/glossary/#stale-data">Stale data</a></dt><dd>Saved data that may be out of date. The app should show how old it is, or refresh it.</dd><dt><a href="/glossary/#swiftdata">SwiftData</a></dt><dd>Apple&#x27;s library for saving data on an iPhone. It has the same role as Room on Android.</dd><dt><a href="/glossary/#tombstone">Tombstone</a></dt><dd>A row that says an item was deleted. The app keeps it for a while, so an old copy cannot bring the item back.</dd><dt><a href="/glossary/#upsert">Upsert</a></dt><dd>A database step that inserts a row, or updates it if it already exists.</dd><dt><a href="/glossary/#workmanager">WorkManager</a></dt><dd>Android&#x27;s tool for background work that must run later. The work survives when the app closes or the phone restarts.</dd></dl><p class="mut"><a href="/glossary/">Read the whole glossary</a></p></details><aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> 18 official pages (<a href="#notes">notes below</a>).</p><p>Kotlin 2.3.21 compiled. Swift 6.4 type-checked.</p><p>Not verified:</p><ul><li>Relaunch after force-quit</li><li>Apple invite-link fallback</li></ul><p>No outside reviewer yet. Checked 14 Oct 2026.</p></aside><details class="notes" id="notes"><summary>Verification notes (last reviewed 14 Oct 2026)</summary>
-<p><strong>What this page is.</strong></p>
+<p><strong>What I checked.</strong></p>
 <ul>
-<li>This guide is the implementation part of the travel plans case.</li>
-<li>I moved it to its own page on 2026-10-14 so the interview page stays inside 45 minutes.</li>
+<li>The Kotlin key, merge and time code ran on the JVM. 2,000 random inserts stayed sorted and unique. The merge keeps edits to different fields and flags the same field. Lisbon 10:00 to New York 13:00 is eight hours.</li>
+<li>An earlier version of the Room entity compiled. The Room compiler accepted the table, the index and the default value.</li>
+<li>An earlier version of the Swift model type-checked for iOS 17 and later. It was not run.</li>
+<li>Official docs read: Android offline-first, WorkManager, user-initiated transfers, zone rules, media location, App Links, Java ZonedDateTime, Apple background URLSession, BGProcessingTask, BGContinuedProcessingTask, TimeZone, RFC 9557 and RFC 6578.</li>
 </ul>
-<p><strong>Code checks.</strong></p>
+<p><strong>What I did not verify.</strong></p>
 <ul>
-<li>The five code blocks (the Room entity, the REST listing, the merge function, the fractional key function and the time snippet) and the Swift model are byte-identical to the earlier draft. I checked this with a diff on 2026-10-14.</li>
-<li>I compiled and ran the code again on 2026-10-14, adding only <code>package</code> and import lines. Kotlin 2.3.21, Android Gradle plugin 9.1.0, compileSdk 36, Room 2.8.4 and Gradle 9.8.1, all offline from the local cache, nothing downloaded.</li>
-<li>The Room entity, the merge function, the fractional key function and the time snippet compile with no errors.</li>
-<li>The Room compiler (KSP 2.3.6) also ran on the entity inside a small test database that I wrote, and it accepted the table, the index and the default value. That database and its two queries are stubs.</li>
-<li>I ran the key, merge and time code on the JVM with a self-check:
-<ul>
-<li>2,000 random inserts stay sorted, unique and never end in the lowest digit.</li>
-<li>The merge keeps edits to different fields and flags the same field.</li>
-<li>The two-request case does report a false conflict, as section 3 says.</li>
-<li>The Lisbon to New York example is eight hours.</li>
-</ul></li>
-<li>The Swift model type-checked with swiftc 6.4 against the iOS 27.0 simulator SDK, for iOS 17 and iOS 26 targets, in language modes 5 and 6, with no errors or warnings. It was not run.</li>
-<li>I found no bug in the code.</li>
-<li>What is not compiled: the <code>startLocal</code> column in section 1, the two fixes for the two-request case in section 3, and the wall-clock-first time model in section 6. These are described in prose only.</li>
-<li>The two-request gap is my reading of the sketch and it is not tested.</li>
+<li>The changed entity (<code>startLocal</code>), the changed time snippet, the Swift model change and the <code>coalesce</code> function were not compiled.</li>
+<li>The "own earlier edit" case is my reading of the sketch. It is not tested.</li>
+<li>What iOS does after a force-quit, and photo location on iOS.</li>
+<li>No iOS engineer has reviewed this page.</li>
 </ul>
-<p><strong>My own opinion or design.</strong></p>
+<p><strong>My own design.</strong></p>
 <ul>
-<li>The fractional key algorithm follows the common midpoint approach and is our implementation.</li>
-<li>Sections 3, 4, 5 and 7 are our synthesis.</li>
-<li>The official docs do not cover collaborative editing, so per-field merge, order keys, tombstone handling and the cursor design are opinion.</li>
-<li>The 410 resync and the tombstone retention are design choices, not documented values.</li>
-<li>No numbers are claimed here.</li>
-</ul>
-<p><strong>Fetched and read.</strong></p>
-<ul>
-<li>Audit: I re-read the pages for UIDT, App Links, Room, the Play rollout, WorkManager define-work, the Apple background session (rate limiter text speaks of download tasks), BGContinuedProcessingTask and phased release, and RFC 9557. I corrected three claims:
-<ul>
-<li>The RFC 9557 claim, which only names the case as out of scope.</li>
-<li>The force-quit claim, which I could not confirm.</li>
-<li>The upload rate limit, which is my assumption.</li>
-</ul></li>
-<li>Read on 2026-10-14:
-<ul>
-<li>Android offline-first page: lazy writes and their conflict warning, versioning, last write wins, a queue drained with backoff, a persistent queue for firmer order, pull, push and hybrid sync.</li>
-<li>WorkManager persistent-work page: work persists across restarts and reboots.</li>
-<li>User-initiated transfer page: Android 14, notification, can be stopped, speaks of downloads only.</li>
-<li>Android zone rules page: module updates, no common timing.</li>
-<li>Android media page: photo location needs ACCESS_MEDIA_LOCATION on Android 10 and later.</li>
-<li>App Links page: Android 15 re-checks, up to seven days.</li>
-<li>Java SE 17 ZonedDateTime page: gap and overlap.</li>
-<li>RFC 9557: future local times can change instant.</li>
-<li>RFC 6578: opaque token, old token rejected.</li>
-<li>Apple background session page, through its JSON: separate process, file-only uploads, relaunch and same-identifier session, rate limiter.</li>
-<li>Apple BGContinuedProcessingTask page, through its JSON: cancel by the person, abrupt end.</li>
-</ul></li>
-<li>Earlier, on 2026-10-13, I verified the manage-work page (<code>enqueueUniqueWork</code>, <code>ExistingWorkPolicy</code>), Apple <code>TimeZone</code> (IDs, not names), <code>BGProcessingTask</code> (idle-only, can be interrupted, <code>processing</code> mode), <code>BGProcessingTaskRequest</code> (<code>requiresNetworkConnectivity</code>) and SwiftData <code>@Attribute(.unique)</code>.</li>
-</ul>
-<p><strong>Not verified.</strong></p>
-<ul>
-<li>That nothing relaunches the app after a force-quit in a general background upload.</li>
-<li>Android behavior after a force-stop.</li>
-<li>Apple's side of invite links and the no-app fallback.</li>
-<li>Whether photo location is removed by default on iOS.</li>
-<li><code>NWPathMonitor</code> details.</li>
-<li>SwiftData unique-upsert behavior on a given OS.</li>
-<li>The <code>CKSyncEngine</code> reading (it comes from the Apple page through its JSON, and I did not build with it).</li>
-<li>The WorkManager backoff numbers in section 10 (from the define-work page, as read for the chat case, and not re-read here).</li>
-<li>Any CRDT library.</li>
-<li>No iOS engineer has reviewed the iOS sections yet.</li>
-</ul>
-<p><strong>Changes by review pass.</strong></p>
-<ul>
-<li>Source-check pass, 2026-10-14: I changed the WorkManager link label, marked an example, and said that the 45-minute length is my assumption.</li>
+<li>Per-field merge, order keys, tombstone handling, the 410 resync and the cursor design. The official docs do not cover collaborative editing.</li>
+<li>Tombstone retention is a design choice. I give no number.</li>
 </ul>
 </details>
 <div class="cta-card"><h2>Questions or corrections?</h2><p>Add them to the <a href="https://github.com/noloman/mobiledesignrounds/discussions/11">discussion thread for this case</a> on GitHub. To post, you need a free GitHub account. What you write there is public and follows GitHub's terms. Good answers are added to this page.</p></div>

@@ -15,11 +15,11 @@
 );
 
 CREATE TABLE purchases (
-  token       TEXT PRIMARY KEY,       -- Google purchaseToken, or Apple transaction id
+  token       TEXT PRIMARY KEY,       -- Google purchaseToken; Apple originalTransactionId (subscription) or transactionId (one-time)
   user_id     TEXT NOT NULL,
   product_id  TEXT NOT NULL REFERENCES products(product_id),
   store       TEXT NOT NULL,          -- 'google' or 'apple'
-  state       TEXT NOT NULL,          -- 'pending', 'active', 'expired', 'revoked'
+  state       TEXT NOT NULL,          -- 'pending', 'active', 'in_grace', 'on_hold', 'expired', 'revoked'
   expires_at  TEXT NOT NULL,          -- ISO time; a far date for a one-time unlock
   updated_at  TEXT NOT NULL
 );
@@ -40,7 +40,7 @@ DELETE FROM entitlements WHERE user_id = :user;
 INSERT INTO entitlements (user_id, feature, valid_until)
 SELECT p.user_id, pr.feature, MAX(p.expires_at)
 FROM purchases p JOIN products pr ON pr.product_id = p.product_id
-WHERE p.user_id = :user AND p.state = 'active'
+WHERE p.user_id = :user AND p.state IN ('active', 'in_grace')
 GROUP BY p.user_id, pr.feature;</code></pre><p>What the six SQLite checks show:</p><ul><li>Sending token T1 twice leaves one row.</li><li>A monthly purchase and a lifetime purchase for the same feature: the later end date wins.</li><li>The lifetime purchase is refunded: access follows the monthly one.</li><li>Both are refunded: the user owns nothing.</li><li>A pending purchase grants nothing.</li></ul><p>The server must also check the token with the store before step 1, and read the product and the end date from the store's answer, never from the app. That call is not shown here because it differs for each store.</p><h2 id="2-the-api">2. The API</h2><p>Four calls. The app uses the first two. The stores call the third. The fourth is for buyers who sign in later.</p><pre tabindex="0"><code>POST /v1/purchases
 { "store": "google", "productId": "pro_monthly", "token": "&lt;purchaseToken&gt;" }
 200 { "entitlements": { "pro": "2026-11-16T00:00:00Z" }, "serverTime": "2026-10-16T08:00:00Z" }
@@ -69,6 +69,7 @@ data class StorePurchase(
 data class Entitlements(
     val validUntil: Map&lt;String, Long&gt;, // feature -&gt; epoch millis
     val fetchedAt: Long,
+    val permanent: Set&lt;String&gt; = emptySet(), // features bought once; the offline window does not apply
 )
 
 sealed interface ServerAnswer {
@@ -115,6 +116,7 @@ class PurchaseManager(
     /** What the screens ask. It reads the saved answer, never the store. */
     suspend fun hasAccess(feature: String, offlineWindowMs: Long = 72L * 60 * 60 * 1000): Boolean {
         val e = cache.read() ?: return false
+        if (feature in e.permanent) return true // a one-time unlock stays on with no signal
         val t = now()
         if (t &gt; e.fetchedAt + offlineWindowMs) return false
         return (e.validUntil[feature] ?: return false) &gt; t
@@ -139,6 +141,7 @@ protocol EntitlementCache {
 struct Entitlements: Codable {
     var validUntil: [String: Date]
     var fetchedAt: Date
+    var permanent: Set&lt;String&gt; = [] // features bought once; the offline window does not apply
 }
 
 actor PurchaseManager {
@@ -166,6 +169,23 @@ actor PurchaseManager {
         for await result in Transaction.currentEntitlements { await handle(result) }
     }
 
+    /// Starting a purchase. The token ties the purchase to your own user id.
+    func buy(_ product: Product, appAccountToken: UUID) async throws {
+        let result = try await product.purchase(options: [.appAccountToken(appAccountToken)])
+        switch result {
+        case .success(let verification): await handle(verification)
+        case .pending: break        // for example Ask to Buy: the approval arrives later in Transaction.updates
+        case .userCancelled: break
+        @unknown default: break
+        }
+    }
+
+    /// Restore Purchases button: App Review expects one.
+    func restore() async {
+        try? await AppStore.sync()
+        await reconcile()
+    }
+
     private func handle(_ result: VerificationResult&lt;Transaction&gt;) async {
         // The check on the device is only a hint. The server still verifies.
         guard case .verified(let transaction) = result else { return }
@@ -180,6 +200,7 @@ actor PurchaseManager {
 
     func hasAccess(_ feature: String, offlineWindow: TimeInterval = 72 * 3600) async -&gt; Bool {
         guard let e = await cache.read() else { return false }
+        if e.permanent.contains(feature) { return true }
         let now = Date()
         guard now &lt; e.fetchedAt.addingTimeInterval(offlineWindow),
               let until = e.validUntil[feature] else { return false }
@@ -203,7 +224,9 @@ actor PurchaseManager {
 
     override suspend fun acknowledge(token: String) {
         val params = AcknowledgePurchaseParams.newBuilder().setPurchaseToken(token).build()
-        billing.acknowledgePurchase(params)
+        val result = billing.acknowledgePurchase(params)
+        // If this fails, the purchase stays unacknowledged and the next reconcile tries again.
+        check(result.responseCode == BillingClient.BillingResponseCode.OK) { &quot;acknowledge failed: ${result.debugMessage}&quot; }
     }
 }
 
@@ -211,8 +234,22 @@ actor PurchaseManager {
 // - the purchase listener only calls reconcile(), so one path handles every purchase
 val billing = BillingClient.newBuilder(context)
     .setListener { _, _ -&gt; appScope.launch { manager.reconcile() } }
-    // enable pending purchases here; the call depends on your Play Billing version
+    // Play Billing 7 and later. Older versions use enablePendingPurchases() with no argument.
+    // Without this call, build() throws.
+    .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
     .build()
+
+// Starting a purchase. Tag it with your own user id, so a store notification can be matched to the user.
+fun buy(activity: Activity, details: ProductDetails, userIdHash: String) {
+    val product = BillingFlowParams.ProductDetailsParams.newBuilder()
+        .setProductDetails(details) // for a subscription, also call setOfferToken(...)
+        .build()
+    val params = BillingFlowParams.newBuilder()
+        .setProductDetailsParamsList(listOf(product))
+        .setObfuscatedAccountId(userIdHash)
+        .build()
+    billing.launchBillingFlow(activity, params)
+}
 
 // And on every resume:
 override fun onResume() {
@@ -317,7 +354,25 @@ fun main() {
         clock = 71 * HOUR; check(m.hasAccess("pro"))
         clock = 73 * HOUR; check(!m.hasAccess("pro"))
     }
-}</code></pre><h2 id="6-platform-limits">6. Platform limits</h2><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Topic</th><th>Android</th><th>iOS</th><th>Basis</th></tr></thead><tbody><tr><td>Listening</td><td>Without an active billing connection, <code>onPurchasesUpdated</code> is not called. Keep one active BillingClient.</td><td>Purchases can finish outside the app, on another device. They arrive through <code>Transaction.updates</code>, which only works if something listens from launch.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Finding missed purchases</td><td>Call <code>queryPurchasesAsync()</code> on start and in <code>onResume()</code>.</td><td>Read <code>Transaction.currentEntitlements</code> and the unfinished transactions.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Telling the store</td><td>Acknowledge within three days, or the purchase is refunded and the entitlement is revoked. Acknowledge right after granting access.</td><td>Finish the transaction after the app delivers the content.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Pending</td><td>Grant access only in the PURCHASED state. The three-day window starts when a pending purchase becomes PURCHASED.</td><td>Not checked here.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a></td></tr><tr><td>The unique key</td><td><code>purchaseToken</code> is globally unique. Do not use the order id, because not every purchase has one.</td><td>The transaction id. Apple also offers server tools to verify signed transactions.</td><td><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Trusting the app</td><td>Always verify a purchase before you grant a benefit.</td><td>The check on the device is a hint. Verify on the server.</td><td><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr></tbody></table></div><p>The rows come from the same three pages I read for the case page on 16 October 2026. Two things I did not check: whether Apple has a deadline like Google's three days, and how the notification services work in detail.</p><h2 id="7-more-practice-prompts">7. More practice prompts</h2><ol><li>Add a consumable product, such as 100 credits. Which table changes, and what does the server do when the same token arrives twice?</li><li>The user buys on Android and signs in on an iPhone. Which call links the purchase, and what must a refund on one store remove?</li><li>The server is down for an hour. What does the app show, and what keeps the user's access?</li><li>Change the 72 hour offline window to 7 days. What do you gain and what do you risk?</li><li>A notification from a store arrives before the app has sent the token. What does the server save?</li></ol><h2 id="further-reading-official-docs">Further reading (official docs)</h2><ul><li><a href="/mobile-system-design/in-app-purchases/">The interview part of this case</a>: scope, decisions, failures, follow-ups and levels</li><li><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a></li><li><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a></li><li><a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></li></ul><details class="notes" id="notes"><summary>Verification notes (last reviewed 16 Oct 2026)</summary><p><strong>Facts from the three official pages</strong> (the same pages as the case page, read on 2026-10-16):</p><ul><li>Play Billing integrate: no active connection means no <code>onPurchasesUpdated</code>; one BillingClient; query purchases on start and resume; acknowledge within three days.</li><li>Play Billing security: verify before granting; the purchase token is globally unique; the order id is not on every purchase.</li><li>StoreKit Transaction: updates, current entitlements, unfinished transactions and finish.</li></ul><p><strong>Code checks.</strong></p><ul><li>The SQL ran in SQLite. It was not run on Postgres.</li><li>The Kotlin manager and seven tests compiled with Kotlin 2.0.21 and kotlinx-coroutines 1.6.4, and all seven passed.</li><li>The Android adapter was not compiled. The Swift was not compiled.</li></ul><p><strong>Not verified.</strong></p><ul><li>The exact Play Billing calls for your library version, including how pending purchases are enabled.</li><li>How the stores' notification services work in detail.</li><li>Whether Apple has a deadline like Google's three days.</li></ul><p><strong>My own opinion or design.</strong></p><ul><li>The tables, the SQL, the reconcile order, the 72 hour window, the API shape and the tests are my design.</li></ul></details><nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/in-app-purchases/"><small>Read first</small>Design in-app purchases and subscriptions</a><a class="nx" href="/start/"><small>Done with this one?</small>Back to the reading paths</a></nav><div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You get a short note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
+}</code></pre><h2 id="6-platform-limits">6. Platform limits</h2><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Topic</th><th>Android</th><th>iOS</th><th>Source</th></tr></thead><tbody><tr><td>Listening</td><td>Without an active billing connection, <code>onPurchasesUpdated</code> is not called. Keep one active BillingClient.</td><td>Purchases can finish outside the app, on another device. They arrive through <code>Transaction.updates</code>, which only works if something listens from launch.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Finding missed purchases</td><td>Call <code>queryPurchasesAsync()</code> on start and in <code>onResume()</code>.</td><td>Read <code>Transaction.currentEntitlements</code> and the unfinished transactions.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Telling the store</td><td>Acknowledge within three days, or the purchase is refunded and the entitlement is revoked. Acknowledge right after granting access.</td><td>Finish the transaction after the app delivers the content.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Pending</td><td>Grant access only in the PURCHASED state. The three-day window starts when a pending purchase becomes PURCHASED.</td><td>Not checked here.</td><td><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a></td></tr><tr><td>The unique key</td><td><code>purchaseToken</code> is globally unique. Do not use the order id, because not every purchase has one.</td><td>The <code>originalTransactionId</code> for a subscription (the <code>transactionId</code> changes on every renewal), the <code>transactionId</code> for a one-time purchase. Apple also offers server tools to verify signed transactions.</td><td><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr><tr><td>Trusting the app</td><td>Always verify a purchase before you grant a benefit.</td><td>The check on the device is a hint. Verify on the server.</td><td><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a>; <a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></td></tr></tbody></table></div><p>The rows come from the same three pages I read for the case page on 16 October 2026. Two things I did not check: whether Apple has a deadline like Google's three days, and how the notification services work in detail.</p><h2 id="7-more-practice-prompts">7. More practice prompts</h2><ol><li>Add a consumable product, such as 100 credits. Which table changes, and what does the server do when the same token arrives twice?</li><li>The user buys on Android and signs in on an iPhone. Which call links the purchase, and what must a refund on one store remove?</li><li>The server is down for an hour. What does the app show, and what keeps the user's access?</li><li>Change the 72 hour offline window to 7 days. What do you gain and what do you risk?</li><li>A notification from a store arrives before the app has sent the token. What does the server save? (It saves the notification under the token, and attaches it to a user when the app sends the proof or when the account id on the purchase is read.)</li></ol><h2 id="further-reading-official-docs">Further reading (official docs)</h2><ul><li><a href="/mobile-system-design/in-app-purchases/">The interview part of this case</a>: scope, decisions, failures, follow-ups and levels</li><li><a href="https://developer.android.com/google/play/billing/integrate">Integrate Google Play Billing</a></li><li><a href="https://developer.android.com/google/play/billing/security">Google Play Billing: security</a></li><li><a href="https://developer.apple.com/documentation/storekit/transaction">Apple StoreKit: Transaction</a></li></ul><details class="notes" id="notes"><summary>Verification notes (last reviewed 16 Oct 2026)</summary>
+<p><strong>What I checked.</strong></p>
+<ul>
+<li>The SQL ran in SQLite before the latest edit. Six checks passed: the same token twice gives one row, the longest purchase wins, a refund of one purchase keeps the other, and a pending purchase grants nothing. It was not run on Postgres.</li>
+<li>The Kotlin manager and seven tests compiled and passed against fake store, server and cache classes, before the <code>permanent</code> field was added.</li>
+<li>Official docs read: Google Play Billing (integrate and security) and Apple StoreKit Transaction.</li>
+</ul>
+<p><strong>What I did not verify.</strong></p>
+<ul>
+<li>The Android adapter and the buy function were not compiled against the real Play Billing library. Check the calls against your version.</li>
+<li>The Swift code was not compiled. No iOS engineer has reviewed this page.</li>
+<li>The changed SQL (<code>in_grace</code>), the <code>permanent</code> field and its Swift version were not re-run.</li>
+<li>How the stores' notification services work in detail, and whether Apple has a deadline like Google's three days.</li>
+</ul>
+<p><strong>My own design.</strong></p>
+<ul>
+<li>The tables, the SQL, the reconcile order, the 72 hour window, the API shape and the tests.</li>
+</ul>
+</details><nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/in-app-purchases/"><small>Read first</small>Design in-app purchases and subscriptions</a><a class="nx" href="/start/"><small>Done with this one?</small>Back to the reading paths</a></nav><div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You get a short note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
 <div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">All case studies</a></li><li><a href="/compare/">Compare design choices</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Concepts</p><ul><li><a href="/concepts/">All concepts</a></li><li><a href="/patterns/">Design patterns</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/guides/">Guides</a></li><li><a href="/mobile-system-design/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/practice/">Practice timer</a></li><li><a href="/practice/#kit">Practice kit</a></li><li><a href="/simulators/">Interactive tools</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li><li><a href="/simulators/cache/">Cache explorer</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "547404bc5ae84ae7bcb0a39fce029e3e"}'></script><script>(()=>{
 if(innerWidth<1040){var d=document.querySelector('.toc details');if(d)d.open=false}

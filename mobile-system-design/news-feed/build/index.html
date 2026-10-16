@@ -15,7 +15,7 @@
 <article class="prose"><p>This is the implementation material behind the <a href="/mobile-system-design/news-feed/">news feed interview case</a>. It covers:</p>
 <ul><li>the tables and the REST shape</li><li>the mediator (the code that fetches pages and fills the database) and the loader code</li><li>the like flow in full</li><li>freshness, images, failure handling and the iOS differences</li></ul>
 <p>None of it belongs in a 45-minute round (the length I assume). I draw it only if asked.</p>
-<p>The snippets use <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> 2.x (<code>androidx.room</code>). The official Room guide now shows Room 3 (<code>androidx.room3</code>, KSP only). Its <a href="https://developer.android.com/jetpack/androidx/releases/room3">release notes</a> replace <code>runInTransaction</code> with <code>withWriteTransaction</code>. The design is the same either way.</p>
+<p>The snippets use <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> 2.x (<code>androidx.room</code>). The official Room guide may show a newer major version with different APIs, such as the transaction helper. The design is the same either way.</p>
 <h2 id="1-data-model-and-api">1. Data model and API</h2>
 <h3 id="the-key-modeling-decision-separate-posts-from-feed-order">The key modeling decision: separate posts from feed order</h3>
 <p>The server ranks the feed, so the same post can move between refreshes. Suppose you store the order on the post row itself, or sort by <code>createdAt</code>. Then an update to one post can change the order of the list, and the user sees posts jump.</p>
@@ -64,8 +64,8 @@ class FeedMediator(
             InitializeAction.SKIP_INITIAL_REFRESH      // show the cache, no spinner
         else InitializeAction.LAUNCH_INITIAL_REFRESH   // stale: refresh, appends wait for it
 
-    override suspend fun load(type: LoadType, state: PagingState&lt;Int, FeedRow&gt;): MediatorResult {
-        val cursor = when (type) {
+    override suspend fun load(loadType: LoadType, state: PagingState&lt;Int, FeedRow&gt;): MediatorResult {
+        val cursor = when (loadType) {
             LoadType.REFRESH -&gt; null
             LoadType.PREPEND -&gt; return MediatorResult.Success(endOfPaginationReached = true)
             LoadType.APPEND -&gt; db.feedDao().lastCursor(&quot;home&quot;)
@@ -74,9 +74,10 @@ class FeedMediator(
         return try {
             val page = api.feed(cursor, limit = 20)
             db.withTransaction {
-                if (type == LoadType.REFRESH) db.feedDao().clearFeed(&quot;home&quot;)   // after the network succeeded
+                if (loadType == LoadType.REFRESH) db.feedDao().clearFeed(&quot;home&quot;)   // after the network succeeded
                 db.postDao().upsertKeepingLocalIntent(page.items)
-                db.feedDao().insertItems(page.toFeedItems(&quot;home&quot;))
+                val start = if (loadType == LoadType.REFRESH) 0 else (db.feedDao().lastPosition(&quot;home&quot;) ?: -1) + 1
+                db.feedDao().insertItems(page.toFeedItems(&quot;home&quot;, start))   // positions continue after the last stored item
             }
             MediatorResult.Success(endOfPaginationReached = page.nextCursor == null)
         } catch (e: IOException) { MediatorResult.Error(e) }
@@ -87,13 +88,28 @@ class FeedMediator(
 <ul><li>Refresh clears only after the network succeeds, inside one transaction. If the request fails, the user keeps the old feed instead of an empty screen.</li><li><code>initialize()</code> is where I decide between showing the cache as it is, or showing it and refreshing in the background (show old data first, then refresh it). Per the Paging guide, <code>LAUNCH_INITIAL_REFRESH</code> also holds back prepend and append until the refresh succeeds. The guide's own sample uses a one-hour window; my ten minutes is an example.</li><li><a class="gl" href="/glossary/#prefetch" title="Loading data before the user asks for it.">Prefetch</a> distance: <code>PagingConfig(pageSize = 20, prefetchDistance = 10)</code>, so the next page starts loading before the user reaches the end. Both numbers are examples, and I would adjust the distance to how fast people scroll.</li></ul>
 <p><strong>iOS:</strong> Apple has no paging library like Paging 3. You write a small loader that keeps one running task and stores <code>nextCursor</code>. The loader starts when the user is within about 5 to 10 rows of the end (my choice, not an Apple value):</p>
 <pre tabindex="0"><code>// Sketch: cursor loader (call loadMoreIfNeeded from each row&#x27;s onAppear, or from UIKit prefetching)
-@MainActor final class FeedLoader {
-    private var task: Task&lt;Void, Never&gt;?
+@MainActor final class FeedLoader: ObservableObject {
+    enum State { case idle, loading, failed, finished }
+    @Published private(set) var state = State.idle        // the list shows a retry row when this is .failed
+
     func loadMoreIfNeeded(currentIndex: Int, total: Int) {
-        guard task == nil, total - currentIndex &lt;= 8, let cursor = store.nextCursor else { return }
-        task = Task {
-            defer { task = nil }
-            if let page = try? await api.feed(cursor: cursor) { await store.append(page) }  // dedupe by post ID
+        guard state == .idle, total - currentIndex &lt;= 8, let cursor = store.nextCursor else { return }
+        load(cursor)
+    }
+    func retry() {                                        // called by the retry row
+        guard state == .failed, let cursor = store.nextCursor else { return }
+        load(cursor)
+    }
+    private func load(_ cursor: String) {
+        state = .loading
+        Task {
+            do {
+                let page = try await api.feed(cursor: cursor)
+                try await store.append(page)              // one save: posts and order, dedupe by post ID
+                state = page.nextCursor == nil ? .finished : .idle
+            } catch {
+                state = .failed                           // keep the cursor, show a retry row
+            }
         }
     }
 }</code></pre>
@@ -121,72 +137,16 @@ class FeedMediator(
 <h2 id="further-reading-official-docs">Further reading (official docs)</h2>
 <ul><li><a href="/mobile-system-design/news-feed/">The interview part of this case</a>: scope, decisions, failures, follow-ups and levels</li><li><a href="https://developer.android.com/topic/libraries/architecture/paging/v3-network-db">Paging from network and database (Android)</a></li><li><a href="https://developer.android.com/topic/architecture/data-layer/offline-first">Offline-first guidance (Android)</a></li><li><a href="https://developer.android.com/topic/architecture/recommendations">Architecture recommendations (Android)</a></li><li><a href="https://developer.android.com/topic/architecture/data-layer">Data layer (Android)</a></li><li><a href="https://developer.apple.com/documentation/uikit/uicollectionviewdatasourceprefetching">UICollectionViewDataSourcePrefetching (Apple)</a></li><li><a href="https://developer.apple.com/documentation/uikit/uitableviewdatasourceprefetching">UITableViewDataSourcePrefetching (Apple)</a></li><li><a href="https://developer.android.com/jetpack/androidx/releases/room3">Room 3 release notes (Android)</a></li><li><a href="https://developer.android.com/topic/libraries/architecture/paging/v3-overview">Paging library overview (Android)</a></li><li><a href="https://bumptech.github.io/glide/doc/caching.html">Glide: caching</a> and <a href="https://coil-kt.github.io/coil/image_loaders/">Coil: image loaders</a></li></ul>
 <p>Builds on: <a href="/mobile-system-design/chat-app/">chat app</a> for the outbox, <a href="/mobile-system-design/pagination-library/">pagination library</a> for the paging contract, <a href="/mobile-system-design/image-loading/">image loading</a> for the image pipeline. Offline-first background: <a href="/guides/offline-first-hub/">offline-first hub</a>.</p>
-<details class="notes words" id="words"><summary>Words on this page (19)</summary><dl><dt><a href="/glossary/#cdn">CDN</a></dt><dd>Content delivery network. Servers close to users that keep copies of your files.</dd><dt><a href="/glossary/#cursor">Cursor</a></dt><dd>A saved place in a list. The server gives it to the app, and the app sends it back to get the next part.</dd><dt><a href="/glossary/#dao">DAO</a></dt><dd>A class that holds the database queries. DAO means data access object.</dd><dt><a href="/glossary/#decode">Decode</a></dt><dd>To turn an image file into pixels that the screen can draw. It takes time and memory.</dd><dt><a href="/glossary/#exponential-backoff">Exponential backoff</a></dt><dd>Waiting longer after each failure. For example, wait 1 second, then 2, then 4.</dd><dt><a href="/glossary/#idempotent">Idempotent</a></dt><dd>Doing it twice has the same result as doing it once. This makes a retry safe.</dd><dt><a href="/glossary/#lru-cache">LRU cache</a></dt><dd>A cache that removes the item used longest ago when it is full. LRU means least recently used.</dd><dt><a href="/glossary/#main-thread">Main thread</a></dt><dd>The thread that draws the screen. If slow work runs on it, the screen freezes.</dd><dt><a href="/glossary/#offline-first">Offline-first</a></dt><dd>A design where the app works without a network. It saves each change on the phone first and sends it later.</dd><dt><a href="/glossary/#outbox">Outbox</a></dt><dd>A saved list of changes that the server has not confirmed yet. The app sends them later, even after it restarts.</dd><dt><a href="/glossary/#paging">Paging</a></dt><dd>Loading a long list in small parts. The app asks for one page at a time.</dd><dt><a href="/glossary/#prefetch">Prefetch</a></dt><dd>Loading data before the user asks for it. It makes scrolling smooth, but it can waste data.</dd><dt><a href="/glossary/#repository">Repository</a></dt><dd>The class that reads and writes data for the rest of the app. It hides whether the data comes from the network or the database.</dd><dt><a href="/glossary/#room">Room</a></dt><dd>Android&#x27;s library for the database on the phone. You use a DAO to read and write the data.</dd><dt><a href="/glossary/#swiftdata">SwiftData</a></dt><dd>Apple&#x27;s library for saving data on an iPhone. It has the same role as Room on Android.</dd><dt><a href="/glossary/#tombstone">Tombstone</a></dt><dd>A row that says an item was deleted. The app keeps it for a while, so an old copy cannot bring the item back.</dd><dt><a href="/glossary/#upsert">Upsert</a></dt><dd>A database step that inserts a row, or updates it if it already exists.</dd><dt><a href="/glossary/#viewmodel">ViewModel</a></dt><dd>A class that holds the state of one screen. It survives a screen rotation.</dd><dt><a href="/glossary/#workmanager">WorkManager</a></dt><dd>Android&#x27;s tool for background work that must run later. The work survives when the app closes or the phone restarts.</dd></dl><p class="mut"><a href="/glossary/">Read the whole glossary</a></p></details><aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> 10 official pages (<a href="#notes">notes below</a>).</p><p>Kotlin 2.3.21 compiled. Swift 6.4 type-checked.</p><p>Not verified:</p><ul><li>CachedIn default behaviour</li><li>OnAppear timing in List</li></ul><p>No outside reviewer yet. Checked 14 Oct 2026.</p></aside><details class="notes" id="notes"><summary>Verification notes (last reviewed 14 Oct 2026)</summary>
-<p><strong>What this page is.</strong></p>
+<details class="notes words" id="words"><summary>Words on this page (19)</summary><dl><dt><a href="/glossary/#cdn">CDN</a></dt><dd>Content delivery network. Servers close to users that keep copies of your files.</dd><dt><a href="/glossary/#cursor">Cursor</a></dt><dd>A saved place in a list. The server gives it to the app, and the app sends it back to get the next part.</dd><dt><a href="/glossary/#dao">DAO</a></dt><dd>A class that holds the database queries. DAO means data access object.</dd><dt><a href="/glossary/#decode">Decode</a></dt><dd>To turn an image file into pixels that the screen can draw. It takes time and memory.</dd><dt><a href="/glossary/#exponential-backoff">Exponential backoff</a></dt><dd>Waiting longer after each failure. For example, wait 1 second, then 2, then 4.</dd><dt><a href="/glossary/#idempotent">Idempotent</a></dt><dd>Doing it twice has the same result as doing it once. This makes a retry safe.</dd><dt><a href="/glossary/#lru-cache">LRU cache</a></dt><dd>A cache that removes the item used longest ago when it is full. LRU means least recently used.</dd><dt><a href="/glossary/#main-thread">Main thread</a></dt><dd>The thread that draws the screen. If slow work runs on it, the screen freezes.</dd><dt><a href="/glossary/#offline-first">Offline-first</a></dt><dd>A design where the app works without a network. It saves each change on the phone first and sends it later.</dd><dt><a href="/glossary/#outbox">Outbox</a></dt><dd>A saved list of changes that the server has not confirmed yet. The app sends them later, even after it restarts.</dd><dt><a href="/glossary/#paging">Paging</a></dt><dd>Loading a long list in small parts. The app asks for one page at a time.</dd><dt><a href="/glossary/#prefetch">Prefetch</a></dt><dd>Loading data before the user asks for it. It makes scrolling smooth, but it can waste data.</dd><dt><a href="/glossary/#repository">Repository</a></dt><dd>The class that reads and writes data for the rest of the app. It hides whether the data comes from the network or the database.</dd><dt><a href="/glossary/#room">Room</a></dt><dd>Android&#x27;s library for the database on the phone. You use a DAO to read and write the data.</dd><dt><a href="/glossary/#swiftdata">SwiftData</a></dt><dd>Apple&#x27;s library for saving data on an iPhone. It has the same role as Room on Android.</dd><dt><a href="/glossary/#tombstone">Tombstone</a></dt><dd>A row that says an item was deleted. The app keeps it for a while, so an old copy cannot bring the item back.</dd><dt><a href="/glossary/#upsert">Upsert</a></dt><dd>A database step that inserts a row, or updates it if it already exists.</dd><dt><a href="/glossary/#viewmodel">ViewModel</a></dt><dd>A class that holds the state of one screen. It survives a screen rotation.</dd><dt><a href="/glossary/#workmanager">WorkManager</a></dt><dd>Android&#x27;s tool for background work that must run later. The work survives when the app closes or the phone restarts.</dd></dl><p class="mut"><a href="/glossary/">Read the whole glossary</a></p></details><aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> 10 official pages (<a href="#notes">notes below</a>).</p><p>The original snippets compiled. The mediator and loader were edited after that check and not recompiled.</p><p>Not verified:</p><ul><li>CachedIn default behaviour</li><li>OnAppear timing in List</li></ul><p>No outside reviewer yet. Checked 14 Oct 2026.</p></aside><details class="notes" id="notes"><summary>What I checked and what I did not</summary>
 <ul>
-<li>This guide is the implementation part of the news feed case, split from the interview page on 2026-10-14.</li>
-<li>The code blocks are unchanged. All four were diffed byte for byte against the audited code in the page this replaces on 2026-10-14 and match.</li>
-<li>Prose that describes the code was re-read against it on the same date.</li>
-</ul>
-<p><strong>My own opinion or design.</strong></p>
-<ul>
-<li>The sentence about keeping the count with the pending flag is design advice from audit E, not sourced.</li>
-<li>The retry split is my classification.</li>
-<li>The 10-minute cache window, prefetch thresholds and impression thresholds are example values.</li>
-</ul>
-<p><strong>Audit fixes applied on 2026-10-13.</strong></p>
-<ul>
-<li>The cursor claim says a ranked feed needs a pinned list or client dedupe.</li>
-<li>The like flow states the retry rule: transient means IOException, 408, 429, 5xx, honour Retry-After; permanent means other 4xx.</li>
-<li>The FeedMediator carries an Apache-2.0 'adapted from' comment.</li>
-</ul>
-<p><strong>Fetched and read on 2026-10-14.</strong></p>
-<ul>
-<li>The Paging network-and-database guide: network call before the transaction, clear on REFRESH inside it, <code>LAUNCH_INITIAL_REFRESH</code> makes appends and prepends wait, one-hour sample window.</li>
-<li>The Room guide: <code>androidx.room3</code>, KSP required, version 3.0.3, no mention of <code>withWriteTransaction</code>.</li>
-<li>The Room 3 release notes: <code>runInTransaction</code> becomes <code>withWriteTransaction</code>. They do not mention <code>withTransaction</code>, which the snippet uses as Room 2 KTX.</li>
-<li>The UICollectionViewDataSourcePrefetching page: prefetch is not necessarily called for every cell. <code>cancelPrefetchingForItemsAt</code> cancels, and is optional.</li>
-</ul>
-<p><strong>Fetched and read on 2026-10-13.</strong></p>
-<ul>
-<li>The Paging overview: Pager and PagingData sit in the ViewModel layer.</li>
-<li>The UITableViewDataSourcePrefetching page.</li>
-<li><code>LazyVStack</code> laziness and <code>onAppear</code> timing wording in the Apple docs JSON.</li>
-</ul>
-<p><strong>Code checks.</strong></p>
-<ul>
-<li>Kotlin snippets were compile-checked offline on 2026-10-13 against Kotlin 2.3.21 (AGP 9.1.0, compileSdk 36), Room 2.8.4, Paging 3.4.2, with stubs only for app-defined placeholders.</li>
-<li>Newer releases exist (Room 2.8.5, Paging 3.5.3).</li>
-<li>The attribution comment added to the mediator was not re-compiled.</li>
-<li>Swift snippets type-checked on 2026-10-13 against the iOS 27 simulator SDK (Swift 6.4, language modes 5 and 6), stubs only for placeholders.</li>
-<li>PUT and DELETE idempotency follows HTTP semantics (RFC 9110).</li>
-<li><code>lastUpdated()</code>, <code>lastCursor()</code> and <code>upsertKeepingLocalIntent</code> are app-defined helpers, not library APIs.</li>
-</ul>
-<p><strong>Not verified.</strong></p>
-<ul>
-<li><code>cachedIn</code> and <code>prefetchDistance</code> default behaviour (general Paging knowledge, not found on the overview page).</li>
-<li>How <code>List</code> is implemented on each OS version.</li>
-<li>Whether <code>onAppear</code> in <code>List</code> fires early enough for prefetch-like loading.</li>
-<li>The Android data-saver API for skipping prefetch.</li>
-<li>The <code>retrofit2.HttpException</code> import (retrofit2 artifacts were stubbed in the compile check).</li>
-<li>Not applied, from audit E: the mediator restarts positions at 0 on APPEND (<code>toFeedItems</code> needs a start position) and overrides <code>load</code> with the parameter named <code>type</code>. The snippet is unchanged on purpose.</li>
-<li>No iOS engineer has reviewed the iOS sections yet.</li>
-</ul>
-<p><strong>Links.</strong></p>
-<ul>
-<li>Every external link returned 200 on 2026-10-14.</li>
-<li>The anchor <code>#4-views-recycling-and-cancellation</code> matches the heading "4. Views, recycling and cancellation" in the image loading build guide (the earlier text called it section 5).</li>
-</ul>
-<p><strong>Changes by review pass.</strong></p>
-<ul>
-<li>A readability pass on 2026-10-14 split long sentences and paragraphs.</li>
-<li>A plain English pass the same day used simpler words, defined technical terms and used one word for each idea (outbox, cursor, retry, remove repeats). It changed no fact, link, code block or marker.</li>
-<li>Source-check pass, 2026-10-14:
-<ul>
-<li>I showed the frame-time arithmetic.</li>
-<li>I marked the row distance as my choice.</li>
-<li>I said that the 45-minute length is my assumption.</li>
-</ul></li>
+<li>I read the Android Paging guide for network and database. It supports the order: network call first, then one transaction that clears on refresh and inserts. It also supports <code>LAUNCH_INITIAL_REFRESH</code> holding back appends, and the one-hour sample window.</li>
+<li>I read the Apple prefetch pages. Prefetch is not called for every cell, and cancelling is optional.</li>
+<li>PUT and DELETE are idempotent by HTTP rules (RFC 9110). The server must really treat them as "set".</li>
+<li><code>lastUpdated()</code>, <code>lastCursor()</code>, <code>lastPosition()</code> and <code>upsertKeepingLocalIntent</code> are helpers you write yourself. They are not library APIs.</li>
+<li>The 10-minute cache window, prefetch distances and impression thresholds are examples.</li>
+<li>The retry split (temporary versus permanent) and keeping the count with the pending flag are my design advice.</li>
+<li>I did not verify <code>cachedIn</code> and <code>prefetchDistance</code> defaults, how <code>List</code> is built on each iOS version, or whether <code>onAppear</code> in a <code>List</code> fires early enough for prefetch.</li>
+<li>No iOS engineer has reviewed the iOS parts yet.</li>
 </ul>
 </details>
 <div class="cta-card"><h2>Questions or corrections?</h2><p>Add them to the <a href="https://github.com/noloman/mobiledesignrounds/discussions/2">discussion thread for this case</a> on GitHub. To post, you need a free GitHub account. What you write there is public and follows GitHub's terms. Good answers are added to this page.</p></div>

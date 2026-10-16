@@ -18,7 +18,7 @@
 <p><strong>In short:</strong> Promise stops, scheduled departures and saved routes offline. Keep trip planning on the server.</p>
 <p>A prompt I would expect: "Design an app that shows when my bus leaves, even with no signal." I ask five questions, with a default for each:</p>
 <ul><li>One city or many? One city, one agency feed.</li><li>Trip planning? Yes, on the server.</li><li>Realtime data? Usually, so the app must work without it.</li><li>Offline? Nearby stops, scheduled departures, saved routes.</li><li>Location? Not required.</li></ul>
-<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>In scope</th><th>Out of scope</th><th>Parked until you ask</th></tr></thead><tbody><tr><td>Stop boards (lists of next departures)</td><td>Tickets and payment</td><td>Planning with no server</td></tr><tr><td>Saved routes</td><td>Walking directions</td><td>A live map of vehicles</td></tr><tr><td>Live, scheduled or <a class="gl" href="/glossary/#stale-data" title="Saved data that may be out of date.">stale</a> labels</td><td>Reports from riders</td><td>A widget or a second phone</td></tr><tr><td>Disruption alerts, tunnels</td><td></td><td>Many cities or agencies</td></tr></tbody></table></div>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>In scope</th><th>Out of scope</th><th>Parked until you ask</th></tr></thead><tbody><tr><td>Stop boards (lists of next departures)</td><td>Tickets and payment</td><td>Planning with no server</td></tr><tr><td>Saved routes</td><td>Walking directions</td><td>A live map of vehicles</td></tr><tr><td>Live, scheduled or <a class="gl" href="/glossary/#stale-data" title="Saved data that may be out of date.">stale</a> labels</td><td>Reports from riders</td><td>A widget or a second phone</td></tr><tr><td>Disruption alerts</td><td>Fare rules</td><td>Many cities or agencies</td></tr></tbody></table></div>
 <p>The phone is not one box. It does four things to this design:</p>
 <div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>What the phone does</th><th>Requirement at risk</th><th>Deep dive</th></tr></thead><tbody><tr><td>Stops the app process</td><td>No half-written timetable</td><td>Data (2), structure (3)</td></tr><tr><td>Delays background work</td><td>A current timetable</td><td>Structure (3), alerts (4.2)</td></tr><tr><td>Loses signal, keeps a dead link</td><td>A time never lies</td><td>The honest row (4.1)</td></tr><tr><td>Has a battery and data plan</td><td>Small downloads, little location</td><td>Numbers (2), alerts (4.2)</td></tr></tbody></table></div>
 <blockquote class="bq-call"><p><strong><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-signpost"/></svg>Your decision.</strong> What do you promise a user with no signal? "Plan any trip", or "the next departures for stops and routes you know"?</p></blockquote>
@@ -31,8 +31,8 @@
 <h2 id="2-data-and-contracts-minutes-4-to-14">2. Data and contracts (minutes 4 to 14)</h2>
 <p><strong>In short:</strong> The server builds one timetable file. The app swaps it whole. Realtime data stays in memory with its age.</p>
 <blockquote class="bq-call"><p><strong><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-signpost"/></svg>Your decision.</strong> Where does the timetable live? Does the phone parse the agency zip, ask the server for every query, or download one compiled file?</p></blockquote>
-<p class="beat b-instinct"><strong><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-bulb"/></svg>First idea, and why it fails.</strong> Download the <a class="gl" href="/glossary/#gtfs" title="General Transit Feed Specification.">GTFS</a> zip and read it into the app. GTFS (General Transit Feed Specification) is the standard set of timetable text files. Reading a big city's stop times blocks the app. If Android stops the process midway, the database holds half a timetable.</p>
-<p class="beat b-say"><strong><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>What I would say.</strong> The server compiles one SQLite file (a database in a single file). I call it the pack. The app downloads it, checks its <a class="gl" href="/glossary/#hash" title="A short code made from the bytes of a file.">hash</a> and schema version, opens it as a new file, and then moves one pointer. Saved routes live in a second database that a swap never touches. I reject patches, because the numbers below do not need them.</p>
+<p class="beat b-instinct"><strong><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-bulb"/></svg>First idea, and why it fails.</strong> Download the <a class="gl" href="/glossary/#gtfs" title="General Transit Feed Specification.">GTFS</a> zip and read it into the app. GTFS (General Transit Feed Specification) is the standard set of timetable text files. Reading a big city's stop times blocks the app. A big import takes a long time. If the system stops the app midway, you are left with a half-built database or a long rebuild.</p>
+<p class="beat b-say"><strong><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-check"/></svg>What I would say.</strong> The server compiles one SQLite file (a database in a single file). I call it the pack. The app downloads it, checks its <a class="gl" href="/glossary/#hash" title="A short code made from the bytes of a file.">hash</a> and schema version, opens it as a new file, and then moves one pointer. On iOS the same swap works with an atomic file replace. Saved routes live in a second database that a swap never touches. I reject patches, because the numbers below do not need them.</p>
 <p class="beat b-push"><strong><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-ask"/></svg>The follow-up question I expect:</strong></p>
 <blockquote><p>"A new pack arrives while the user reads a board."</p></blockquote>
 <p>Readers keep the old file. The next query uses the new one.</p>
@@ -47,52 +47,29 @@
 <figure class="diagram dg" id="fig-pt-layers" data-ix="{&quot;flows&quot;:[{&quot;name&quot;:&quot;Walk through&quot;,&quot;cum&quot;:true,&quot;steps&quot;:[{&quot;on&quot;:[&quot;r1&quot;,&quot;r2&quot;],&quot;t&quot;:&quot;The timetable pack holds scheduled times and works offline. A live layer, one stop&#x27;s slice kept in memory, sits on top.&quot;},{&quot;on&quot;:[&quot;r3&quot;,&quot;a3&quot;,&quot;r4&quot;,&quot;a4&quot;,&quot;r5&quot;,&quot;a5&quot;],&quot;t&quot;:&quot;Each row carries one of three labels. Scheduled: there is no live data. Live: the slice is fresh. Stale: the slice is over 180 seconds old.&quot;}]}]}"><svg viewBox="0 0 340 192" role="img" aria-label="Diagram. The timetable pack holds scheduled times and works offline. A live layer, one stop&#x27;s slice kept in memory, sits on top. Each row carries one of three labels: Scheduled, when there is no live data; Live, when the slice is fresh; Stale, when the slice is over 180 seconds old."><g class="mn" data-id="r1"><rect class="b " x="8" y="8" width="158" height="56" rx="10"/><use href="#i-database" class="di " x="16" y="26.0" width="20" height="20"/><text class="t" x="42" y="24.0" text-anchor="start">Timetable pack</text><text class="s" x="42" y="40.0" text-anchor="start">scheduled times,</text><text class="s" x="42" y="56.0" text-anchor="start">works offline</text></g><g class="mn" data-id="r2"><rect class="b m" x="174" y="8" width="158" height="56" rx="10"/><use href="#i-waves" class="di m" x="182" y="26.0" width="20" height="20"/><text class="t" x="208" y="24.0" text-anchor="start">Live layer</text><text class="s" x="208" y="40.0" text-anchor="start">one stop&#x27;s slice,</text><text class="s" x="208" y="56.0" text-anchor="start">kept in memory</text></g><g class="mn" data-id="r3"><rect class="b " x="8" y="108" width="100" height="56" rx="10"/><text class="t" x="58.0" y="132.0" text-anchor="middle">Scheduled</text><text class="s" x="58.0" y="148.0" text-anchor="middle">no live data</text></g><g class="mn" data-id="r4"><rect class="b m" x="120" y="108" width="100" height="56" rx="10"/><text class="t" x="170.0" y="132.0" text-anchor="middle">Live</text><text class="s" x="170.0" y="148.0" text-anchor="middle">slice is fresh</text></g><g class="mn" data-id="r5"><rect class="b f" x="232" y="108" width="100" height="56" rx="10"/><text class="t" x="282.0" y="132.0" text-anchor="middle">Stale</text><text class="s" x="282.0" y="148.0" text-anchor="middle">over 180 s old</text><text class="s" x="170" y="184" text-anchor="middle">Each row carries its label.</text></g><g class="ed" data-id="a3"><path class="l m" d="M87 64 L58 108"/><path class="hd m" d="M58 108L64.9 103.9L59.1 100.1z"/></g><g class="ed" data-id="a5"><path class="l m" d="M253 64 L172 108"/><path class="l f" d="M253 64 L282 108"/><path class="hd f" d="M282 108L280.9 100.1L275.1 103.9z"/></g><g class="ed" data-id="a4"><path class="hd m" d="M172 108L180.0 107.6L176.7 101.5z"/></g></svg><figcaption><span>The timetable pack gives scheduled times. A live layer sits on top and shows its age, so every row says how much the app knows.</span></figcaption></figure>
 <h2 id="3-to-5-in-short-what-the-full-case-covers">3 to 5 in short: what the full case covers</h2>
 <p><strong>In short:</strong> Three more decisions follow. Here is each one, and the first idea that fails.</p>
-<ul><li><strong>3. Client structure (minutes 14 to 22).</strong> Who owns the timetable and its updates? The first idea is to let each screen download when it opens. That starts two downloads and can leave a temporary file with no owner.</li><li><strong>4.1 The honest row (minutes 22 to 31).</strong> What does a row say when live data is missing, late or old? The first idea is to treat a missing update as on time. In a tunnel the row would still say, for example, "2 min".</li><li><strong>4.2 Who wakes the phone (minutes 31 to 40).</strong> Does the phone watch for a disruption, or does the server tell it? The first idea is to poll in the background and follow the user with location. Android limits both.</li><li><strong>5. Break it, ship it, roll it back (minutes 40 to 45).</strong> What does the user see when a download stops, the clock is wrong or a release is bad? The first idea is to ship a fix and wait. A store lets you stop a rollout, not recall it.</li></ul>
+<ul><li><strong>3. Client structure (minutes 14 to 22).</strong> Who owns the timetable and its updates? The first idea is to let each screen download when it opens. That starts two downloads and can leave a temporary file with no owner.</li><li><strong>4.1 The honest row (minutes 22 to 31).</strong> What does a row say when live data is missing, late or old? The first idea is to treat a missing update as on time. In a tunnel the row would still say, for example, "2 min".</li><li><strong>4.2 Who wakes the phone (minutes 31 to 40).</strong> Does the phone watch for a disruption, or does the server tell it? The first idea is to poll in the background and follow the user with location. Android limits both, and iOS limits background refresh too.</li><li><strong>5. Break it, ship it, roll it back (minutes 40 to 45).</strong> What does the user see when a download stops, the clock is wrong or a release is bad? The first idea is to ship a fix and wait. A store lets you stop a rollout, not recall it.</li></ul>
 <p>The full case also has six follow-up questions that each change one constraint. It ends with what changes at mid, senior and staff level.</p>
 <h2 id="get-the-full-case">Get the full case</h2>
 <p><strong>In short:</strong> The full case will be part of the study pack. The pack does not exist yet. You can join the waitlist.</p>
 <blockquote><p><strong>The full case, with the follow-up questions, the failure table, the levels and the build guide, will be part of the study pack. The pack does not exist yet. You can join the waitlist: <a href="/pack/">/pack/</a>.</strong></p></blockquote>
-<p>This page stays free at this address. If the pack is dropped, or six months after it launches, the full text goes live here.</p>
+<p>This page stays free at this address. No date is promised for the full case.</p>
 <details class="notes words" id="words"><summary>Words on this page (4)</summary><dl><dt><a href="/glossary/#gtfs">GTFS</a></dt><dd>General Transit Feed Specification. A standard set of text files for bus and train timetables.</dd><dt><a href="/glossary/#hash">Hash</a></dt><dd>A short code made from the bytes of a file. Apps compare the codes to see if two files are the same.</dd><dt><a href="/glossary/#prefetch">Prefetch</a></dt><dd>Loading data before the user asks for it. It makes scrolling smooth, but it can waste data.</dd><dt><a href="/glossary/#stale-data">Stale data</a></dt><dd>Saved data that may be out of date. The app should show how old it is, or refresh it.</dd></dl><p class="mut"><a href="/glossary/">Read the whole glossary</a></p></details><aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> 1 official page (<a href="#notes">notes below</a>).</p><p>No code on this page.</p><p>Not verified:</p><ul><li>Sections 3 to 5 have no links</li><li>Store recall, Android polling limits</li></ul><p>No outside reviewer yet. Checked 14 Oct 2026.</p></aside><details class="notes" id="notes"><summary>Verification notes (last reviewed 14 Oct 2026)</summary>
-<p><strong>What this page is.</strong></p>
+<p><strong>What I checked.</strong></p>
 <ul>
-<li>This is the public teaser of the transport case.</li>
-<li>It holds the full text of sections 1 and 2 from the private full case, shortened to the outline for sections 3 to 5.</li>
-<li>The private file is the source and is not changed.</li>
-<li>The Basis, levels and failure table are not on this page.</li>
-<li>The build guide link is left out.</li>
+<li>The GTFS Schedule reference: times after midnight, such as 25:10, count from noon minus 12 hours of the service day, in the agency time zone.</li>
+<li>The Android pages behind the scope and data sections.</li>
+<li>The arithmetic in section 2: 2,000,000 x 28 B is 56 MB, 3 x 56 is 168 MB, 19 x 30 is 570 MB, 90 + 30 is 120 s, 1.5 x 120 is 180 s, 1.4 x 360 is 504 m.</li>
 </ul>
-<p><strong>Fetched and read.</strong></p>
+<p><strong>What I did not verify.</strong></p>
 <ul>
-<li>Verified: I read the GTFS and Android pages behind sections 1 and 2 on 2026-10-14, as recorded in the notes of the full case.</li>
-<li>The 25:10 rule comes from the GTFS Schedule reference, which the fetch tool read only in part.</li>
+<li>The outline of sections 3 to 5 has no source links. Treat it as a preview.</li>
+<li>That a store cannot recall a build, and the Android limits on background polling and location.</li>
+<li>Anything about iOS. No iOS engineer has reviewed this page.</li>
 </ul>
-<p><strong>Numbers.</strong></p>
+<p><strong>My own design.</strong></p>
 <ul>
-<li>The numbers in section 2 are my assumptions, and I recomputed the arithmetic:
-<ul>
-<li>2,000,000 x 28 B is 56 MB.</li>
-<li>3 x 56 is 168 MB.</li>
-<li>19 x 30 is 570 MB.</li>
-<li>90 + 30 is 120 s.</li>
-<li>1.5 x 120 is 180 s.</li>
-<li>1.4 x 360 is 504 m.</li>
-</ul></li>
-<li>No price or launch date is claimed.</li>
-</ul>
-<p><strong>Not verified.</strong></p>
-<ul>
-<li>Not verified on this page: the outline claims for sections 3 to 5 are not linked, because the full case holds the sources.</li>
-<li>The claim that a store cannot recall a build, and the Android limits on background polling and location, were checked in the full case but are not re-checked here.</li>
-<li>The 6 month rule comes from MONETIZATION-PLAN.md and is not yet confirmed by the owner.</li>
-</ul>
-<p><strong>My own opinion or design.</strong></p>
-<ul>
-<li>The pushes and follow-ups are my reconstruction, not transcripts.</li>
-</ul>
-<p><strong>Changes by review pass.</strong></p>
-<ul>
-<li>Source-check pass, 2026-10-14: I added the GTFS reference link for the noon-minus-12-hours rule and marked an example.</li>
+<li>The numbers in section 2 are assumptions, not measurements.</li>
+<li>The follow-up questions are my reconstruction of public prep material, not transcripts of real rounds.</li>
 </ul>
 </details>
 <div class="cta-card"><h2>Questions or corrections?</h2><p>Add them to the <a href="https://github.com/noloman/mobiledesignrounds/discussions/12">discussion thread for this case</a> on GitHub. To post, you need a free GitHub account. What you write there is public and follows GitHub's terms. Good answers are added to this page.</p></div>
