@@ -33,6 +33,7 @@
 - [Build it: feature flags and remote config on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/feature-flags/build/): the schema, API, code and platform limits for the design feature flags and remote config answer
 - [Design a state machine for a mobile flow](https://mobiledesignrounds.com/mobile-system-design/state-machine/): Explicit states and events for a checkout, double taps that do nothing, and a recovery path when the app is killed mid-payment.
 - [Build it: a state machine for a mobile flow on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/state-machine/build/): the types, reducer, store, saved attempt record, tests and platform limits for the design a state machine answer
+- [Design in-app purchases and subscriptions (Android and iOS)](https://mobiledesignrounds.com/mobile-system-design/in-app-purchases/): The server decides who owns what, a paid user is never left without access, and renewals and refunds arrive on their own. The iOS side has not yet been reviewed by an iOS engineer.
 
 ## Case studies by topic
 - [Offline and sync](https://mobiledesignrounds.com/mobile-system-design/offline-and-sync/): Apps that keep working with no network, and sync later.
