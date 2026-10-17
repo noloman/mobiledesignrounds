@@ -4,9 +4,16 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-10-16T00:00:00Z</updated>
+<updated>2026-10-17T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
+<entry>
+<title>Follow-up round: the reply gets lost</title>
+<link href="https://mobiledesignrounds.com/follow-up/lost-reply/"/>
+<id>https://mobiledesignrounds.com/follow-up/lost-reply/</id>
+<updated>2026-10-17T00:00:00Z</updated>
+<summary>The interviewer asks what happens when the server saved your message but the reply never arrived.</summary>
+</entry>
 <entry>
 <title>Design a chat app</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/chat-app/"/>
