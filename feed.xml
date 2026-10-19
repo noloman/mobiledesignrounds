@@ -4,9 +4,16 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-10-17T00:00:00Z</updated>
+<updated>2026-10-19T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
+<entry>
+<title>Follow-up round: a new post arrives while you scroll</title>
+<link href="https://mobiledesignrounds.com/follow-up/new-post-while-scrolling/"/>
+<id>https://mobiledesignrounds.com/follow-up/new-post-while-scrolling/</id>
+<updated>2026-10-19T00:00:00Z</updated>
+<summary>The interviewer asks what page 2 shows when ten new posts arrive while the user reads page 1.</summary>
+</entry>
 <entry>
 <title>Follow-up round: the reply gets lost</title>
 <link href="https://mobiledesignrounds.com/follow-up/lost-reply/"/>
