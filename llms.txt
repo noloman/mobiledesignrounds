@@ -24,6 +24,8 @@
 - [Build it: a video streaming app on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/video-app/build/): the schema, API, code and platform limits for the design a video streaming app answer
 - [Design reels, video and photos for a travel app (Android and iOS)](https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/): A player pool, a small preload window, uploads that resume, and photos that fit in memory. The iOS side has not yet been reviewed by an iOS engineer.
 - [Build it: reels, video and photos on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/build/): the tables, REST calls, code and platform limits for the reels, video and photos answer
+- [Design a notifications screen in Jetpack Compose (Android)](https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/): A sealed row model, a countdown that uses a clock and not a counter, what recomposes on each tick, and Accept and Decline that can fail. Android and Compose only.
+- [Build it: a notifications screen in Jetpack Compose](https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/build/): the Kotlin code, JSON, strings and tests for the notifications screen answer
 - [Design an analytics SDK](https://mobiledesignrounds.com/mobile-system-design/analytics-sdk/): Sending events in batches, saving them on the device, privacy, and versions.
 - [Build it: an analytics SDK on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/analytics-sdk/build/): the schema, API, code and platform limits for the design an analytics sdk answer
 - [Design a push notification SDK](https://mobiledesignrounds.com/mobile-system-design/push-sdk/): How push tokens change over time, delivery, and deep links.
@@ -78,7 +80,7 @@
 - [Weak and strong answer](https://mobiledesignrounds.com/practice/weak-vs-strong/): a weak and a strong answer to the chat app send path, side by side, with what the weak one skips
 
 ## Glossary
-- [Glossary](https://mobiledesignrounds.com/glossary/): plain English meanings of 77 hard words from the case studies, such as outbox, idempotent, Doze and WorkManager
+- [Glossary](https://mobiledesignrounds.com/glossary/): plain English meanings of 80 hard words from the case studies, such as outbox, idempotent, Doze and WorkManager
 
 ## Pack waitlist (not yet a product)
 - [Pack waitlist](https://mobiledesignrounds.com/pack/): a planned paid study pack. It does not exist yet. There is no price, only a waitlist
