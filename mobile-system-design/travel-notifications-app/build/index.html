@@ -1,0 +1,1085 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-WJDm62DDE4MZD9v2EoCFL7mWS2pksWjW0iId/jEDZH4=' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Build a Notifications Screen in Jetpack Compose: Kotlin Code</title><meta name="description" content="The Kotlin and Compose code behind the travel app notifications case: the wire types, a server clock, a countdown ticker, the repository, the ViewModel, the offer card and the tests.">
+<link rel="canonical" href="https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/build/"><meta property="og:title" content="Build a Notifications Screen in Jetpack Compose: Kotlin Code"><meta property="og:description" content="The Kotlin and Compose code behind the travel app notifications case: the wire types, a server clock, a countdown ticker, the repository, the ViewModel, the offer card and the tests."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/build/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/feeds-and-media.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Build a Notifications Screen in Jetpack Compose: Kotlin Code">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage-700-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Build it: a notifications screen in Jetpack Compose", "description": "The Kotlin and Compose code behind the travel app notifications case: the wire types, a server clock, a countdown ticker, the repository, the ViewModel, the offer card and the tests.", "datePublished": "2026-10-20", "dateModified": "2026-10-20", "mainEntityOfPage": "https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/build/", "image": ["https://mobiledesignrounds.com/og/feeds-and-media.png"], "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/", "sameAs": ["https://manulorenzo.me", "https://github.com/noloman"]}, "publisher": {"@type": "Organization", "name": "Mobile Design Rounds", "url": "https://mobiledesignrounds.com/", "logo": {"@type": "ImageObject", "url": "https://mobiledesignrounds.com/icon-512.png"}}, "inLanguage": "en"}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://mobiledesignrounds.com/mobile-system-design/"}, {"@type": "ListItem", "position": 3, "name": "Design a notifications screen in Jetpack Compose", "item": "https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/"}, {"@type": "ListItem", "position": 4, "name": "Build guide", "item": "https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/build/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/concepts/">Concepts</a><a href="/practice/">Practice</a><a href="/about/">About</a><a class="navcta" href="/#cheat-sheet-signup">Free cheat sheet</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/mobile-system-design/">Case studies</a></li><li><a href="/mobile-system-design/travel-notifications-app/">Design a notifications screen in Jetpack Compose</a></li><li aria-current="page">Build guide</li></ol></nav><div class="chips"><span>Build guide</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg> Android</span><span>25 min read</span></div><h1>Build it: a notifications screen in Jetpack Compose</h1><p class="meta">Last reviewed <time datetime="2026-10-20">20 Oct 2026</time>. Drafted with AI assistance. Checked against official documentation where noted (<a href="/about/#how">how this is checked</a>). Part of: <a href="/mobile-system-design/travel-notifications-app/">Design a notifications screen in Jetpack Compose</a> &middot; <a href="/mobile-system-design/feeds-and-media/">Feeds and media</a> &middot; <a href="/mobile-system-design/#method">The five-step method</a>.</p></div><div class="layout"><aside class="toc"><details open><summary>On this page</summary><ol><li><a href="#45-minute-plan">45-minute plan</a></li><li><a href="#0-dependencies">Dependencies</a></li><li><a href="#1-wire-format">1. Wire format</a></li><li><a href="#2-rest">2. REST</a></li><li><a href="#3-app-model">3. App model</a></li><li><a href="#4-clock-and-ticker">4. The clock and the ticker</a></li><li><a href="#5-repository">5. The repository</a></li><li><a href="#6-viewmodel">6. The ViewModel</a></li><li><a href="#7-screen-and-list">7. The screen and the list</a></li><li><a href="#8-rows">8. The photo activity and friend request rows</a></li><li><a href="#9-offer-card">9. The offer card and the countdown</a></li><li><a href="#10-strings">10. Strings and plurals</a></li><li><a href="#11-recomposition-probe">11. A way to see recomposition in a test</a></li><li><a href="#12-tests">12. Tests</a></li><li><a href="#13-profiling">13. What to measure on a device</a></li><li><a href="#14-more-practice-prompts">14. More practice prompts</a></li><li><a href="#further-reading-official-docs">Further reading (official docs)</a></li></ol></details></aside><article class="prose"><p>This is the implementation material behind the <a href="/mobile-system-design/travel-notifications-app/">notifications screen interview case</a>. It covers:</p>
+<ul>
+<li>the JSON and the wire types, with a fallback for a row type the app does not know</li>
+<li>the app model, the clock and the ticker</li>
+<li>the repository, the ViewModel and the screen</li>
+<li>the countdown card, with the tick read in two small places</li>
+<li>strings and plurals, and the tests</li>
+</ul>
+<p>None of it fits in a 45 minute round. I write only the model, the clock and the card if the interviewer asks.</p>
+<p><strong>How this code was checked.</strong> I compiled it and ran 22 tests on the desktop JVM with Compose 1.7.3 and Kotlin 2.0.21. Three Android pieces were stand-ins there: the image composable (a box that counts how often it runs), string resources, and <code>PullToRefreshBox</code>. The strings section and the dependency list below are <strong>not</strong> compiled. I did not run any of it on a phone. The desktop build uses Compose Multiplatform 1.7.3, which is based on Jetpack Compose 1.7. Check your own versions before you copy anything.</p>
+<p>Imports are left out. The package is <code>app</code> in the listings. <strong>Left out on purpose:</strong> dependency injection, navigation, theme, the HTTP client behind <code>NotificationsApi</code>, and the image library setup.</p>
+<h2 id="45-minute-plan">45-minute plan</h2>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable">
+<table><thead><tr><th>Minutes</th><th>Step</th><th>What I have drawn by the end</th><th>Skip if late</th></tr></thead><tbody><tr><td>0 to 5</td><td>Scope and constraints</td><td>The seen/ask table, defaults</td><td>Fewer questions</td></tr><tr><td>5 to 13</td><td>Data and contracts</td><td>The sealed model, the calls</td><td>The call table</td></tr><tr><td>13 to 21</td><td>Client structure</td><td>Screen, ViewModel, repository, clock; the LazyColumn</td><td>One line per box</td></tr><tr><td>21 to 38</td><td>Make the hard part work</td><td>The clock, the ticker, where the tick is read, Accept and Decline</td><td>The progress bar</td></tr><tr><td>38 to 45</td><td>Break it, ship it, roll it back</td><td>Top failures, tests, the flag</td><td>Two failures and the flag</td></tr></tbody></table></div>
+<h2 id="0-dependencies">Dependencies</h2>
+<pre tabindex="0"><code>// Kotlin 2.0.20 or newer, so strong skipping is on by default.
+dependencies {
+    implementation(platform(&quot;androidx.compose:compose-bom:&lt;current&gt;&quot;))
+    implementation(&quot;androidx.compose.material3:material3&quot;)   // PullToRefreshBox: the 1.3 line or newer, check your version
+    implementation(&quot;androidx.lifecycle:lifecycle-runtime-compose:&lt;current&gt;&quot;)   // collectAsStateWithLifecycle
+    implementation(&quot;androidx.lifecycle:lifecycle-viewmodel-compose:&lt;current&gt;&quot;)
+    implementation(&quot;org.jetbrains.kotlinx:kotlinx-serialization-json:&lt;current&gt;&quot;)
+    implementation(&quot;io.coil-kt.coil3:coil-compose:&lt;current&gt;&quot;)                  // or the image library you already use
+
+    testImplementation(&quot;org.jetbrains.kotlinx:kotlinx-coroutines-test:&lt;current&gt;&quot;)
+    androidTestImplementation(&quot;androidx.compose.ui:ui-test-junit4&quot;)
+}</code></pre>
+<h2 id="1-wire-format">1. Wire format</h2>
+<p>One list, in display order, with the server time on the response:</p>
+<pre tabindex="0"><code>{
+  &quot;serverTimeMs&quot;: 1792492800000,
+  &quot;items&quot;: [
+    { &quot;type&quot;: &quot;photo_activity&quot;, &quot;id&quot;: &quot;pa_881&quot;, &quot;createdAtMs&quot;: 1792492080000,
+      &quot;action&quot;: &quot;added&quot;, &quot;photoCount&quot;: 5, &quot;albumId&quot;: &quot;al_7&quot;, &quot;albumTitle&quot;: &quot;Lisbon&quot;,
+      &quot;actorCount&quot;: 3,
+      &quot;actors&quot;: [ { &quot;id&quot;: &quot;u1&quot;, &quot;name&quot;: &quot;Ana&quot;, &quot;avatarUrl&quot;: &quot;https://...&quot; }, { &quot;id&quot;: &quot;u2&quot;, &quot;name&quot;: &quot;Ben&quot; } ] },
+    { &quot;type&quot;: &quot;album_offer&quot;, &quot;id&quot;: &quot;offer_12&quot;, &quot;createdAtMs&quot;: 1792400000000,
+      &quot;title&quot;: &quot;Print your Lisbon trip&quot;, &quot;body&quot;: &quot;A hardcover album, 24 pages&quot;,
+      &quot;imageUrl&quot;: &quot;https://...&quot;, &quot;ctaLabel&quot;: &quot;Order album&quot;, &quot;expiresAtMs&quot;: 1792669385000 },
+    { &quot;type&quot;: &quot;friend_request&quot;, &quot;id&quot;: &quot;fr_40&quot;, &quot;createdAtMs&quot;: 1792300000000,
+      &quot;from&quot;: { &quot;id&quot;: &quot;u9&quot;, &quot;name&quot;: &quot;Sam&quot; }, &quot;status&quot;: &quot;pending&quot; }
+  ]
+}</code></pre>
+<p>The DTOs, the unknown-type fallback and the mapping to the app model. A newer server can send a type this version does not know. <code>polymorphicDefaultDeserializer</code> turns it into <code>UnknownDto</code>, and the mapper drops it. <code>ignoreUnknownKeys</code> covers new fields on known types.</p>
+<pre tabindex="0"><code>// ---- Wire format -------------------------------------------------------------------------
+
+@Serializable
+data class FeedDto(val serverTimeMs: Long, val items: List&lt;ItemDto&gt;)
+
+@Serializable
+sealed interface ItemDto {
+    val id: String
+    val createdAtMs: Long
+}
+
+@Serializable
+data class ActorDto(val id: String, val name: String, val avatarUrl: String? = null)
+
+@Serializable @SerialName(&quot;photo_activity&quot;)
+data class PhotoActivityDto(
+    override val id: String,
+    override val createdAtMs: Long,
+    val action: String,
+    val actors: List&lt;ActorDto&gt;,
+    val actorCount: Int,
+    val photoCount: Int,
+    val albumId: String,
+    val albumTitle: String,
+    val text: String? = null,
+) : ItemDto
+
+@Serializable @SerialName(&quot;album_offer&quot;)
+data class AlbumOfferDto(
+    override val id: String,
+    override val createdAtMs: Long,
+    val title: String,
+    val body: String,
+    val imageUrl: String,
+    val ctaLabel: String,
+    val expiresAtMs: Long,
+) : ItemDto
+
+@Serializable @SerialName(&quot;friend_request&quot;)
+data class FriendRequestDto(
+    override val id: String,
+    override val createdAtMs: Long,
+    val from: ActorDto,
+    val status: String,
+) : ItemDto
+
+/** A type this app version does not know. It must not crash the screen. */
+@Serializable
+data class UnknownDto(override val id: String = &quot;&quot;, override val createdAtMs: Long = 0) : ItemDto
+
+val NotificationsJson = Json {
+    ignoreUnknownKeys = true
+    serializersModule = SerializersModule {
+        polymorphicDefaultDeserializer(ItemDto::class) { UnknownDto.serializer() }
+    }
+}
+
+fun ItemDto.toDomain(): NotificationItem? = when (this) {
+    is PhotoActivityDto -&gt; PhotoActivity(
+        id = id, createdAtMs = createdAtMs,
+        action = when (action) { &quot;added&quot; -&gt; PhotoAction.Added; &quot;edited&quot; -&gt; PhotoAction.Edited; else -&gt; PhotoAction.Unknown },
+        actors = actors.map { Actor(it.id, it.name, it.avatarUrl) },
+        actorCount = maxOf(actorCount, actors.size),
+        photoCount = photoCount, albumId = albumId, albumTitle = albumTitle, fallbackText = text,
+    )
+    is AlbumOfferDto -&gt; AlbumOffer(id, createdAtMs, title, body, imageUrl, ctaLabel, expiresAtMs)
+    is FriendRequestDto -&gt; FriendRequest(
+        id = id, createdAtMs = createdAtMs,
+        from = Actor(from.id, from.name, from.avatarUrl),
+        status = when (status) { &quot;accepted&quot; -&gt; RequestStatus.Accepted; &quot;declined&quot; -&gt; RequestStatus.Declined; else -&gt; RequestStatus.Pending },
+    )
+    is UnknownDto -&gt; null // skip what we cannot draw
+}</code></pre>
+<h2 id="2-rest">2. REST</h2>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable">
+<table><thead><tr><th>Call</th><th>Request</th><th>Success</th><th>Errors the app handles</th></tr></thead><tbody><tr><td><code>GET /v1/notifications?limit=30</code></td><td>none</td><td><code>200</code> with the JSON above</td><td>Network or 5xx: keep the old list, show a message. First load: error state with Try again</td></tr><tr><td><code>POST /v1/friend-requests/{id}/accept</code></td><td>none</td><td><code>200</code> with the new status</td><td>5xx or no network: roll back. 404, 409, 410: remove the row</td></tr><tr><td><code>POST /v1/friend-requests/{id}/decline</code></td><td>none</td><td><code>200</code> with the new status</td><td>The same</td></tr><tr><td><code>401</code> on any call</td><td></td><td></td><td>The HTTP layer refreshes the token and retries once. Accept and Decline are state changes, so a repeat is safe</td></tr></tbody></table></div>
+<p>If the server cannot give <code>serverTimeMs</code> in the body, the <code>Date</code> response header is the same idea with one-second precision. The app model below treats both the same way: it calls <code>sync</code> once per response.</p>
+<h2 id="3-app-model">3. App model</h2>
+<p>Models are <code>@Immutable</code> so that the Compose compiler uses <code>equals</code>, even though they contain a <code>List</code>. <code>inFlight</code> is local only. It is not in the DTOs.</p>
+<pre tabindex="0"><code>@Immutable
+data class Actor(val id: String, val name: String, val avatarUrl: String?)
+
+@Immutable
+sealed interface NotificationItem {
+    /** Stable and unique across all types, for example &quot;pa_881&quot;, &quot;offer_12&quot;, &quot;fr_40&quot;. */
+    val id: String
+    /** Epoch millis in server time. Never a string like &quot;12 minutes ago&quot;. */
+    val createdAtMs: Long
+}
+
+enum class PhotoAction { Added, Edited, Unknown }
+
+@Immutable
+data class PhotoActivity(
+    override val id: String,
+    override val createdAtMs: Long,
+    val action: PhotoAction,
+    val actors: List&lt;Actor&gt;,   // the first few, most recent first, enough for the avatars
+    val actorCount: Int,       // everybody involved; can be larger than actors.size
+    val photoCount: Int,
+    val albumId: String,
+    val albumTitle: String,
+    val fallbackText: String?, // server text, used only when action is Unknown
+) : NotificationItem
+
+@Immutable
+data class AlbumOffer(
+    override val id: String,
+    override val createdAtMs: Long,
+    val title: String,
+    val body: String,
+    val imageUrl: String,
+    val ctaLabel: String,
+    val expiresAtMs: Long,     // the deadline. &quot;Expired&quot; is computed from it, never stored.
+) : NotificationItem
+
+enum class RequestStatus { Pending, Accepted, Declined }
+enum class RequestAction { Accept, Decline }
+
+@Immutable
+data class FriendRequest(
+    override val id: String,
+    override val createdAtMs: Long,
+    val from: Actor,
+    val status: RequestStatus,        // what the server says
+    val inFlight: RequestAction? = null, // what the user just did and the server has not confirmed
+) : NotificationItem</code></pre>
+<h2 id="4-clock-and-ticker">4. The clock and the ticker</h2>
+<p><code>AnchoredServerClock</code> does not follow the wall clock. <code>countdownTicks</code> wakes when the shown second changes, and each value is a clock reading. <code>minuteTicks</code> is the slow one for the &quot;ago&quot; labels. In the app, create the clock with <code>AnchoredServerClock({ SystemClock.elapsedRealtime() })</code> and share one instance.</p>
+<pre tabindex="0"><code>interface ServerClock {
+    /** Best estimate of the server's time in epoch millis. */
+    fun nowMs(): Long
+}
+
+/**
+ * Server time = the server time of the last response + the time that has passed since,
+ * measured with a clock that the user cannot change.
+ */
+class AnchoredServerClock(
+    private val elapsedRealtimeMs: () -&gt; Long,  // { SystemClock.elapsedRealtime() }
+    private val wallClockMs: () -&gt; Long = { System.currentTimeMillis() },
+) : ServerClock {
+
+    private class Anchor(val serverMs: Long, val elapsedMs: Long)
+
+    @Volatile private var anchor: Anchor? = null
+
+    /** Call on every response that carries the server time. */
+    fun sync(serverNowMs: Long) {
+        anchor = Anchor(serverNowMs, elapsedRealtimeMs())
+    }
+
+    override fun nowMs(): Long {
+        val a = anchor ?: return wallClockMs() // nothing synced yet: the best we have
+        return a.serverMs + (elapsedRealtimeMs() - a.elapsedMs)
+    }
+}
+
+/**
+ * Emits the server time each time the second shown for [deadlineMs] changes,
+ * and once more when the deadline has passed. Then it completes.
+ */
+fun ServerClock.countdownTicks(deadlineMs: Long): Flow&lt;Long&gt; = flow {
+    while (true) {
+        val now = nowMs()
+        emit(now)
+        val remaining = deadlineMs - now
+        if (remaining &lt;= 0) return@flow
+        // delay() only says &quot;wake me about then&quot;. The value always comes from the clock.
+        val toNextSecond = remaining % 1_000L
+        delay(if (toNextSecond == 0L) 1_000L else toNextSecond)
+    }
+}
+
+/** Emits the server time at the start of every minute, forever. For &quot;12 minutes ago&quot;. */
+fun ServerClock.minuteTicks(): Flow&lt;Long&gt; = flow {
+    while (true) {
+        val now = nowMs()
+        emit(now)
+        delay(60_000L - Math.floorMod(now, 60_000L))
+    }
+}</code></pre>
+<p>The pure functions for display, with no Android code, so they test easily. The countdown rounds up, and an age is never negative.</p>
+<pre tabindex="0"><code>/** The time left, split for display. Pure, so it is easy to test. */
+data class Remaining(val days: Long, val hours: Long, val minutes: Long, val seconds: Long) {
+    val isOver: Boolean get() = days == 0L &amp;&amp; hours == 0L &amp;&amp; minutes == 0L &amp;&amp; seconds == 0L
+}
+
+/** Rounds up: 0.4 s left still shows &quot;1 second&quot;, so the display hits zero when the offer ends. */
+fun remainingParts(deadlineMs: Long, nowMs: Long): Remaining {
+    val left = (deadlineMs - nowMs).coerceAtLeast(0L)
+    val totalSeconds = (left + 999L) / 1_000L
+    return Remaining(
+        days = totalSeconds / 86_400L,
+        hours = totalSeconds % 86_400L / 3_600L,
+        minutes = totalSeconds % 3_600L / 60L,
+        seconds = totalSeconds % 60L,
+    )
+}
+
+sealed interface Age {
+    data object JustNow : Age
+    data class Minutes(val n: Int) : Age
+    data class Hours(val n: Int) : Age
+    data class Days(val n: Int) : Age
+}
+
+/** A device clock that is ahead of the server must not print &quot;in 2 hours&quot;. */
+fun ageOf(createdAtMs: Long, nowMs: Long): Age {
+    val minutes = ((nowMs - createdAtMs).coerceAtLeast(0L) / 60_000L).toInt()
+    return when {
+        minutes &lt; 1 -&gt; Age.JustNow
+        minutes &lt; 60 -&gt; Age.Minutes(minutes)
+        minutes &lt; 24 * 60 -&gt; Age.Hours(minutes / 60)
+        else -&gt; Age.Days(minutes / (24 * 60))
+    }
+}</code></pre>
+<h2 id="5-repository">5. The repository</h2>
+<ul>
+<li><code>refresh</code> and <code>respond</code> take turns on one <code>Mutex</code>, so a slow refresh cannot bring back an old &quot;Pending&quot; after an Accept.</li>
+<li>Only one refresh runs at a time. A second call returns at once.</li>
+<li><code>respond</code> runs in the app scope. Leaving the screen does not cancel a tap that was already sent.</li>
+<li>Every <code>catch (e: Exception)</code> is preceded by a <code>CancellationException</code> rethrow. Without it, cancelling a coroutine would look like a network error.</li>
+<li>404, 409 and 410 remove the row. Accepted keeps the row with the new status. Declined removes it.</li>
+</ul>
+<pre tabindex="0"><code>sealed interface FeedState {
+    data object Loading : FeedState
+    data object Failed : FeedState // nothing to show
+    data class Loaded(
+        val items: List&lt;NotificationItem&gt;,
+        val refreshing: Boolean = false,
+    ) : FeedState
+}
+
+sealed interface RespondResult {
+    data class Done(val status: RequestStatus) : RespondResult
+    data object Gone : RespondResult          // withdrawn, or the account is gone
+    data object Failed : RespondResult        // network or server trouble: the user can retry
+}
+
+interface NotificationsRepository {
+    val feed: Flow&lt;FeedState&gt;
+    /** Returns false when the refresh failed. The old items stay. */
+    suspend fun refresh(): Boolean
+    suspend fun respond(requestId: String, action: RequestAction): RespondResult
+}</code></pre>
+<pre tabindex="0"><code>class HttpError(val code: Int) : Exception(&quot;HTTP $code&quot;)
+
+interface NotificationsApi {
+    suspend fun notifications(limit: Int): FeedDto
+    /** Returns the new status. Throws HttpError for 4xx and 5xx. */
+    suspend fun respond(requestId: String, action: RequestAction): String
+}
+
+// ---- Repository --------------------------------------------------------------------------
+
+class DefaultNotificationsRepository(
+    private val api: NotificationsApi,
+    private val clock: AnchoredServerClock,
+    private val appScope: CoroutineScope, // lives as long as the process, not the screen
+) : NotificationsRepository {
+
+    private val state = MutableStateFlow&lt;FeedState&gt;(FeedState.Loading)
+    override val feed: StateFlow&lt;FeedState&gt; = state
+
+    private val turn = Mutex()                       // refresh and respond take turns
+    private val refreshing = AtomicBoolean(false)    // at most one refresh at a time
+
+    override suspend fun refresh(): Boolean {
+        if (!refreshing.compareAndSet(false, true)) return true // one is already running
+        try {
+            return turn.withLock {
+                state.update { if (it is FeedState.Loaded) it.copy(refreshing = true) else FeedState.Loading }
+                try {
+                    val dto = api.notifications(limit = 30)
+                    clock.sync(dto.serverTimeMs)
+                    state.value = FeedState.Loaded(dto.items.mapNotNull { it.toDomain() })
+                    true
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    state.update { if (it is FeedState.Loaded) it.copy(refreshing = false) else FeedState.Failed }
+                    false
+                }
+            }
+        } finally {
+            refreshing.set(false)
+        }
+    }
+
+    override suspend fun respond(requestId: String, action: RequestAction): RespondResult =
+        // Not in the caller's scope: leaving the screen must not cancel a tap that was already sent.
+        appScope.async { turn.withLock { send(requestId, action) } }.await()
+
+    private suspend fun send(requestId: String, action: RequestAction): RespondResult =
+        try {
+            val status = when (api.respond(requestId, action)) {
+                &quot;accepted&quot; -&gt; RequestStatus.Accepted
+                else -&gt; RequestStatus.Declined
+            }
+            apply { items -&gt;
+                if (status == RequestStatus.Declined) items.filterNot { it.id == requestId }
+                else items.map { if (it.id == requestId &amp;&amp; it is FriendRequest) it.copy(status = status) else it }
+            }
+            RespondResult.Done(status)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: HttpError) {
+            when (e.code) {
+                404, 409, 410 -&gt; { apply { items -&gt; items.filterNot { it.id == requestId } }; RespondResult.Gone }
+                else -&gt; RespondResult.Failed
+            }
+        } catch (e: Exception) {
+            RespondResult.Failed
+        }
+
+    private fun apply(change: (List&lt;NotificationItem&gt;) -&gt; List&lt;NotificationItem&gt;) =
+        state.update { if (it is FeedState.Loaded) it.copy(items = change(it.items)) else it }
+}</code></pre>
+<h2 id="6-viewmodel">6. The ViewModel</h2>
+<ul>
+<li><code>inFlight</code> is a map from request ID to action. It is the only place that knows &quot;the user did this, the server has not answered&quot;.</li>
+<li>A second tap for the same ID is ignored. The check and the insert happen in one <code>update</code>, so two taps in one frame cannot both pass.</li>
+<li>A declined row is hidden at once. An accepted row shows the result at once. Both come back if the call fails.</li>
+<li>The message is state, not an event. The screen shows it once and calls <code>onMessageShown</code>.</li>
+<li><code>WhileSubscribed(5_000)</code> keeps the state for five seconds, so a rotation does not reload.</li>
+</ul>
+<pre tabindex="0"><code>sealed interface NotificationsUiState {
+    data object Loading : NotificationsUiState
+    data object Failed : NotificationsUiState
+    data class Content(
+        val items: List&lt;NotificationItem&gt;,
+        val refreshing: Boolean,
+        val message: UserMessage?,
+    ) : NotificationsUiState
+}
+
+enum class UserMessage { RespondFailed, RequestGone, RefreshFailed }
+
+class NotificationsViewModel(
+    private val repository: NotificationsRepository,
+) : ViewModel() {
+
+    // What the user did and the server has not confirmed yet. Lives only in memory.
+    private val inFlight = MutableStateFlow&lt;Map&lt;String, RequestAction&gt;&gt;(emptyMap())
+    private val message = MutableStateFlow&lt;UserMessage?&gt;(null)
+
+    val uiState: StateFlow&lt;NotificationsUiState&gt; =
+        combine(repository.feed, inFlight, message) { feed, pending, msg -&gt;
+            when (feed) {
+                FeedState.Loading -&gt; NotificationsUiState.Loading
+                FeedState.Failed -&gt; NotificationsUiState.Failed
+                is FeedState.Loaded -&gt; NotificationsUiState.Content(
+                    items = feed.items
+                        .filterNot { it is FriendRequest &amp;&amp; pending[it.id] == RequestAction.Decline } // hide at once
+                        .map { item -&gt;
+                            if (item is FriendRequest) item.copy(inFlight = pending[item.id]) else item
+                        },
+                    refreshing = feed.refreshing,
+                    message = msg,
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotificationsUiState.Loading)
+
+    fun onRefresh() {
+        viewModelScope.launch {
+            if (!repository.refresh() &amp;&amp; uiState.value is NotificationsUiState.Content) {
+                message.value = UserMessage.RefreshFailed
+            }
+        }
+    }
+
+    fun onRespond(requestId: String, action: RequestAction) {
+        // The buttons disappear on the next frame, but two taps can arrive before it.
+        var accepted = false
+        inFlight.update { current -&gt;
+            if (requestId in current) current else { accepted = true; current + (requestId to action) }
+        }
+        if (!accepted) return
+        viewModelScope.launch {
+            val result = repository.respond(requestId, action)
+            // The repository has already applied the new status, so there is no flicker.
+            inFlight.update { it - requestId }
+            when (result) {
+                is RespondResult.Done -&gt; Unit
+                RespondResult.Gone -&gt; message.value = UserMessage.RequestGone
+                RespondResult.Failed -&gt; message.value = UserMessage.RespondFailed
+            }
+        }
+    }
+
+    fun onMessageShown() {
+        message.value = null
+    }
+}</code></pre>
+<h2 id="7-screen-and-list">7. The screen and the list</h2>
+<p>The route reads the ViewModel. The screen takes state and callbacks, so a preview or a test can call it with fake data. The clock is passed down, and the &quot;ago&quot; clock is made once for the list and passed as a <code>State</code>.</p>
+<pre tabindex="0"><code>@Composable
+fun NotificationsRoute(
+    viewModel: NotificationsViewModel,
+    clock: ServerClock,
+    onOfferClick: (offerId: String) -&gt; Unit,
+    onAlbumClick: (albumId: String) -&gt; Unit,
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    NotificationsScreen(
+        state = state,
+        clock = clock,
+        onRefresh = viewModel::onRefresh,
+        onRespond = viewModel::onRespond,
+        onOfferClick = onOfferClick,
+        onAlbumClick = onAlbumClick,
+        onMessageShown = viewModel::onMessageShown,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotificationsScreen(
+    state: NotificationsUiState,
+    clock: ServerClock,
+    onRefresh: () -&gt; Unit,
+    onRespond: (requestId: String, action: RequestAction) -&gt; Unit,
+    onOfferClick: (offerId: String) -&gt; Unit,
+    onAlbumClick: (albumId: String) -&gt; Unit,
+    onMessageShown: () -&gt; Unit,
+) {
+    val snackbarHost = remember { SnackbarHostState() }
+    val content = state as? NotificationsUiState.Content
+    val message = content?.message
+    if (message != null) {
+        val text = messageText(message)
+        LaunchedEffect(message) {
+            snackbarHost.showSnackbar(text)
+            onMessageShown()
+        }
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHost) }) { padding -&gt;
+        Box(Modifier.padding(padding).fillMaxSize()) {
+            when (state) {
+                NotificationsUiState.Loading -&gt; LoadingPlaceholder()
+                NotificationsUiState.Failed -&gt; ErrorState(onRetry = onRefresh)
+                is NotificationsUiState.Content -&gt; PullToRefreshBox(
+                    isRefreshing = state.refreshing,
+                    onRefresh = onRefresh,
+                ) {
+                    NotificationsList(state.items, clock, onRespond, onOfferClick, onAlbumClick)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NotificationsList(
+    items: List&lt;NotificationItem&gt;,
+    clock: ServerClock,
+    onRespond: (String, RequestAction) -&gt; Unit,
+    onOfferClick: (String) -&gt; Unit,
+    onAlbumClick: (String) -&gt; Unit,
+) {
+    val listState = rememberLazyListState()
+    // One slow clock for all &quot;12 minutes ago&quot; labels. We pass the State, not its value.
+    val minuteNow = rememberMinuteNow(clock)
+
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize().testTag(&quot;notifications&quot;),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(
+            items = items,
+            key = { it.id },
+            contentType = { it::class },
+        ) { item -&gt;
+            when (item) {
+                is PhotoActivity -&gt; PhotoActivityRow(
+                    item = item,
+                    now = minuteNow,
+                    onClick = { onAlbumClick(item.albumId) },
+                    modifier = Modifier.animateItem(),
+                )
+                is AlbumOffer -&gt; OfferCard(
+                    offer = item,
+                    clock = clock,
+                    onOrderClick = { onOfferClick(item.id) },
+                    modifier = Modifier.animateItem(),
+                )
+                is FriendRequest -&gt; FriendRequestRow(
+                    item = item,
+                    now = minuteNow,
+                    onAccept = { onRespond(item.id, RequestAction.Accept) },
+                    onDecline = { onRespond(item.id, RequestAction.Decline) },
+                    modifier = Modifier.animateItem(),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun rememberMinuteNow(clock: ServerClock): State&lt;Long&gt; {
+    val flow = remember(clock) { clock.minuteTicks() }
+    return flow.collectAsStateWithLifecycle(initialValue = remember(clock) { clock.nowMs() })
+}</code></pre>
+<h2 id="8-rows">8. The photo activity and friend request rows</h2>
+<ul>
+<li><code>Arrangement.spacedBy(-overlap)</code> makes the avatars overlap. The docs say a negative space does that. <code>zIndex</code> puts the first avatar on top.</li>
+<li>Each avatar has a ring in the surface colour, so the overlap reads clearly.</li>
+<li>Avatars have <code>contentDescription = null</code>, because the text names the people.</li>
+<li><code>AgeText</code> is its own function. It is the only place in a row that reads the minute clock.</li>
+</ul>
+<pre tabindex="0"><code>// ---- Photo activity ------------------------------------------------------------------------
+
+@Composable
+fun PhotoActivityRow(
+    item: PhotoActivity,
+    now: State&lt;Long&gt;,
+    onClick: () -&gt; Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AvatarStack(item.actors, item.actorCount)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(activityText(item), style = MaterialTheme.typography.bodyMedium)
+                AgeText(item.createdAtMs, now)
+            }
+        }
+    }
+}
+
+@Composable
+fun AvatarStack(
+    actors: List&lt;Actor&gt;,
+    totalCount: Int,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    overlap: Dp = 14.dp,
+) {
+    val shown = actors.take(3)
+    val extra = totalCount - shown.size
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(-overlap)) {
+        shown.forEachIndexed { index, actor -&gt;
+            Avatar(actor, size, Modifier.zIndex((shown.size - index).toFloat())) // first one on top
+        }
+        if (extra &gt; 0) {
+            Box(
+                Modifier
+                    .size(size)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) { Text(&quot;+$extra&quot;, style = MaterialTheme.typography.labelSmall) }
+        }
+    }
+}
+
+@Composable
+fun Avatar(actor: Actor, size: Dp, modifier: Modifier = Modifier) {
+    AsyncImage(
+        model = actor.avatarUrl,
+        contentDescription = null, // decorative: the text names the people
+        contentScale = ContentScale.Crop,
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape),
+    )
+}
+
+/** Only this small function reads the minute clock, so only it recomposes each minute. */
+@Composable
+private fun AgeText(createdAtMs: Long, now: State&lt;Long&gt;) {
+    Text(
+        text = ageText(ageOf(createdAtMs, now.value)),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+// ---- Friend request ------------------------------------------------------------------------
+
+@Composable
+fun FriendRequestRow(
+    item: FriendRequest,
+    now: State&lt;Long&gt;,
+    onAccept: () -&gt; Unit,
+    onDecline: () -&gt; Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accepted = item.status == RequestStatus.Accepted || item.inFlight == RequestAction.Accept
+    Card(modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Avatar(item.from, 40.dp)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = if (accepted) friendsNowText(item.from.name) else friendRequestText(item.from.name),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    AgeText(item.createdAtMs, now)
+                }
+            }
+            if (!accepted) {
+                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = onAccept) { Text(acceptLabel()) }
+                    OutlinedButton(onClick = onDecline) { Text(declineLabel()) }
+                }
+            }
+        }
+    }
+}</code></pre>
+<pre tabindex="0"><code>// ---- States --------------------------------------------------------------------------------
+
+@Composable
+private fun LoadingPlaceholder() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+}
+
+@Composable
+private fun ErrorState(onRetry: () -&gt; Unit) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(errorText())
+        Button(onClick = onRetry) { Text(retryLabel()) }
+    }
+}</code></pre>
+<h2 id="9-offer-card">9. The offer card and the countdown</h2>
+<ul>
+<li><code>OfferCard</code> holds the <code>State&lt;Long&gt;</code> but does not read it. It reads <code>expired</code>, which changes once.</li>
+<li><code>CountdownText</code> is the only composable that reads the tick for the text.</li>
+<li><code>CountdownBar</code> reads the tick inside <code>drawBehind</code>, so a tick repeats only the draw phase.</li>
+<li><code>&quot;tnum&quot;</code> (tabular figures) keeps every digit the same width, so the text does not shift.</li>
+<li>The text is not a live region. The Compose docs say live regions are a bad fit for content that updates often, such as countdown timers. For a screen reader, give the card a rough description that changes each minute.</li>
+</ul>
+<pre tabindex="0"><code>/**
+ * The card does NOT read the tick. It reads only `expired`, which flips once.
+ * The tick is read by CountdownText and by the progress bar's draw lambda.
+ */
+@Composable
+fun OfferCard(
+    offer: AlbumOffer,
+    clock: ServerClock,
+    onOrderClick: () -&gt; Unit,
+    modifier: Modifier = Modifier,
+) {
+    val now = rememberCountdownNow(clock, offer.expiresAtMs)
+    val expired by remember(offer.expiresAtMs) {
+        derivedStateOf { now.value &gt;= offer.expiresAtMs }
+    }
+
+    Card(modifier.fillMaxWidth().testTag(&quot;offer&quot;)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            AsyncImage(
+                model = offer.imageUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().height(160.dp),
+            )
+            Text(offer.title, style = MaterialTheme.typography.titleMedium)
+            Text(offer.body, style = MaterialTheme.typography.bodyMedium)
+            if (expired) {
+                Text(offerEndedText(), style = MaterialTheme.typography.labelLarge)
+            } else {
+                CountdownText(offer.expiresAtMs, now)
+                Button(onClick = onOrderClick) { Text(offer.ctaLabel) }
+            }
+        }
+    }
+}
+
+/** Server time for one deadline: a tick each time the shown second changes, only while STARTED. */
+@Composable
+fun rememberCountdownNow(clock: ServerClock, deadlineMs: Long): State&lt;Long&gt; {
+    val ticks = remember(clock, deadlineMs) { clock.countdownTicks(deadlineMs) }
+    return ticks.collectAsStateWithLifecycle(initialValue = remember(clock) { clock.nowMs() })
+}
+
+/** The only composable that reads the tick for the text. A tick recomposes this and nothing above it. */
+@Composable
+private fun CountdownText(deadlineMs: Long, now: State&lt;Long&gt;, modifier: Modifier = Modifier) {
+    Text(
+        text = remainingText(remainingParts(deadlineMs, now.value)),
+        style = MaterialTheme.typography.titleSmall.merge(TextStyle(fontFeatureSettings = &quot;tnum&quot;)),
+        modifier = modifier.testTag(&quot;countdown&quot;),
+    )
+}
+
+/**
+ * A bar that shrinks as time passes. The read of `now` is inside drawBehind, so a tick
+ * invalidates only the draw phase: no recomposition and no layout.
+ */
+@Composable
+fun CountdownBar(startMs: Long, deadlineMs: Long, now: State&lt;Long&gt;, modifier: Modifier = Modifier) {
+    val color = MaterialTheme.colorScheme.primary
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(4.dp)
+            .drawBehind {
+                val total = (deadlineMs - startMs).coerceAtLeast(1L)
+                val left = (deadlineMs - now.value).coerceIn(0L, total)
+                drawRect(color, size = Size(size.width * left / total, size.height))
+            },
+    )
+}</code></pre>
+<h2 id="10-strings">10. Strings and plurals</h2>
+<p><strong>Not compiled.</strong> In the test setup these are plain Kotlin stand-ins. In the app they come from <code>strings.xml</code>. Two things to know:</p>
+<ul>
+<li>A plural resource picks its form from one number. &quot;Ana and 2 others added 5 photos&quot; has two numbers, so I build it from two parts. Some languages need the whole sentence in one resource, and you would split the cases there.</li>
+<li><code>ListFormatter</code> joins the parts with the right &quot;and&quot; for the locale (&quot;2 days, 2 hours, 43 minutes and 5 seconds&quot;). It needs API level 26. Below that, join with commas.</li>
+</ul>
+<pre tabindex="0"><code>&lt;resources&gt;
+    &lt;string name=&quot;friend_request&quot;&gt;%1$s sent you a friend request&lt;/string&gt;
+    &lt;string name=&quot;friends_now&quot;&gt;You and %1$s are now friends&lt;/string&gt;
+    &lt;string name=&quot;accept&quot;&gt;Accept&lt;/string&gt;
+    &lt;string name=&quot;decline&quot;&gt;Decline&lt;/string&gt;
+    &lt;string name=&quot;offer_ended&quot;&gt;This offer has ended&lt;/string&gt;
+    &lt;string name=&quot;just_now&quot;&gt;Just now&lt;/string&gt;
+    &lt;string name=&quot;load_failed&quot;&gt;Could not load your notifications&lt;/string&gt;
+    &lt;string name=&quot;try_again&quot;&gt;Try again&lt;/string&gt;
+    &lt;string name=&quot;respond_failed&quot;&gt;Could not answer. Try again.&lt;/string&gt;
+    &lt;string name=&quot;request_gone&quot;&gt;This request is no longer available.&lt;/string&gt;
+    &lt;string name=&quot;refresh_failed&quot;&gt;Could not refresh.&lt;/string&gt;
+    &lt;string name=&quot;two_people&quot;&gt;%1$s and %2$s&lt;/string&gt;
+    &lt;string name=&quot;activity_added&quot;&gt;%1$s added %2$s to %3$s&lt;/string&gt;
+    &lt;string name=&quot;activity_edited&quot;&gt;%1$s edited photos in %2$s&lt;/string&gt;
+    &lt;plurals name=&quot;people_others&quot;&gt;
+        &lt;item quantity=&quot;one&quot;&gt;%1$s and %2$d other&lt;/item&gt;
+        &lt;item quantity=&quot;other&quot;&gt;%1$s and %2$d others&lt;/item&gt;
+    &lt;/plurals&gt;
+    &lt;plurals name=&quot;photos&quot;&gt;
+        &lt;item quantity=&quot;one&quot;&gt;%d photo&lt;/item&gt;
+        &lt;item quantity=&quot;other&quot;&gt;%d photos&lt;/item&gt;
+    &lt;/plurals&gt;
+    &lt;plurals name=&quot;minutes_ago&quot;&gt;&lt;item quantity=&quot;one&quot;&gt;%d minute ago&lt;/item&gt;&lt;item quantity=&quot;other&quot;&gt;%d minutes ago&lt;/item&gt;&lt;/plurals&gt;
+    &lt;plurals name=&quot;hours_ago&quot;&gt;&lt;item quantity=&quot;one&quot;&gt;%d hour ago&lt;/item&gt;&lt;item quantity=&quot;other&quot;&gt;%d hours ago&lt;/item&gt;&lt;/plurals&gt;
+    &lt;plurals name=&quot;days_ago&quot;&gt;&lt;item quantity=&quot;one&quot;&gt;%d day ago&lt;/item&gt;&lt;item quantity=&quot;other&quot;&gt;%d days ago&lt;/item&gt;&lt;/plurals&gt;
+    &lt;plurals name=&quot;days&quot;&gt;&lt;item quantity=&quot;one&quot;&gt;%d day&lt;/item&gt;&lt;item quantity=&quot;other&quot;&gt;%d days&lt;/item&gt;&lt;/plurals&gt;
+    &lt;plurals name=&quot;hours&quot;&gt;&lt;item quantity=&quot;one&quot;&gt;%d hour&lt;/item&gt;&lt;item quantity=&quot;other&quot;&gt;%d hours&lt;/item&gt;&lt;/plurals&gt;
+    &lt;plurals name=&quot;minutes&quot;&gt;&lt;item quantity=&quot;one&quot;&gt;%d minute&lt;/item&gt;&lt;item quantity=&quot;other&quot;&gt;%d minutes&lt;/item&gt;&lt;/plurals&gt;
+    &lt;plurals name=&quot;seconds&quot;&gt;&lt;item quantity=&quot;one&quot;&gt;%d second&lt;/item&gt;&lt;item quantity=&quot;other&quot;&gt;%d seconds&lt;/item&gt;&lt;/plurals&gt;
+&lt;/resources&gt;</code></pre>
+<pre tabindex="0"><code>@Composable
+fun remainingText(r: Remaining): String {
+    val parts = buildList {
+        if (r.days &gt; 0) add(pluralStringResource(R.plurals.days, r.days.toInt(), r.days))
+        if (r.days &gt; 0 || r.hours &gt; 0) add(pluralStringResource(R.plurals.hours, r.hours.toInt(), r.hours))
+        if (r.days &gt; 0 || r.hours &gt; 0 || r.minutes &gt; 0) add(pluralStringResource(R.plurals.minutes, r.minutes.toInt(), r.minutes))
+        add(pluralStringResource(R.plurals.seconds, r.seconds.toInt(), r.seconds))
+    }
+    return remember(parts) { ListFormatter.getInstance().format(parts) }   // android.icu.text, API 26+
+}
+
+@Composable
+fun ageText(age: Age): String = when (age) {
+    Age.JustNow -&gt; stringResource(R.string.just_now)
+    is Age.Minutes -&gt; pluralStringResource(R.plurals.minutes_ago, age.n, age.n)
+    is Age.Hours -&gt; pluralStringResource(R.plurals.hours_ago, age.n, age.n)
+    is Age.Days -&gt; pluralStringResource(R.plurals.days_ago, age.n, age.n)
+}
+
+@Composable
+fun activityText(item: PhotoActivity): String {
+    val first = item.actors.firstOrNull()?.name.orEmpty()
+    val who = when (item.actorCount) {
+        0, 1 -&gt; first
+        2 -&gt; stringResource(R.string.two_people, first, item.actors.getOrNull(1)?.name.orEmpty())
+        else -&gt; pluralStringResource(R.plurals.people_others, item.actorCount - 1, first, item.actorCount - 1)
+    }
+    return when (item.action) {
+        PhotoAction.Added -&gt; stringResource(
+            R.string.activity_added, who,
+            pluralStringResource(R.plurals.photos, item.photoCount, item.photoCount), item.albumTitle,
+        )
+        PhotoAction.Edited -&gt; stringResource(R.string.activity_edited, who, item.albumTitle)
+        PhotoAction.Unknown -&gt; item.fallbackText.orEmpty()
+    }
+}</code></pre>
+<p>Wire it up in your own code. The clock is one instance for the app. The repository gets the app scope:</p>
+<pre tabindex="0"><code>val clock = AnchoredServerClock({ SystemClock.elapsedRealtime() })
+val repository = DefaultNotificationsRepository(api, clock, appScope)   // appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+val viewModel: NotificationsViewModel = viewModel(
+    factory = viewModelFactory { initializer { NotificationsViewModel(repository) } },
+)
+NotificationsRoute(viewModel, clock, onOfferClick = { /* open the order flow */ }, onAlbumClick = { /* open the album */ })</code></pre>
+<h2 id="11-recomposition-probe">11. A way to see recomposition in a test</h2>
+<p>The image composable in my tests is a stand-in that counts how often it runs. It is <code>@NonSkippableComposable</code>, so it runs every time its parent runs. If the card body ran again, the count would go up.</p>
+<pre tabindex="0"><code>val imageComposeCounts = mutableMapOf&lt;Any?, Int&gt;()
+
+@NonSkippableComposable
+@Composable
+fun AsyncImage(model: Any?, contentDescription: String?, modifier: Modifier = Modifier, contentScale: ContentScale = ContentScale.Fit) {
+    SideEffect { imageComposeCounts[model] = (imageComposeCounts[model] ?: 0) + 1 }
+    Box(modifier.testTag(&quot;img:$model&quot;))
+}</code></pre>
+<h2 id="12-tests">12. Tests</h2>
+<p><strong>Unit tests, virtual time.</strong> The fake clock follows the test scheduler. The first test is the one in the case page: the ticker wakes at 0, 400, 1400, 2400 and 3400 ms. The second jumps the clock by 30 seconds and checks that the next reading is right.</p>
+<pre tabindex="0"><code>/** Server time follows the test scheduler, plus an optional jump. */
+@OptIn(ExperimentalCoroutinesApi::class)
+class FakeClock(private val scope: TestScope, private val startMs: Long) : ServerClock {
+    var jumpMs = 0L
+    override fun nowMs() = startMs + scope.currentTime + jumpMs
+}
+
+class AnchoredClockTest {
+    @Test fun `follows elapsed time and ignores wall clock changes`() {
+        var elapsed = 1_000L
+        var wall = 5_000_000L
+        val clock = AnchoredServerClock({ elapsed }, { wall })
+        assertEquals(5_000_000L, clock.nowMs())          // not synced: wall clock
+        clock.sync(10_000L)
+        elapsed += 2_500
+        wall -= 3_600_000                                // user moves the clock back one hour
+        assertEquals(12_500L, clock.nowMs())
+        clock.sync(20_000L)                              // re-sync
+        elapsed += 1
+        assertEquals(20_001L, clock.nowMs())
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class CountdownTicksTest {
+    @Test fun `ticks when the shown second changes and ends after the deadline`() = runTest {
+        val clock = FakeClock(this, startMs = 0)
+        val seen = mutableListOf&lt;Pair&lt;Long, Long&gt;&gt;() // (virtual time, shown seconds)
+        clock.countdownTicks(deadlineMs = 3_400).collect { now -&gt;
+            seen += currentTime to remainingParts(3_400, now).seconds
+        }
+        assertEquals(listOf(0L to 4L, 400L to 3L, 1_400L to 2L, 2_400L to 1L, 3_400L to 0L), seen)
+    }
+
+    @Test fun `missed time is recovered from the clock, not counted`() = runTest {
+        val clock = FakeClock(this, startMs = 0)
+        val shown = mutableListOf&lt;Long&gt;()
+        val job = launch { clock.countdownTicks(60_000).collect { shown += remainingParts(60_000, it).seconds } }
+        testScheduler.advanceTimeBy(1_500)
+        testScheduler.runCurrent()
+        clock.jumpMs = 30_000   // as if the process was frozen for 30 s
+        testScheduler.advanceTimeBy(600)
+        testScheduler.runCurrent()
+        assertEquals(28L, shown.last())   // 60 - 1.5 - 0.6 - 30 = 27.9 -&gt; shows 28
+        job.cancel()
+    }
+
+    @Test fun `an already expired deadline emits once`() = runTest {
+        val clock = FakeClock(this, startMs = 10_000)
+        val all = clock.countdownTicks(5_000).toList()
+        assertEquals(1, all.size)
+        assertTrue(remainingParts(5_000, all[0]).isOver)
+    }
+}
+
+class FormatTest {
+    @Test fun `rounds up and splits`() {
+        val ms = ((2 * 86_400 + 2 * 3_600 + 43 * 60 + 5) * 1_000L)
+        assertEquals(Remaining(2, 2, 43, 5), remainingParts(ms, 0))
+        assertEquals(Remaining(0, 0, 0, 1), remainingParts(400, 0))   // 0.4 s left shows 1
+        assertTrue(remainingParts(1_000, 1_000).isOver)
+        assertTrue(remainingParts(1_000, 5_000).isOver)               // past: clamps to zero
+    }
+    @Test fun `age never goes negative`() {
+        assertEquals(Age.JustNow, ageOf(createdAtMs = 10_000, nowMs = 5_000))
+        assertEquals(Age.Minutes(12), ageOf(0, 12 * 60_000 + 59_000))
+        assertEquals(Age.Hours(2), ageOf(0, 2 * 3_600_000L))
+        assertEquals(Age.Days(3), ageOf(0, 3 * 86_400_000L + 5))
+    }
+}</code></pre>
+<p><strong>ViewModel tests with a fake API.</strong> Three taps send one request. A slow refresh cannot overwrite a later Accept. A failure rolls back and sends one message. The helper <code>settle</code> runs the scheduler a few times, because the ViewModel, the repository and <code>stateIn</code> each hop through the dispatcher.</p>
+<pre tabindex="0"><code>class FakeApi : NotificationsApi {
+    var feedGate: CompletableDeferred&lt;Unit&gt;? = null
+    var respondGate: CompletableDeferred&lt;Unit&gt;? = null
+    var respondError: Exception? = null
+    var respondCalls = 0
+    var feed = FeedDto(1_000_000, listOf(
+        FriendRequestDto(&quot;fr_1&quot;, 10, ActorDto(&quot;u1&quot;, &quot;Sam&quot;), &quot;pending&quot;),
+        FriendRequestDto(&quot;fr_2&quot;, 20, ActorDto(&quot;u2&quot;, &quot;Kim&quot;), &quot;pending&quot;),
+    ))
+    override suspend fun notifications(limit: Int): FeedDto { feedGate?.await(); return feed }
+    override suspend fun respond(requestId: String, action: RequestAction): String {
+        respondCalls++
+        respondGate?.await()
+        respondError?.let { throw it }
+        return if (action == RequestAction.Accept) &quot;accepted&quot; else &quot;declined&quot;
+    }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun TestScope.settle() { repeat(3) { testScheduler.advanceUntilIdle(); testScheduler.runCurrent() } }
+
+class ViewModelTest {
+    private val dispatcher = StandardTestDispatcher()
+    @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
+    @AfterTest fun tearDown() { Dispatchers.resetMain() }
+
+    private fun TestScope.setup(api: FakeApi): Pair&lt;NotificationsViewModel, () -&gt; NotificationsUiState&gt; {
+        val clock = AnchoredServerClock({ currentTime })
+        val repo = DefaultNotificationsRepository(api, clock, backgroundScope)
+        val vm = NotificationsViewModel(repo)
+        var last: NotificationsUiState = NotificationsUiState.Loading
+        vm.uiState.onEach { last = it }.launchIn(backgroundScope)
+        vm.onRefresh()
+        settle()
+        return vm to { last }
+    }
+    private fun NotificationsUiState.requests() = (this as NotificationsUiState.Content).items.filterIsInstance&lt;FriendRequest&gt;()
+
+    @Test fun `accept shows at once, then keeps the server status`() = runTest(dispatcher) {
+        val api = FakeApi().apply { respondGate = CompletableDeferred() }
+        val (vm, state) = setup(api)
+        vm.onRespond(&quot;fr_1&quot;, RequestAction.Accept)
+        settle()
+        assertEquals(RequestAction.Accept, state().requests().first { it.id == &quot;fr_1&quot; }.inFlight)
+        api.respondGate!!.complete(Unit)
+        settle()
+        val r = state().requests().first { it.id == &quot;fr_1&quot; }
+        assertEquals(RequestStatus.Accepted, r.status); assertNull(r.inFlight)
+    }
+
+    @Test fun `second tap in a row sends one request`() = runTest(dispatcher) {
+        val api = FakeApi().apply { respondGate = CompletableDeferred() }
+        val (vm, _) = setup(api)
+        vm.onRespond(&quot;fr_1&quot;, RequestAction.Accept)
+        vm.onRespond(&quot;fr_1&quot;, RequestAction.Decline)
+        vm.onRespond(&quot;fr_1&quot;, RequestAction.Accept)
+        settle()
+        assertEquals(1, api.respondCalls)
+    }</code></pre>
+<p><strong>Compose UI tests.</strong> These two show the contrast. In the first, a tick changes the text but the card image count does not move. In the second, the same read placed in the card body makes the count go up with every tick. <code>advance</code> steps the Compose test clock in 100 ms pieces. One big jump skips the frames that the recompositions need.</p>
+<pre tabindex="0"><code>private class TestClock(private val now: () -&gt; Long, val startMs: Long) : ServerClock {
+    var reads = 0
+    override fun nowMs(): Long { reads++; return startMs + now() }
+}
+
+private val offer = AlbumOffer(&quot;offer_1&quot;, 0, &quot;Print your trip&quot;, &quot;A hardcover album&quot;, &quot;img-offer&quot;, &quot;Order&quot;, expiresAtMs = 10_000)
+private val activity = PhotoActivity(&quot;pa_1&quot;, 0, PhotoAction.Added, listOf(Actor(&quot;a&quot;, &quot;Ana&quot;, &quot;img-ana&quot;), Actor(&quot;b&quot;, &quot;Ben&quot;, &quot;img-ben&quot;), Actor(&quot;c&quot;, &quot;Cy&quot;, &quot;img-cy&quot;)), 5, 3, &quot;al&quot;, &quot;Lisbon&quot;, null)</code></pre>
+<pre tabindex="0"><code>@Test fun `a tick recomposes only the countdown text`() = runComposeUiTest {
+    imageComposeCounts.clear()
+    mainClock.autoAdvance = false
+    val clock = TestClock({ mainClock.currentTime }, startMs = 0)
+    setContent { WithOwner {
+        Column {
+            OfferCard(offer, clock, onOrderClick = {})
+            PhotoActivityRow(activity, remember { mutableStateOf(0L) }, onClick = {})
+        }
+    } }
+    mainClock.advanceTimeByFrame()
+    onNodeWithTag(&quot;countdown&quot;).assertTextContains(&quot;10 seconds&quot;, substring = true)
+    val offerBefore = imageComposeCounts[&quot;img-offer&quot;]; val rowBefore = imageComposeCounts[&quot;img-ana&quot;]
+    advance(3_000L)
+    onNodeWithTag(&quot;countdown&quot;).assertTextContains(&quot;7 seconds&quot;, substring = true)
+    assertEquals(offerBefore, imageComposeCounts[&quot;img-offer&quot;], &quot;OfferCard body ran again on a tick&quot;)
+    assertEquals(rowBefore, imageComposeCounts[&quot;img-ana&quot;])
+}
+
+@Test fun `reading the tick in the card body recomposes the card every tick`() = runComposeUiTest {
+    imageComposeCounts.clear()
+    mainClock.autoAdvance = false
+    val clock = TestClock({ mainClock.currentTime }, startMs = 0)
+    setContent {
+        WithOwner {
+        val now by rememberCountdownNow(clock, offer.expiresAtMs)   // the read is HERE, in the card
+        Column {
+            AsyncImage(&quot;img-naive&quot;, null)
+            Text10(remainingParts(offer.expiresAtMs, now).seconds)
+        }
+    } }
+    mainClock.advanceTimeByFrame()
+    val before = imageComposeCounts[&quot;img-naive&quot;]!!
+    advance(3_000L)
+    assertTrue(imageComposeCounts[&quot;img-naive&quot;]!! &gt;= before + 3, &quot;expected a recomposition per tick, got ${imageComposeCounts[&quot;img-naive&quot;]} from $before&quot;)
+}</code></pre>
+<p><strong>More tests that I ran,</strong> not listed in full: the lifecycle stops the ticker (zero clock reads while stopped), a card far off screen stops ticking and starts again, a draw-only read repaints without composing or measuring, the second avatar overlaps the first, and inserting a row above the first visible row does not move the list.</p>
+<p>On a device, use the same ideas with <code>createComposeRule()</code>, <code>mainClock.autoAdvance = false</code>, and a <code>LocalLifecycleOwner</code> that you move between STARTED and CREATED.</p>
+<h2 id="13-profiling">13. What to measure on a device</h2>
+<div class="tw" tabindex="0" role="region" aria-label="Table, scrollable">
+<table><thead><tr><th>Question</th><th>Tool</th><th>What I look for</th></tr></thead><tbody><tr><td>Does the card body run on every tick?</td><td>Layout Inspector, recomposition counts</td><td>The card count stays still. The text count goes up once a second</td></tr><tr><td>Which parameters are unstable?</td><td>Compose compiler reports</td><td>Row models marked stable. No surprise <code>List</code> parameters</td></tr><tr><td>Is scrolling smooth?</td><td>Macrobenchmark with <code>FrameTimingMetric</code>, and JankStats in production</td><td>Frame times, and the share of slow frames</td></tr><tr><td>Does the countdown wake the phone with the screen off?</td><td>A system trace, and <code>dumpsys batterystats</code></td><td>No ticks from this app while stopped</td></tr><tr><td>How wrong is the clock?</td><td>A metric: the share of Order taps that the server rejects as ended while the app showed time left</td><td>It stays near zero, and does not rise after a release</td></tr></tbody></table></div>
+<h2 id="14-more-practice-prompts">14. More practice prompts</h2>
+<ul>
+<li>&quot;The offer can be extended by the server while the user is looking at it.&quot; What changes in the card?</li>
+<li>&quot;There is a second countdown on the home screen.&quot; Where does the ticker live now?</li>
+<li>&quot;Add a Mark all as read button.&quot; Where does the state live, and what does the server need?</li>
+<li>&quot;The list must work offline.&quot; What is the source of truth, and what do you mark as unconfirmed?</li>
+<li>&quot;Users on slow phones see jank when the list refreshes.&quot; What do you check first?</li>
+</ul>
+<h2 id="further-reading-official-docs">Further reading (official docs)</h2>
+<ul>
+<li><a href="/mobile-system-design/travel-notifications-app/">The case: design a notifications screen in Jetpack Compose</a></li>
+<li><a href="https://developer.android.com/develop/ui/compose/performance/bestpractices">Compose performance best practices</a></li>
+<li><a href="https://developer.android.com/develop/ui/compose/lists">Lists and grids in Compose</a></li>
+<li><a href="https://developer.android.com/develop/ui/compose/performance/stability/strongskipping">Strong skipping mode</a></li>
+<li><a href="https://developer.android.com/develop/ui/compose/performance/stability/fix">Fix stability issues</a></li>
+<li><a href="https://developer.android.com/topic/libraries/architecture/coroutines">Collect flows in the UI</a></li>
+<li><a href="https://developer.android.com/reference/android/os/SystemClock">SystemClock</a></li>
+<li><a href="https://developer.android.com/develop/ui/compose/testing/synchronization">Test synchronization in Compose</a></li>
+<li><a href="https://developer.android.com/reference/android/icu/text/ListFormatter">ListFormatter</a></li>
+<li><a href="https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-core/kotlinx.serialization.modules/-serializers-module-builder/polymorphic-default-deserializer.html">kotlinx.serialization polymorphism</a></li>
+</ul>
+<aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> the code was compiled and 22 tests passed on the desktop JVM with Compose 1.7.3 and Kotlin 2.0.21. See the <a href="/mobile-system-design/travel-notifications-app/#notes">verification notes</a> on the case page.</p><p>Not compiled and not run on a phone: the string resources, the Coil image, <code>PullToRefreshBox</code> from Material 3, the Gradle dependency list. No outside reviewer yet. Checked 20 Oct 2026.</p></aside><nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/travel-notifications-app/"><small>Read first</small>Design a notifications screen in Jetpack Compose</a><a class="nx" href="/mobile-system-design/live-ticker/"><small>Next</small>Design a stock ticker app</a></nav><div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You also get a short email each week with a follow-up round, and a note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">All case studies</a></li><li><a href="/compare/">Compare design choices</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Concepts</p><ul><li><a href="/concepts/">All concepts</a></li><li><a href="/patterns/">Design patterns</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/guides/">Guides</a></li><li><a href="/mobile-system-design/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/practice/">Practice timer</a></li><li><a href="/practice/#kit">Practice kit</a></li><li><a href="/follow-up/">Follow-up rounds</a></li><li><a href="/simulators/">Interactive tools</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li><li><a href="/simulators/cache/">Cache explorer</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "547404bc5ae84ae7bcb0a39fce029e3e"}'></script><script>(()=>{
+if(innerWidth<1040){var d=document.querySelector('.toc details');if(d)d.open=false}
+var L=[].slice.call(document.querySelectorAll('.steps a'));
+if(L.length&&window.IntersectionObserver){
+ var H=L.map(a=>document.getElementById(a.hash.slice(1))),cur=-1,inb={};
+ var set=i=>{if(i===cur)return;cur=i;L.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current')})};
+ var io=new IntersectionObserver(es=>es.forEach(e=>{var i=H.indexOf(e.target);
+  if(e.isIntersecting){inb[i]=1;set(i)}
+  else if(e.boundingClientRect.top<0)set(Math.max(cur,i));
+  else if(inb[i]){inb[i]=0;set(i-1)}}),{rootMargin:'0px 0px -75% 0px'});
+ H.forEach(h=>h&&io.observe(h))}
+var F=[].slice.call(document.querySelectorAll('.dg.an'));
+if(F.length&&window.IntersectionObserver&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+ var go=f=>{f.classList.remove('go');void f.getBoundingClientRect();f.classList.add('go')},
+ fo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){fo.unobserve(e.target);go(e.target)}}),{threshold:.4});
+ F.forEach(f=>{f.classList.add('rdy');f.querySelector('.replay').onclick=()=>go(f);fo.observe(f)})}
+if(!(navigator.clipboard&&navigator.clipboard.writeText))return;
+document.querySelectorAll('.prose pre').forEach(p=>{
+ var w=document.createElement('div'),b=document.createElement('button');
+ w.className='code';b.className='copy';b.type='button';b.textContent='Copy';b.setAttribute('aria-label','Copy code to clipboard');
+ b.onclick=()=>{var done=t=>{b.textContent=t;setTimeout(()=>{b.textContent='Copy'},1500)};
+  try{navigator.clipboard.writeText(p.innerText).then(()=>done('Copied'),()=>done('Copy failed'))}catch(e){done('Copy failed')}};
+ p.before(w);w.append(p,b)})
+})();</script><script defer src="/diagram.js"></script><script defer src="/progress.js"></script></body></html>
