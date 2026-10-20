@@ -171,6 +171,7 @@ details.notes p{font-size:.9rem;color:var(--ink2);margin:.8em 0 0}
 .cta-card h2{font:800 1.4rem var(--display);margin:0 0 6px}
 .cta-card p{margin:0;color:var(--ink2)}
 .cta-card .signup{margin-top:16px}
+.cta-mini{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin:0 0 28px}.cta-mini p{margin:0 0 12px;color:var(--ink2)}.cta-mini strong{color:var(--ink)}
 
 .code{position:relative}
 .code pre{padding-top:40px}
@@ -313,7 +314,7 @@ details.words dd{margin:.15em 0 0;font-size:.9rem;color:var(--ink2);max-width:62
 
 @media print{
 body{background:#fff;color:#000;font-size:11pt}
-.top,.skip,.toc,.cta-card,.sim,.signup,.follow,.pager,.copy,.jump,.fnav{display:none!important}
+.top,.skip,.toc,.cta-card,.cta-mini,.sim,.signup,.follow,.pager,.copy,.jump,.fnav{display:none!important}
 .layout{display:block}
 .toc{display:block!important;max-height:none;overflow:visible}.toc>details{display:none!important}
 .steps a{color:#000;display:block;min-height:0}.steps .nd,.steps li::after{display:none}.steps .mn::before{content:" - "}.steps .nm,.steps .mn{display:inline;padding:0}
