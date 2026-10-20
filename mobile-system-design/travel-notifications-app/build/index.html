@@ -18,7 +18,7 @@
 <li>strings and plurals, and the tests</li>
 </ul>
 <p>None of it fits in a 45 minute round. I write only the model, the clock and the card if the interviewer asks.</p>
-<p><strong>How this code was checked.</strong> I compiled it and ran 22 tests on the desktop JVM with Compose 1.7.3 and Kotlin 2.0.21. Three Android pieces were stand-ins there: the image composable (a box that counts how often it runs), string resources, and <code>PullToRefreshBox</code>. The strings section and the dependency list below are <strong>not</strong> compiled. I did not run any of it on a phone. The desktop build uses Compose Multiplatform 1.7.3, which is based on Jetpack Compose 1.7. Check your own versions before you copy anything.</p>
+<p><strong>How this code was checked.</strong> I compiled it and ran 27 tests on the desktop JVM with Compose 1.7.3 and Kotlin 2.0.21. Three Android pieces were stand-ins there: the image composable (a box that counts how often it runs), string resources, and <code>PullToRefreshBox</code>. The strings section and the dependency list below are <strong>not</strong> compiled. I did not run any of it on a phone. The desktop build uses Compose Multiplatform 1.7.3, which is based on Jetpack Compose 1.7. Check your own versions before you copy anything.</p>
 <p>Imports are left out. The package is <code>app</code> in the listings. <strong>Left out on purpose:</strong> dependency injection, navigation, theme, the HTTP client behind <code>NotificationsApi</code>, and the image library setup.</p>
 <h2 id="45-minute-plan">45-minute plan</h2>
 <div class="tw" tabindex="0" role="region" aria-label="Table, scrollable">
@@ -128,7 +128,7 @@ fun ItemDto.toDomain(): NotificationItem? = when (this) {
 }</code></pre>
 <h2 id="2-rest">2. REST</h2>
 <div class="tw" tabindex="0" role="region" aria-label="Table, scrollable">
-<table><thead><tr><th>Call</th><th>Request</th><th>Success</th><th>Errors the app handles</th></tr></thead><tbody><tr><td><code>GET /v1/notifications?limit=30</code></td><td>none</td><td><code>200</code> with the JSON above</td><td>Network or 5xx: keep the old list, show a message. First load: error state with Try again</td></tr><tr><td><code>POST /v1/friend-requests/{id}/accept</code></td><td>none</td><td><code>200</code> with the new status</td><td>5xx or no network: roll back. 404, 409, 410: remove the row</td></tr><tr><td><code>POST /v1/friend-requests/{id}/decline</code></td><td>none</td><td><code>200</code> with the new status</td><td>The same</td></tr><tr><td><code>401</code> on any call</td><td></td><td></td><td>The HTTP layer refreshes the token and retries once. Accept and Decline are state changes, so a repeat is safe</td></tr></tbody></table></div>
+<table><thead><tr><th>Call</th><th>Request</th><th>Success</th><th>Errors the app handles</th></tr></thead><tbody><tr><td><code>GET /v1/notifications?limit=30</code></td><td>none</td><td><code>200</code> with the JSON above</td><td>Network or 5xx: keep the old list, show a message. First load: error state with Try again</td></tr><tr><td><code>POST /v1/friend-requests/{id}/accept</code></td><td>none</td><td><code>200</code> with the new status</td><td>5xx: roll back. Timeout or 409: unknown, refresh. 404, 410: remove the row</td></tr><tr><td><code>POST /v1/friend-requests/{id}/decline</code></td><td>none</td><td><code>200</code> with the new status</td><td>The same</td></tr><tr><td><code>401</code> on any call</td><td></td><td></td><td>The HTTP layer refreshes the token and retries once. Accept and Decline are state changes, so a repeat is safe</td></tr></tbody></table></div>
 <p>If the server cannot give <code>serverTimeMs</code> in the body, the <code>Date</code> response header is the same idea with one-second precision. The app model below treats both the same way: it calls <code>sync</code> once per response.</p>
 <h2 id="3-app-model">3. App model</h2>
 <p>Models are <code>@Immutable</code> so that the Compose compiler uses <code>equals</code>, even though they contain a <code>List</code>. <code>inFlight</code> is local only. It is not in the DTOs.</p>
@@ -200,7 +200,12 @@ class AnchoredServerClock(
 
     @Volatile private var anchor: Anchor? = null
 
-    /** Call on every response that carries the server time. */
+    /**
+     * Call on a fresh response that carries the server time, not on a cached one.
+     * The server stamped the time before the response travelled, so this estimate runs behind
+     * by about one network trip. A careful version adds round trip / 2. Each call can also move the
+     * display by the jitter between two responses.
+     */
     fun sync(serverNowMs: Long) {
         anchor = Anchor(serverNowMs, elapsedRealtimeMs())
     }
@@ -276,7 +281,10 @@ fun ageOf(createdAtMs: Long, nowMs: Long): Age {
 <li>Only one refresh runs at a time. A second call returns at once.</li>
 <li><code>respond</code> runs in the app scope. Leaving the screen does not cancel a tap that was already sent.</li>
 <li>Every <code>catch (e: Exception)</code> is preceded by a <code>CancellationException</code> rethrow. Without it, cancelling a coroutine would look like a network error.</li>
-<li>404, 409 and 410 remove the row. Accepted keeps the row with the new status. Declined removes it.</li>
+<li>The refresh also runs in the app scope, so a cleared ViewModel cannot leave <code>refreshing = true</code> for the next screen.</li>
+<li>404 and 410 remove the row. A timeout (<code>IOException</code>), a 409 or a status the app does not know is <code>Unknown</code>: the ViewModel refreshes and shows what the server holds. A 5xx is <code>Failed</code>: roll back.</li>
+<li>Two rows with one id would crash <code>LazyColumn</code>, so the mapper keeps the first. One bad row inside a known type still fails the whole refresh, and the old list stays. Decoding each row on its own is the fix if that matters.</li>
+<li>Accepted keeps the row with the new status. Declined removes it.</li>
 </ul>
 <pre tabindex="0"><code>sealed interface FeedState {
     data object Loading : FeedState
@@ -290,7 +298,8 @@ fun ageOf(createdAtMs: Long, nowMs: Long): Age {
 sealed interface RespondResult {
     data class Done(val status: RequestStatus) : RespondResult
     data object Gone : RespondResult          // withdrawn, or the account is gone
-    data object Failed : RespondResult        // network or server trouble: the user can retry
+    data object Failed : RespondResult        // the server said no (5xx, 4xx): nothing changed, the user can retry
+    data object Unknown : RespondResult       // timeout or conflict: it may have worked. Refresh to find out.
 }
 
 interface NotificationsRepository {
@@ -321,15 +330,21 @@ class DefaultNotificationsRepository(
     private val turn = Mutex()                       // refresh and respond take turns
     private val refreshing = AtomicBoolean(false)    // at most one refresh at a time
 
-    override suspend fun refresh(): Boolean {
+    // The repository outlives the screen, so the refresh must too. If it ran in the caller's
+    // scope, leaving the screen would cancel it and leave `refreshing = true` for the next screen.
+    override suspend fun refresh(): Boolean = appScope.async { load() }.await()
+
+    private suspend fun load(): Boolean {
         if (!refreshing.compareAndSet(false, true)) return true // one is already running
         try {
+            // Before the lock, so the spinner shows even while a tap is being sent.
+            state.update { if (it is FeedState.Loaded) it.copy(refreshing = true) else FeedState.Loading }
             return turn.withLock {
-                state.update { if (it is FeedState.Loaded) it.copy(refreshing = true) else FeedState.Loading }
                 try {
                     val dto = api.notifications(limit = 30)
                     clock.sync(dto.serverTimeMs)
-                    state.value = FeedState.Loaded(dto.items.mapNotNull { it.toDomain() })
+                    // Two rows with one id would crash LazyColumn (&quot;key already used&quot;).
+                    state.value = FeedState.Loaded(dto.items.distinctBy { it.id }.mapNotNull { it.toDomain() })
                     true
                 } catch (e: CancellationException) {
                     throw e
@@ -351,7 +366,8 @@ class DefaultNotificationsRepository(
         try {
             val status = when (api.respond(requestId, action)) {
                 &quot;accepted&quot; -&gt; RequestStatus.Accepted
-                else -&gt; RequestStatus.Declined
+                &quot;declined&quot; -&gt; RequestStatus.Declined
+                else -&gt; return RespondResult.Unknown // a status we do not know: ask the server again
             }
             apply { items -&gt;
                 if (status == RequestStatus.Declined) items.filterNot { it.id == requestId }
@@ -362,9 +378,12 @@ class DefaultNotificationsRepository(
             throw e
         } catch (e: HttpError) {
             when (e.code) {
-                404, 409, 410 -&gt; { apply { items -&gt; items.filterNot { it.id == requestId } }; RespondResult.Gone }
+                404, 410 -&gt; { apply { items -&gt; items.filterNot { it.id == requestId } }; RespondResult.Gone }
+                409 -&gt; RespondResult.Unknown // someone, maybe this device, answered already: refresh decides
                 else -&gt; RespondResult.Failed
             }
+        } catch (e: IOException) {
+            RespondResult.Unknown // a timeout can hide a success: the server may have saved it
         } catch (e: Exception) {
             RespondResult.Failed
         }
@@ -390,7 +409,7 @@ class DefaultNotificationsRepository(
     ) : NotificationsUiState
 }
 
-enum class UserMessage { RespondFailed, RequestGone, RefreshFailed }
+enum class UserMessage { RespondFailed, RespondUnknown, RequestGone, RefreshFailed }
 
 class NotificationsViewModel(
     private val repository: NotificationsRepository,
@@ -417,6 +436,9 @@ class NotificationsViewModel(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), NotificationsUiState.Loading)
 
+    // The first load. A repeat while one runs is ignored by the repository.
+    init { onRefresh() }
+
     fun onRefresh() {
         viewModelScope.launch {
             if (!repository.refresh() &amp;&amp; uiState.value is NotificationsUiState.Content) {
@@ -427,11 +449,9 @@ class NotificationsViewModel(
 
     fun onRespond(requestId: String, action: RequestAction) {
         // The buttons disappear on the next frame, but two taps can arrive before it.
-        var accepted = false
-        inFlight.update { current -&gt;
-            if (requestId in current) current else { accepted = true; current + (requestId to action) }
-        }
-        if (!accepted) return
+        // getAndUpdate returns the old map, so a retried update cannot leave a stale flag behind.
+        val before = inFlight.getAndUpdate { if (requestId in it) it else it + (requestId to action) }
+        if (requestId in before) return
         viewModelScope.launch {
             val result = repository.respond(requestId, action)
             // The repository has already applied the new status, so there is no flicker.
@@ -440,6 +460,10 @@ class NotificationsViewModel(
                 is RespondResult.Done -&gt; Unit
                 RespondResult.Gone -&gt; message.value = UserMessage.RequestGone
                 RespondResult.Failed -&gt; message.value = UserMessage.RespondFailed
+                RespondResult.Unknown -&gt; {
+                    message.value = UserMessage.RespondUnknown
+                    repository.refresh() // the server knows what happened
+                }
             }
         }
     }
@@ -486,8 +510,11 @@ fun NotificationsScreen(
     if (message != null) {
         val text = messageText(message)
         LaunchedEffect(message) {
-            snackbarHost.showSnackbar(text)
-            onMessageShown()
+            try {
+                snackbarHost.showSnackbar(text)
+            } finally {
+                onMessageShown() // also when the user leaves while it shows
+            }
         }
     }
 
@@ -649,6 +676,8 @@ fun FriendRequestRow(
     modifier: Modifier = Modifier,
 ) {
     val accepted = item.status == RequestStatus.Accepted || item.inFlight == RequestAction.Accept
+    val acceptDescription = acceptDescription(item.from.name)   // a screen reader says who, not just &quot;Accept&quot;
+    val declineDescription = declineDescription(item.from.name)
     Card(modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -664,8 +693,8 @@ fun FriendRequestRow(
             }
             if (!accepted) {
                 Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onAccept) { Text(acceptLabel()) }
-                    OutlinedButton(onClick = onDecline) { Text(declineLabel()) }
+                    Button(onClick = onAccept, modifier = Modifier.semantics { contentDescription = acceptDescription }) { Text(acceptLabel()) }
+                    OutlinedButton(onClick = onDecline, modifier = Modifier.semantics { contentDescription = declineDescription }) { Text(declineLabel()) }
                 }
             }
         }
@@ -687,11 +716,11 @@ private fun ErrorState(onRetry: () -&gt; Unit) {
 }</code></pre>
 <h2 id="9-offer-card">9. The offer card and the countdown</h2>
 <ul>
-<li><code>OfferCard</code> holds the <code>State&lt;Long&gt;</code> but does not read it. It reads <code>expired</code>, which changes once.</li>
+<li><code>OfferCard</code> holds the <code>State&lt;Long&gt;</code> but does not read it. It reads <code>expired</code>, which changes once. That read happens in the content scope of the <code>Card</code>, so the tests count the image inside that scope.</li>
 <li><code>CountdownText</code> is the only composable that reads the tick for the text.</li>
 <li><code>CountdownBar</code> reads the tick inside <code>drawBehind</code>, so a tick repeats only the draw phase.</li>
-<li><code>&quot;tnum&quot;</code> (tabular figures) keeps every digit the same width, so the text does not shift.</li>
-<li>The text is not a live region. The Compose docs say live regions are a bad fit for content that updates often, such as countdown timers. For a screen reader, give the card a rough description that changes each minute.</li>
+<li><code>&quot;tnum&quot;</code> (tabular figures) keeps every digit the same width. Words such as &quot;1 day&quot; and &quot;2 days&quot; still differ in width, so the line can move or wrap.</li>
+<li>The text is not a live region. The Compose docs say live regions are a bad fit for content that updates often, such as countdown timers. The code here does not build a screen reader description for the countdown. The plan: hide the ticking text and the bar from accessibility, and give the card a rough description that changes each minute, so semantics do not update every second. Announce the result of Accept once, in a polite live region, and keep focus on the row. Accept and Decline carry the person's name in their description.</li>
 </ul>
 <pre tabindex="0"><code>/**
  * The card does NOT read the tick. It reads only `expired`, which flips once.
@@ -722,6 +751,7 @@ fun OfferCard(
             if (expired) {
                 Text(offerEndedText(), style = MaterialTheme.typography.labelLarge)
             } else {
+                CountdownBar(offer.createdAtMs, offer.expiresAtMs, now, Modifier.clearAndSetSemantics {}) // decorative
                 CountdownText(offer.expiresAtMs, now)
                 Button(onClick = onOrderClick) { Text(offer.ctaLabel) }
             }
@@ -927,22 +957,24 @@ class FormatTest {
         assertEquals(Age.Days(3), ageOf(0, 3 * 86_400_000L + 5))
     }
 }</code></pre>
-<p><strong>ViewModel tests with a fake API.</strong> Three taps send one request. A slow refresh cannot overwrite a later Accept. A failure rolls back and sends one message. The helper <code>settle</code> runs the scheduler a few times, because the ViewModel, the repository and <code>stateIn</code> each hop through the dispatcher.</p>
+<p><strong>ViewModel tests with a fake API.</strong> Three taps send one request. A slow refresh cannot overwrite a later Accept. A failure rolls back and sends one message. A timeout and a 409 refresh. A cancelled refresh does not leave the repository stuck. The helper <code>settle</code> runs the scheduler a few times, because the ViewModel, the repository and <code>stateIn</code> each hop through the dispatcher.</p>
 <pre tabindex="0"><code>class FakeApi : NotificationsApi {
     var feedGate: CompletableDeferred&lt;Unit&gt;? = null
     var respondGate: CompletableDeferred&lt;Unit&gt;? = null
     var respondError: Exception? = null
     var respondCalls = 0
+    var feedCalls = 0
+    var respondStatus: String? = null
     var feed = FeedDto(1_000_000, listOf(
         FriendRequestDto(&quot;fr_1&quot;, 10, ActorDto(&quot;u1&quot;, &quot;Sam&quot;), &quot;pending&quot;),
         FriendRequestDto(&quot;fr_2&quot;, 20, ActorDto(&quot;u2&quot;, &quot;Kim&quot;), &quot;pending&quot;),
     ))
-    override suspend fun notifications(limit: Int): FeedDto { feedGate?.await(); return feed }
+    override suspend fun notifications(limit: Int): FeedDto { feedCalls++; feedGate?.await(); return feed }
     override suspend fun respond(requestId: String, action: RequestAction): String {
         respondCalls++
         respondGate?.await()
         respondError?.let { throw it }
-        return if (action == RequestAction.Accept) &quot;accepted&quot; else &quot;declined&quot;
+        return respondStatus ?: if (action == RequestAction.Accept) &quot;accepted&quot; else &quot;declined&quot;
     }
 }
 
@@ -960,8 +992,7 @@ class ViewModelTest {
         val vm = NotificationsViewModel(repo)
         var last: NotificationsUiState = NotificationsUiState.Loading
         vm.uiState.onEach { last = it }.launchIn(backgroundScope)
-        vm.onRefresh()
-        settle()
+        settle() // the ViewModel loads the feed itself
         return vm to { last }
     }
     private fun NotificationsUiState.requests() = (this as NotificationsUiState.Content).items.filterIsInstance&lt;FriendRequest&gt;()
@@ -1057,7 +1088,7 @@ private val activity = PhotoActivity(&quot;pa_1&quot;, 0, PhotoAction.Added, lis
 <li><a href="https://developer.android.com/reference/android/icu/text/ListFormatter">ListFormatter</a></li>
 <li><a href="https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-core/kotlinx.serialization.modules/-serializers-module-builder/polymorphic-default-deserializer.html">kotlinx.serialization polymorphism</a></li>
 </ul>
-<aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> the code was compiled and 22 tests passed on the desktop JVM with Compose 1.7.3 and Kotlin 2.0.21. See the <a href="/mobile-system-design/travel-notifications-app/#notes">verification notes</a> on the case page.</p><p>Not compiled and not run on a phone: the string resources, the Coil image, <code>PullToRefreshBox</code> from Material 3, the Gradle dependency list. No outside reviewer yet. Checked 20 Oct 2026.</p></aside><nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/travel-notifications-app/"><small>Read first</small>Design a notifications screen in Jetpack Compose</a><a class="nx" href="/mobile-system-design/live-ticker/"><small>Next</small>Design a stock ticker app</a></nav><div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You also get a short email each week with a follow-up round, and a note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
+<aside class="checks" aria-label="What we checked"><p><strong>What we checked:</strong> the code was compiled and 27 tests passed on the desktop JVM with Compose 1.7.3 and Kotlin 2.0.21. See the <a href="/mobile-system-design/travel-notifications-app/#notes">verification notes</a> on the case page.</p><p>Not compiled and not run on a phone: the string resources, the Coil image, <code>PullToRefreshBox</code> from Material 3, the Gradle dependency list. No outside reviewer yet. Checked 20 Oct 2026.</p></aside><nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/travel-notifications-app/"><small>Read first</small>Design a notifications screen in Jetpack Compose</a><a class="nx" href="/mobile-system-design/live-ticker/"><small>Next</small>Design a stock ticker app</a></nav><div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You also get a short email each week with a follow-up round, and a note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
 <div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">All case studies</a></li><li><a href="/compare/">Compare design choices</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Concepts</p><ul><li><a href="/concepts/">All concepts</a></li><li><a href="/patterns/">Design patterns</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/guides/">Guides</a></li><li><a href="/mobile-system-design/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/practice/">Practice timer</a></li><li><a href="/practice/#kit">Practice kit</a></li><li><a href="/follow-up/">Follow-up rounds</a></li><li><a href="/simulators/">Interactive tools</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li><li><a href="/simulators/cache/">Cache explorer</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "547404bc5ae84ae7bcb0a39fce029e3e"}'></script><script>(()=>{
 if(innerWidth<1040){var d=document.querySelector('.toc details');if(d)d.open=false}
