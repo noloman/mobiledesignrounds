@@ -100,6 +100,7 @@ WorkManager.getInstance(ctx).enqueueUniqueWork(
 )</code></pre>
 <p><strong>Why this is safe against duplicates:</strong> if the request reaches the server but the response is lost, the retry sends the same <code>clientId</code>. The server returns the original <code>serverId</code> and <code>seq</code>. It does not create a second message.</p>
 <p>This is idempotency (doing it twice has the same result as doing it once) in practice. The <a href="/mobile-system-design/booking-app/">booking app</a> uses the same pattern for the payment. The <a href="/guides/staff-mobile-loop-guide/">staff guide</a> walks through this exact lost-acknowledgement case at staff depth.</p>
+<p><strong>Tap to retry.</strong> A manual retry sends the same <code>clientId</code>, because the first try may have reached the server. Only a message that the server rejected for its content gets a new ID. On logout, keep or clear the outbox for that account. Never send it with the next user's token.</p>
 <p><strong>Ordering note:</strong> pending messages have no <code>seq</code> yet. The screen shows confirmed messages by <code>seq</code>, then pending ones by <code>createdAt</code> at the bottom. When an ack gives a row its <code>seq</code>, the row moves to its place.</p>
 <h2 id="5-the-receive-path-in-detail">5. The receive path in detail</h2>
 <p>The socket and FCM only tell the device that something changed. The data always comes from a cursor fetch.</p>
