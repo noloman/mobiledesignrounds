@@ -22,6 +22,8 @@
 - [Build it: a stock ticker app on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/live-ticker/build/): the schema, API, code and platform limits for the design a stock ticker app answer
 - [Design a video streaming app](https://mobiledesignrounds.com/mobile-system-design/video-app/): Loading ahead (prefetch), adaptive bitrate, and playback state.
 - [Build it: a video streaming app on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/video-app/build/): the schema, API, code and platform limits for the design a video streaming app answer
+- [Design reels, video and photos for a travel app (Android and iOS)](https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/): A player pool, a small preload window, uploads that resume, and photos that fit in memory. The iOS side has not yet been reviewed by an iOS engineer.
+- [Build it: reels, video and photos on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/build/): the tables, REST calls, code and platform limits for the reels, video and photos answer
 - [Design an analytics SDK](https://mobiledesignrounds.com/mobile-system-design/analytics-sdk/): Sending events in batches, saving them on the device, privacy, and versions.
 - [Build it: an analytics SDK on Android and iOS](https://mobiledesignrounds.com/mobile-system-design/analytics-sdk/build/): the schema, API, code and platform limits for the design an analytics sdk answer
 - [Design a push notification SDK](https://mobiledesignrounds.com/mobile-system-design/push-sdk/): How push tokens change over time, delivery, and deep links.

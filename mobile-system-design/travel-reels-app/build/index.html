@@ -1,0 +1,266 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-WJDm62DDE4MZD9v2EoCFL7mWS2pksWjW0iId/jEDZH4=' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Build Reels, Video and Photos for a Travel App: Android and iOS Code</title><meta name="description" content="The tables, REST calls, packaging asks, player pool, preload, resumable upload and photo memory code behind the travel app media case, for Android and iOS.">
+<link rel="canonical" href="https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/build/"><meta property="og:title" content="Build Reels, Video and Photos for a Travel App: Android and iOS Code"><meta property="og:description" content="The tables, REST calls, packaging asks, player pool, preload, resumable upload and photo memory code behind the travel app media case, for Android and iOS."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/build/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/feeds-and-media.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Build Reels, Video and Photos for a Travel App: Android and iOS Code">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage-700-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Build it: reels, video and photos on Android and iOS", "description": "The tables, REST calls, packaging asks, player pool, preload, resumable upload and photo memory code behind the travel app media case, for Android and iOS.", "datePublished": "2026-10-20", "dateModified": "2026-10-20", "mainEntityOfPage": "https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/build/", "image": ["https://mobiledesignrounds.com/og/feeds-and-media.png"], "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/", "sameAs": ["https://manulorenzo.me", "https://github.com/noloman"]}, "publisher": {"@type": "Organization", "name": "Mobile Design Rounds", "url": "https://mobiledesignrounds.com/", "logo": {"@type": "ImageObject", "url": "https://mobiledesignrounds.com/icon-512.png"}}, "inLanguage": "en"}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Case studies", "item": "https://mobiledesignrounds.com/mobile-system-design/"}, {"@type": "ListItem", "position": 3, "name": "Build guide", "item": "https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/build/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/concepts/">Concepts</a><a href="/practice/">Practice</a><a href="/about/">About</a><a class="navcta" href="/#cheat-sheet-signup">Free cheat sheet</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/mobile-system-design/">Case studies</a></li><li><a href="/mobile-system-design/travel-reels-app/">Design reels, video and photos for a travel app</a></li><li aria-current="page">Build guide</li></ol></nav><div class="chips"><span>Build guide</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>Android</span><span class="plat"><svg class="ic" aria-hidden="true" focusable="false"><use href="#i-phone"/></svg>iOS</span><span>20 min read</span></div><h1>Build it: reels, video and photos on Android and iOS</h1><p class="meta">Last reviewed <time datetime="2026-10-20">20 Oct 2026</time>. Drafted with AI assistance. Checked against official documentation where noted (<a href="/about/#how">how this is checked</a>). Part of: <a href="/mobile-system-design/travel-reels-app/">Design reels, video and photos for a travel app</a> &middot; <a href="/mobile-system-design/feeds-and-media/">Feeds and media</a> &middot; <a href="/mobile-system-design/#method">The five-step method</a>.</p></div><div class="layout"><aside class="toc"><details open><summary>On this page</summary><ol><li><a href="#1-local-schema-room">1. Local schema (Room)</a></li><li><a href="#2-rest">2. REST</a></li><li><a href="#3-packaging-asks">3. What packaging and the backend must give the client</a></li><li><a href="#4-player-pool">4. A player pool owned outside the UI (Android)</a></li><li><a href="#5-video-disk-cache">5. Disk cache for video bytes (Android)</a></li><li><a href="#6-settle-based-play">6. Play only the settled page (Compose)</a></li><li><a href="#7-posting-pipeline">7. The posting pipeline</a></li><li><a href="#8-photos-and-memory">8. Large photos and the memory budget</a></li><li><a href="#9-ios-swift">9. How to build it on iOS (Swift)</a></li><li><a href="#10-platform-limits">10. Platform limits that change the design</a></li><li><a href="#11-metrics">11. What to measure</a></li><li><a href="#12-more-practice-prompts">12. More practice prompts</a></li><li><a href="#further-reading-official-docs">Further reading (official docs)</a></li></ol></details></aside><article class="prose"><p>This is the implementation material behind the <a href="/mobile-system-design/travel-reels-app/">reels, video and photos interview case</a>. It covers:</p><ul><li>the local tables and the REST calls, with the IDs that make a retry safe</li><li>what packaging and the backend must give the client</li><li>the player pool, the preload policy and the disk cache</li><li>the post pipeline: compress, save, upload in chunks, resume</li><li>large photos: decode to a target size, and the memory budget</li><li>the iOS side in Swift, and the platform limits</li></ul><p>None of it fits in a 45 minute round. I draw it only if the interviewer asks.</p><p><strong>Versions.</strong> The Kotlin code uses Media3 (the Android media library) <code>DefaultPreloadManager</code> as shown in the Android Developers Blog, and Compose. I read the preload blog post. The post says its snippets have typos, and it names no Media3 version, so compile against your version before you copy anything. The cache classes (<code>SimpleCache</code>, <code>CacheDataSource</code>) are from my knowledge of Media3 and I did not re-read their pages. The Swift code is a sketch and has not been compiled.</p><h2 id="45-minute-plan">45-minute plan</h2><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Minutes</th><th>Step</th><th>What I have drawn by the end</th><th>Skip if late</th></tr></thead><tbody><tr><td>0 to 4</td><td>Scope and constraints</td><td>Scope table, what the phone does</td><td>Fewer questions</td></tr><tr><td>4 to 14</td><td>Data and contracts</td><td>Feed row, upload calls, saved IDs</td><td>The packaging table</td></tr><tr><td>14 to 22</td><td>Client structure</td><td>Player pool, upload manager, media budget</td><td>One line per box</td></tr><tr><td>22 to 40</td><td>Make the hard part work</td><td>Preload window, post states, photo sizes</td><td>iOS bullets</td></tr><tr><td>40 to 45</td><td>Break it, ship it, roll it back</td><td>Top failures, remote settings, what I watch</td><td>Two failures and the flag</td></tr></tbody></table></div><h2 id="1-local-schema-room">1. Local schema (Room)</h2><pre tabindex="0"><code>@Entity(tableName = &quot;reels&quot;)
+data class ReelEntity(
+    @PrimaryKey val id: String,
+    val posterUrl: String,
+    val previewColor: Int,             // dominant colour, shown before the poster loads
+    val durationMs: Long,
+    val aspect: Float,                 // width / height, so the cell has its size before the video
+    val position: Long,                // order in the feed; new reels are appended after the current one
+    val removed: Boolean = false,      // tombstone: a stale page must not bring it back
+)
+
+@Entity(tableName = &quot;pending_posts&quot;)
+data class PendingPostEntity(
+    @PrimaryKey val postId: String,    // UUID made when the user taps Post
+    val caption: String,
+    val placeId: String?,
+    val state: String,                 // SAVED, UPLOADING, WAITING, PROCESSING, LIVE, REJECTED
+    val createdAt: Long,
+    val rejectReason: String? = null,
+)
+
+@Entity(tableName = &quot;pending_uploads&quot;, indices = [Index(&quot;postId&quot;)])
+data class PendingUploadEntity(
+    @PrimaryKey val uploadId: String,  // UUID made with the post, never remade
+    val postId: String,
+    val localPath: String,             // app files folder, never a cache folder
+    val bytes: Long,
+    val confirmedOffset: Long,         // last offset the server confirmed
+    val sessionUrl: String?,           // may expire; ask again with the same uploadId
+    val sessionExpiresAt: Long?,
+)</code></pre><p>Four details matter:</p><ul><li><strong>The post and its uploads are written in one transaction.</strong> If the app is killed between the two writes, there must not be an upload without a post or a post without an upload.</li><li><strong><code>confirmedOffset</code> is the server's number.</strong> I save it after every chunk answer. I never save "bytes I sent", because the server may not have kept them.</li><li><strong>States only move forward.</strong> <code>LIVE</code> never goes back to <code>PROCESSING</code>. An old push that arrives late is ignored.</li><li><strong>On iOS</strong> the same three tables fit SwiftData models or GRDB tables. The rules are the same.</li></ul><p>An unique index on the file hash is optional. I use it only to warn the user about picking the same video twice. The server still dedupes by post ID.</p><h2 id="2-rest">2. REST</h2><pre tabindex="0"><code>GET  /v1/reels?cursor=&lt;opaque&gt;&amp;limit=10
+     → { items: [{ id, posterUrl, previewColor, durationMs, aspect }], nextCursor }
+
+GET  /v1/reels/{id}/playback
+     → { url, expiresAt, renditions?: [...] }          // 404 or 410 when the reel is gone
+
+POST /v1/uploads                                        // idempotent by uploadId
+     { uploadId, kind: &quot;video&quot;|&quot;photo&quot;, bytes, mime }
+     → { sessionUrl, chunkSize, expiresAt }
+
+HEAD /v1/uploads/{uploadId}                             // or GET: how much do you hold?
+     → Upload-Offset: 12582912
+
+PATCH sessionUrl                                        // one chunk
+     Upload-Offset: 12582912      Content-Length: 5242880
+     → 204, Upload-Offset: 17825792                     // the server ignores bytes it already has
+
+POST /v1/posts                                          // idempotent by postId
+     { postId, uploadIds: [...], caption, placeId, takenAt }
+     → 201 (or 200 with the same post)
+
+GET  /v1/posts/{postId}
+     → { state: &quot;processing&quot;|&quot;ready&quot;|&quot;rejected&quot;, reason? }
+
+DELETE /v1/posts/{postId}                               // repeat is safe</code></pre><p>I made these calls up for this guide, in the style of resumable upload protocols. Real services differ in names but not in the two things the phone needs: an offset it can ask for, and a session call that accepts the same ID twice. Google Cloud Storage chunks must be a multiple of 256 KiB, and its session lives one week (<a href="https://docs.cloud.google.com/storage/docs/resumable-uploads">resumable uploads</a>). Amazon S3 multipart parts must be 5 MiB or more except the last, with at most 10,000 parts (<a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html">S3 limits</a>). With 5 MiB parts, 10,000 parts allow about 48 GiB, which is far above any reel.</p><p>Status codes I plan for on a chunk:</p><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Answer</th><th>Meaning</th><th>What the phone does</th></tr></thead><tbody><tr><td>204 or 200</td><td>Chunk saved</td><td>Save the new confirmed offset, send the next chunk</td></tr><tr><td>401 or 403</td><td>Token or signed session no longer accepted</td><td>Refresh the token, ask for the session of the same uploadId, ask the offset, continue</td></tr><tr><td>404 or 410</td><td>Session is gone</td><td>Create a new session with the same uploadId. Start from byte 0 if the server holds nothing</td></tr><tr><td>408, 429, 5xx, or no answer</td><td>Server or network trouble</td><td>Ask the offset first, then retry with backoff and jitter (<a href="/mobile-system-design/photo-file-sync/">photo sync case</a>)</td></tr><tr><td>409 or 416 (offset mismatch)</td><td>The phone and the server disagree</td><td>Trust the server offset and continue from it</td></tr></tbody></table></div><p class="mut">Rows are my design. Google documents 410 and 404 for an expired session; the rest is how I would handle each answer.</p><h2 id="3-packaging-asks">3. What packaging and the backend must give the client</h2><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Ask</th><th>Why the client needs it</th></tr></thead><tbody><tr><td>2 or 3 renditions per reel: for example 360p, 540p and 720p, vertical, H.264</td><td>Weak links need a low rung. Old phones decode H.264</td></tr><tr><td>Segments of about 2 seconds for HLS, or the index at the front of an MP4</td><td>The first frame arrives after one small download</td></tr><tr><td>A key frame at the start of every segment</td><td>Seeking and quality changes are clean, and a preload of N seconds is exactly N seconds</td></tr><tr><td>A poster image for every reel, in 2 sizes, and a dominant colour or tiny preview</td><td>The cell is never black</td></tr><tr><td>Duration and aspect ratio in the feed row</td><td>The cell has its size before any video loads</td></tr><tr><td>A stable rendition name and reel ID</td><td>The client builds the cache key from them, not from the signed address</td></tr><tr><td>Photo variants by width (for example 360, 720, 1080, 2160), in a modern format with a JPEG fallback</td><td>The grid asks for the size of its cell, the viewer for the screen</td></tr><tr><td>Loudness-normalised audio</td><td>The user does not jump when the next reel is louder</td></tr><tr><td>A maximum length and size, rejected with a reason</td><td>The client can show the reason and keep the local file</td></tr></tbody></table></div><p>Photo variants through the address (for example a width parameter) are a common CDN feature. The exact parameter names depend on the CDN, so I say "ask for the width of the cell in pixels" and leave the spelling to the backend.</p><h2 id="4-player-pool">4. A player pool owned outside the UI (Android)</h2><pre tabindex="0"><code>class ReelPlayerPool(
+    private val builder: DefaultPreloadManager.Builder,
+    private val size: Int,                      // 2 on low-RAM phones, 3 otherwise
+) {
+    private val free = ArrayDeque&lt;ExoPlayer&gt;()
+    private val leased = mutableMapOf&lt;String, ExoPlayer&gt;()   // reelId -&gt; player
+
+    init { repeat(size) { free.add(builder.buildExoPlayer()) } }
+
+    /** Lease a player for a reel. Returns null if none is free: the cell keeps its poster. */
+    fun lease(reelId: String): ExoPlayer? {
+        leased[reelId]?.let { return it }
+        val p = free.removeFirstOrNull() ?: return null
+        leased[reelId] = p
+        return p
+    }
+
+    fun release(reelId: String) {
+        val p = leased.remove(reelId) ?: return
+        p.stop(); p.clearMediaItems()
+        free.add(p)
+    }
+
+    /** Memory warning: keep one player, give the rest back to the system. */
+    fun shrinkTo(n: Int) {
+        while (free.size + leased.size &gt; n &amp;&amp; free.isNotEmpty()) free.removeFirst().release()
+    }
+
+    fun releaseAll() { (free + leased.values).forEach { it.release() }; free.clear(); leased.clear() }
+}</code></pre><p>The pool lives in the app scope (a singleton in your dependency graph), not in an activity or a ViewModel. A ViewModel is cleared when its screen leaves the back stack. The <a href="/mobile-system-design/video-app/">video case</a> explains why a service is used there. A feed without background audio can use an app-scoped object, because nothing needs to keep playing after the user leaves the feed.</p><p>The preload manager and the players must come from the same builder, or their parts are not shared. This is stated in the Media3 preloading post (<a href="https://developer.android.com/blog/posts/elevating-media-playback-introducing-preloading-with-media3-part-1">part 1</a>).</p><pre tabindex="0"><code>class ReelPreloadPolicy : TargetPreloadStatusControl&lt;Int, DefaultPreloadManager.PreloadStatus&gt; {
+    @Volatile var currentIndex = 0
+    @Volatile var cheapNetwork = true          // false on cellular or Data Saver
+
+    override fun getTargetPreloadStatus(rankingData: Int): DefaultPreloadManager.PreloadStatus? {
+        val d = rankingData - currentIndex     // 1 = next, -1 = previous
+        return when {
+            d == 1  -&gt; specifiedRangeLoaded(if (cheapNetwork) 5_000L else 2_000L)
+            d == -1 &amp;&amp; cheapNetwork -&gt; specifiedRangeLoaded(1_000L)
+            d == 2 &amp;&amp; cheapNetwork -&gt; DefaultPreloadManager.PreloadStatus.TRACKS_SELECTED
+            else    -&gt; null                    // nothing for the rest
+        }
+    }
+}</code></pre><p>This copies the shape of the example in the Media3 post, with my numbers. The post's own example uses 5 seconds for the next item, 3 seconds for the previous item, and more stages further away. Compile it against your Media3 version: the post says its snippets contain typos, and I did not check the method names against the API reference.</p><h2 id="5-video-disk-cache">5. Disk cache for video bytes (Android)</h2><pre tabindex="0"><code>val cache = SimpleCache(
+    File(context.cacheDir, &quot;reels&quot;),
+    LeastRecentlyUsedCacheEvictor(400L * 1024 * 1024),      // 400 MB, my starting point
+    StandaloneDatabaseProvider(context),
+)
+
+// A stable key: reel + rendition. The signed query string must not be in it.
+fun mediaItem(reelId: String, rendition: String, url: String) =
+    MediaItem.Builder()
+        .setUri(url)
+        .setCustomCacheKey(&quot;$reelId:$rendition&quot;)
+        .build()</code></pre><p>Without the custom key, every new signed address is a new key, so the bytes already on disk are never found. This is the most common reason a "cached" feed still downloads every reel again. The video cache is allowed to evict. It lives in the cache folder, which is fine, because it holds only copies.</p><h2 id="6-settle-based-play">6. Play only the settled page (Compose)</h2><pre tabindex="0"><code>@Composable
+fun ReelsPager(reels: List&lt;Reel&gt;, pool: ReelPlayerPool, policy: ReelPreloadPolicy, preload: DefaultPreloadManager) {
+    val pager = rememberPagerState { reels.size }
+
+    LaunchedEffect(pager) {
+        snapshotFlow { pager.settledPage }             // changes only when the swipe has ended
+            .distinctUntilChanged()
+            .debounce(150)                             // my number: skip fast flicks
+            .collect { page -&gt;
+                policy.currentIndex = page
+                preload.setCurrentPlayingIndex(page)
+                preload.invalidate()
+                // give back players that are not current or next
+                reels.indices.filter { it != page &amp;&amp; it != page + 1 &amp;&amp; it != page - 1 }
+                    .forEach { pool.release(reels[it].id) }
+            }
+    }
+
+    VerticalPager(pager, beyondViewportPageCount = 0) { page -&gt;
+        ReelCell(reels[page], isCurrent = page == pager.settledPage, pool = pool)
+    }
+}</code></pre><p><code>beyondViewportPageCount = 0</code> means the pager composes only the visible page. Preloading is the preload manager's job, not the pager's. <code>settledPage</code> is the page the pager has come to rest on. I wrote this from my knowledge of Compose foundation and did not re-read its page. The cell shows the poster until the player reports that it has drawn the first frame (the <code>onRenderedFirstFrame</code> callback of the player listener). A cell that is not current does not play, even if it holds a prepared player.</p><h2 id="7-posting-pipeline">7. The posting pipeline</h2><p>The order matters more than the code. This is the order from the main page, with the code that carries each step.</p><pre tabindex="0"><code>suspend fun onPostTapped(picked: Uri, caption: String, placeId: String?) {
+    // 1. Copy at once. A picker address may stop working later.
+    val local = copyToAppFiles(picked)                       // filesDir/outgoing/&lt;uuid&gt;.mp4
+
+    // 2. Check space first. Compress needs room for the output.
+    require(freeBytes() &gt; local.length() * 2) { &quot;Not enough space&quot; }
+
+    // 3. Write the IDs and the file path before any network call.
+    val postId = UUID.randomUUID().toString()
+    val uploadId = UUID.randomUUID().toString()
+    db.withTransaction {
+        db.posts().insert(PendingPostEntity(postId, caption, placeId, &quot;SAVED&quot;, now()))
+        db.uploads().insert(PendingUploadEntity(uploadId, postId, local.path, local.length(), 0, null, null))
+    }
+
+    // 4. Compress on the phone (Media3 Transformer), then hand over to the runner.
+    compressTo1080p(local, uploadId)
+    uploadRunner.enqueue(postId)            // user-initiated job on Android 14+, WorkManager fallback below
+}</code></pre><p>Media3 Transformer trims and transcodes, and uses <code>MediaCodec</code> for hardware encoding (<a href="https://developer.android.com/media/media3/transformer">Transformer</a>). Its overview does not mention pause or resume, so I treat a compress as all-or-nothing: if the app is killed during it, the next start deletes the partial output and starts the compress again from the copied file. That is why step 1 copies the original into the app files folder first.</p><pre tabindex="0"><code>suspend fun runUpload(postId: String) {
+    val post = db.posts().get(postId) ?: return
+    for (up in db.uploads().forPost(postId)) {
+        var session = up.sessionUrl?.takeIf { (up.sessionExpiresAt ?: 0) &gt; now() }
+            ?: api.createUpload(up.uploadId, up.bytes).also { db.uploads().saveSession(up.uploadId, it) }.sessionUrl
+
+        // Ask the server, never trust our own counter after a restart.
+        var offset = api.offset(up.uploadId)
+        db.uploads().saveOffset(up.uploadId, offset)
+
+        RandomAccessFile(File(up.localPath), &quot;r&quot;).use { f -&gt;
+            while (offset &lt; up.bytes) {
+                val n = minOf(CHUNK, up.bytes - offset).toInt()
+                val buf = ByteArray(n).also { f.seek(offset); f.readFully(it) }
+                when (val r = api.putChunk(session, offset, buf)) {
+                    is Ok -&gt; { offset = r.serverOffset; db.uploads().saveOffset(up.uploadId, offset) }
+                    is AuthExpired -&gt; { auth.refresh(); session = api.createUpload(up.uploadId, up.bytes).sessionUrl; offset = api.offset(up.uploadId) }
+                    is SessionGone -&gt; { session = api.createUpload(up.uploadId, up.bytes).sessionUrl; offset = api.offset(up.uploadId) }
+                    is Retry -&gt; delay(r.backoffMs)
+                }
+            }
+        }
+    }
+    api.createPost(postId, db.uploads().forPost(postId).map { it.uploadId }, post.caption, post.placeId)
+    db.posts().setState(postId, &quot;PROCESSING&quot;)
+}</code></pre><p>Three things to notice. The upload ID never changes. The offset comes from the server at the start and after every error. And the post is created only after all bytes are in, with the post ID the user's tap made. A double tap or a restart cannot make a second post.</p><p>What starts <code>runUpload</code>:</p><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Android version</th><th>Runner</th><th>Notes</th></tr></thead><tbody><tr><td>14 and later</td><td>User-initiated data transfer job</td><td>Needs <code>RUN_USER_INITIATED_JOBS</code>, a visible notification, and a visible app when it is scheduled. No Jetpack library supports it. If the user stops the app from the task manager, <code>onStopJob()</code> is not called, so the offset must already be saved (<a href="https://developer.android.com/develop/background-work/background-tasks/uidt">docs</a>)</td></tr><tr><td>13 and lower</td><td>WorkManager with a foreground service</td><td>The fallback named in the same page. A foreground service of the data-sync type has a time limit on Android 15 and later (<a href="/mobile-system-design/video-app/">video case</a>); stop in the timeout callback and go on later</td></tr><tr><td>Any</td><td>A retry on the next app start</td><td>Read the rows in <code>SAVED</code>, <code>UPLOADING</code> and <code>WAITING</code> and enqueue them again</td></tr></tbody></table></div><p>On Wi-Fi-only: the first time a user posts a large video on cellular, ask once, and save the answer. The state is then <code>WAITING</code> with the reason "Waiting for Wi-Fi".</p><h2 id="8-photos-and-memory">8. Large photos and the memory budget</h2><pre tabindex="0"><code>// Android: decode to the target size in one step (API 28+).
+fun decodeForViewer(src: ImageDecoder.Source, maxW: Int, maxH: Int): Bitmap =
+    ImageDecoder.decodeBitmap(src) { decoder, info, _ -&gt;
+        val s = minOf(maxW.toFloat() / info.size.width, maxH.toFloat() / info.size.height, 1f)
+        decoder.setTargetSize((info.size.width * s).toInt(), (info.size.height * s).toInt())
+    }</code></pre><p>Below API 28, use <code>BitmapFactory.Options.inJustDecodeBounds</code> to read the size, compute <code>inSampleSize</code>, and decode again. <code>inSampleSize</code> is rounded down to a power of two (<a href="https://developer.android.com/topic/performance/graphics/load-bitmap">Loading large bitmaps</a>). In practice an image library does this for you: give it the target size of the view. The main point for an interview is that the target size is a decision of the screen, and the file size is not.</p><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Photo</th><th>Pixels</th><th>Decoded size (4 bytes a pixel)</th></tr></thead><tbody><tr><td>Grid thumbnail</td><td>360 x 360</td><td>0.5 MB</td></tr><tr><td>Viewer copy</td><td>1080 x 1440</td><td>6.2 MB</td></tr><tr><td>12 MP original</td><td>4000 x 3000</td><td>48 MB</td></tr><tr><td>48 MP original</td><td>8000 x 6000</td><td>192 MB</td></tr><tr><td>One zoom tile</td><td>512 x 512</td><td>1 MB</td></tr></tbody></table></div><p class="mut">Width times height times 4. My arithmetic. Some formats use more or less per pixel, and the system may keep a second copy while it converts.</p><pre tabindex="0"><code>class MediaBudget(context: Context, private val pool: ReelPlayerPool, private val images: ImageCaches) : ComponentCallbacks2 {
+    private val am = context.getSystemService(ActivityManager::class.java)
+    val lowRam = am.isLowRamDevice
+    val poolSize = if (lowRam) 2 else 3
+    val imageMemoryBytes = (am.memoryClass * 1024L * 1024L * if (lowRam) 0.10 else 0.15).toLong()  // my numbers
+
+    override fun onTrimMemory(level: Int) {
+        if (level &gt;= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {   // check the levels for your target API
+            images.dropOffScreenDecoded()
+            images.clearMemoryCache()
+            pool.shrinkTo(1)
+        }
+    }
+    override fun onConfigurationChanged(c: Configuration) {}
+    override fun onLowMemory() { onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_COMPLETE) }
+}</code></pre><p><code>isLowRamDevice</code> and <code>memoryClass</code> are standard <code>ActivityManager</code> values. I did not re-read their pages, and I did not verify the trim levels. Treat the percentages as starting points to tune on real low-end phones.</p><h2 id="9-ios-swift">9. How to build it on iOS (Swift)</h2><p>The design is the same. These are the iOS parts that differ.</p><pre tabindex="0"><code>// Photos: decode straight to a target size with ImageIO. Never decode the original and shrink it.
+func downsampled(_ url: URL, maxPixel: Int) -&gt; CGImage? {
+    let srcOpts = [kCGImageSourceShouldCache: false] as CFDictionary
+    guard let src = CGImageSourceCreateWithURL(url as CFURL, srcOpts) else { return nil }
+    let opts = [
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceShouldCacheImmediately: true,
+        kCGImageSourceCreateThumbnailWithTransform: true,      // applies the rotation from the metadata
+        kCGImageSourceThumbnailMaxPixelSize: maxPixel,
+    ] as CFDictionary
+    return CGImageSourceCreateThumbnailAtIndex(src, 0, opts)
+}</code></pre><p>The ImageIO thumbnail function is documented by Apple. I did not read the page for the option keys, so check them. Keep the pixel cost in mind: a decoded <code>CGImage</code> still costs width times height times 4 bytes.</p><pre tabindex="0"><code>// Preload: assign the item to a paused player so it buffers, and cap the buffer.
+func prepare(_ reel: Reel, on player: AVPlayer) {
+    let item = AVPlayerItem(url: reel.playbackURL)
+    item.preferredForwardBufferDuration = 5       // seconds; low raises stall risk, high costs resources
+    player.replaceCurrentItem(with: item)
+    player.pause()
+}</code></pre><p>Apple documents <code>preferredForwardBufferDuration</code> as the seconds the player should buffer ahead, and says a low value raises the chance of stalls while a high value raises the demand on system resources. Whether a paused player buffers the full amount before it plays is my reading, so measure time to first frame on a real phone. For a poster, use <code>AVPlayerLayer.isReadyForDisplay</code> to know that the first frame is on screen. The iOS limit on the number of players at once is not documented in a page I found, so keep the pool at two or three and test.</p><pre tabindex="0"><code>// Upload: a background session, one task per chunk, each chunk from its own file.
+final class Uploader: NSObject, URLSessionTaskDelegate {
+    private lazy var session: URLSession = {
+        let c = URLSessionConfiguration.background(withIdentifier: &quot;app.media.upload&quot;)
+        c.sessionSendsLaunchEvents = true
+        return URLSession(configuration: c, delegate: self, delegateQueue: nil)
+    }()
+
+    func sendNextChunk(upload: PendingUpload, offset: Int64) throws {
+        let chunkURL = try writeChunkFile(of: upload.localURL, from: offset, length: chunkSize)   // in Application Support
+        var req = URLRequest(url: upload.sessionURL); req.httpMethod = &quot;PATCH&quot;
+        req.setValue(&quot;\(offset)&quot;, forHTTPHeaderField: &quot;Upload-Offset&quot;)
+        let task = session.uploadTask(with: req, fromFile: chunkURL)
+        task.taskDescription = upload.uploadId          // read it back after a relaunch
+        task.resume()
+    }
+
+    func urlSession(_ s: URLSession, task: URLSessionTask, didCompleteWithError e: Error?) {
+        // Save the server offset from the response, delete the chunk file, send the next one.
+        // On 401 or 403: refresh the token, ask for the session of the same uploadId.
+    }
+}</code></pre><p>Apple says background uploads must come from a file, that the session must have a delegate, and that after the system ends the app you recreate the session with the same identifier (<a href="https://developer.apple.com/documentation/foundation/downloading-files-in-the-background">docs</a>). Apple also says the system limits how fast a relaunched app can start new background tasks, and advises one session that starts many tasks. For a long video, cutting it into chunk files up front is one way to use that advice; the other is to send fewer, larger chunks. I chose a task per chunk because the server offset is the truth after each one.</p><p>iOS 26 adds <code>BGContinuedProcessingTask</code> for work the user starts in the foreground and that may continue in the background. The system shows its progress in a Live Activity and the person can cancel it, and the system may end it when resources are short (<a href="https://developer.apple.com/documentation/backgroundtasks/bgcontinuedprocessingtask">Apple</a>). I would use it for the compress step, and the background session for the transfer. I did not read the request side of the API, so check it.</p><p>Picking media on iOS: the system picker gives the app an item to copy. Copy the file into the app's own folder at once, as on Android. Do not keep only the picker's reference. I did not verify how long the picker's temporary files last.</p><h2 id="10-platform-limits">10. Platform limits that change the design</h2><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Limit</th><th>Android</th><th>iOS</th><th>What it changes</th></tr></thead><tbody><tr><td>Hardware video decoders at once</td><td>Limited per codec; the capabilities object reports a maximum (not verified)</td><td>Not documented in a page I found</td><td>Pool of two or three, never one player per cell</td></tr><tr><td>Memory for a decoded photo</td><td>Width x height x 4 bytes</td><td>Same</td><td>Decode to the target size</td></tr><tr><td>App ended for memory</td><td>Out-of-memory crash, or the system ends the process</td><td>The system ends the app, often with no warning</td><td>Stay small before any warning, shrink on the warning</td></tr><tr><td>Long upload in the background</td><td>User-initiated data transfer job (14+), WorkManager foreground fallback</td><td>Background URLSession from files; BGContinuedProcessingTask on 26+</td><td>Save the offset after every chunk</td></tr><tr><td>User force-stops the app</td><td>The process ends; user-initiated jobs are not rescheduled</td><td>Active background transfers are cancelled (from the video case, not re-checked)</td><td>Rows and files on disk, resume on the next launch</td></tr><tr><td>Cache folders</td><td>May be cleared when storage is low</td><td>May be cleared when storage is low (not verified)</td><td>Pending uploads live in the files folder</td></tr></tbody></table></div><h2 id="11-metrics">11. What to measure</h2><div class="tw" tabindex="0" role="region" aria-label="Table, scrollable"><table><thead><tr><th>Metric</th><th>Why</th></tr></thead><tbody><tr><td>Time to first frame</td><td>From the swipe settling to the first frame drawn. The number users feel</td></tr><tr><td>Stall share</td><td>Share of watch time spent stalled</td></tr><tr><td>Preload bytes never played</td><td>If it is high, the window is too deep</td></tr><tr><td>Playback start failures, by device class</td><td>Finds decoder shortages and old phones</td></tr><tr><td>Low-memory crashes and system kills, by device class and screen</td><td>Finds the pool or viewer cost</td></tr><tr><td>Upload success rate, resume count, bytes sent twice</td><td>Shows if the offset logic works. Bytes sent twice should be near zero</td></tr><tr><td>Time from Post to Live</td><td>What the creator waits for. Processing is the usual part</td></tr></tbody></table></div><h2 id="12-more-practice-prompts">12. More practice prompts</h2><p>Practice prompts, not a claim about what any interviewer asks.</p><ol><li>The user taps Post, turns on airplane mode, and kills the app. What does the profile show, and what happens at the next launch with network? (The post shows as Posting. The rows and file are on disk. The runner reads them and asks for the offset of the same ID.)</li><li>A creator posts a 40 minute video by mistake. Where do you stop it? (In the picker and the compress step, with a clear reason, before any bytes leave the phone. The server also rejects it with a reason.)</li><li>Reels stall only on one phone brand after an update. How do you find out why? (Split the data by device class and decoder. Check if the pool leased a player that failed to get a decoder. Lower the pool with a remote setting.)</li><li>How would you add a "download for offline" button? (Different cache, never evicted, with a license if the content needs one. See the video case.)</li><li>How would the design change for a gallery of 5,000 photos from the phone? (Page the picker, thumbnails from the system, upload each in the background with its own ID, and the photo sync case for the rest.)</li><li>The same photo is uploaded from two phones. What happens? (Two upload IDs, so two uploads. Dedupe by content hash on the server is a product choice, not a retry rule.)</li></ol><h2 id="further-reading-official-docs">Further reading (official docs)</h2><ul><li><a href="/mobile-system-design/travel-reels-app/">Design reels, video and photos for a travel app</a>: the 45 minute answer</li><li><a href="https://developer.android.com/blog/posts/elevating-media-playback-introducing-preloading-with-media3-part-1">Android Developers: preloading with Media3, part 1</a></li><li><a href="https://developer.android.com/media/media3/transformer">Media3 Transformer</a></li><li><a href="https://developer.android.com/develop/background-work/background-tasks/uidt">User-initiated data transfer jobs</a></li><li><a href="https://developer.android.com/topic/performance/graphics/load-bitmap">Loading large bitmaps efficiently</a></li><li><a href="https://developer.apple.com/documentation/foundation/downloading-files-in-the-background">Downloading files in the background</a></li><li><a href="https://developer.apple.com/documentation/backgroundtasks/bgcontinuedprocessingtask">BGContinuedProcessingTask</a></li><li><a href="https://developer.apple.com/documentation/avfoundation/avplayeritem/preferredforwardbufferduration">AVPlayerItem preferredForwardBufferDuration</a></li><li><a href="https://developer.apple.com/documentation/imageio/cgimagesourcecreatethumbnailatindex(_:_:_:)">CGImageSourceCreateThumbnailAtIndex</a></li><li><a href="https://docs.cloud.google.com/storage/docs/resumable-uploads">Google Cloud Storage: resumable uploads</a></li><li><a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html">Amazon S3: multipart upload limits</a></li></ul><p class="mut">No outside reviewer yet. The iOS parts are not reviewed by an iOS engineer. The code is a sketch and was not compiled. Checked 20 Oct 2026.</p><nav class="pager" aria-label="Reading order"><a class="pv" href="/mobile-system-design/travel-reels-app/"><small>Read first</small>Design reels, video and photos for a travel app</a><a class="nx" href="/start/"><small>Done with this one?</small>Back to the reading paths</a></nav><h2 id="keep-reading">Keep reading</h2><ul class="related"><li><a href="/mobile-system-design/travel-reels-app/">Design reels, video and photos for a travel app</a><br><span class="mut">The 45 minute answer behind this build guide.</span></li><li><a href="/mobile-system-design/video-app/build/">Build it: a video streaming app on Android and iOS</a><br><span class="mut">Long videos, downloads and licenses.</span></li><li><a href="/mobile-system-design/photo-file-sync/build/">Build it: photo backup and file sync</a><br><span class="mut">Block hashes, resumable uploads and conflicts.</span></li><li><a href="/guides/idempotency-keys/">Guide: idempotency keys</a><br><span class="mut">How a key makes a repeated request count once.</span></li></ul><div class="cta-card"><h2>Get the free one-page cheat sheet</h2><p>One page: the five steps, a 45-minute time plan and two checklists. Print it or keep it on your phone.</p><form class="signup" method="post" action="https://app.kit.com/forms/10041528/subscriptions"><label class="sr" for="em-art">Email address</label><input id="em-art" type="email" name="email_address" placeholder="you@company.com" autocomplete="email" required><button type="submit">Email me the cheat sheet</button></form><p class="fine">We email you the cheat sheet after you confirm your address. You can also open it now from the <a href="/start/">Start here</a> page. You also get a short email each week with a follow-up round, and a note when a new case is published. Unsubscribe any time. <a href="/privacy/#newsletter">Privacy</a>.</p></div></article></div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">All case studies</a></li><li><a href="/compare/">Compare design choices</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Concepts</p><ul><li><a href="/concepts/">All concepts</a></li><li><a href="/patterns/">Design patterns</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/guides/">Guides</a></li><li><a href="/mobile-system-design/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/practice/">Practice timer</a></li><li><a href="/practice/#kit">Practice kit</a></li><li><a href="/follow-up/">Follow-up rounds</a></li><li><a href="/simulators/">Interactive tools</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li><li><a href="/simulators/cache/">Cache explorer</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "547404bc5ae84ae7bcb0a39fce029e3e"}'></script><script>(()=>{
+if(innerWidth<1040){var d=document.querySelector('.toc details');if(d)d.open=false}
+var L=[].slice.call(document.querySelectorAll('.steps a'));
+if(L.length&&window.IntersectionObserver){
+ var H=L.map(a=>document.getElementById(a.hash.slice(1))),cur=-1,inb={};
+ var set=i=>{if(i===cur)return;cur=i;L.forEach((a,j)=>{if(j===i)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current')})};
+ var io=new IntersectionObserver(es=>es.forEach(e=>{var i=H.indexOf(e.target);
+  if(e.isIntersecting){inb[i]=1;set(i)}
+  else if(e.boundingClientRect.top<0)set(Math.max(cur,i));
+  else if(inb[i]){inb[i]=0;set(i-1)}}),{rootMargin:'0px 0px -75% 0px'});
+ H.forEach(h=>h&&io.observe(h))}
+var F=[].slice.call(document.querySelectorAll('.dg.an'));
+if(F.length&&window.IntersectionObserver&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+ var go=f=>{f.classList.remove('go');void f.getBoundingClientRect();f.classList.add('go')},
+ fo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){fo.unobserve(e.target);go(e.target)}}),{threshold:.4});
+ F.forEach(f=>{f.classList.add('rdy');f.querySelector('.replay').onclick=()=>go(f);fo.observe(f)})}
+if(!(navigator.clipboard&&navigator.clipboard.writeText))return;
+document.querySelectorAll('.prose pre').forEach(p=>{
+ var w=document.createElement('div'),b=document.createElement('button');
+ w.className='code';b.className='copy';b.type='button';b.textContent='Copy';b.setAttribute('aria-label','Copy code to clipboard');
+ b.onclick=()=>{var done=t=>{b.textContent=t;setTimeout(()=>{b.textContent='Copy'},1500)};
+  try{navigator.clipboard.writeText(p.innerText).then(()=>done('Copied'),()=>done('Copy failed'))}catch(e){done('Copy failed')}};
+ p.before(w);w.append(p,b)})
+})();</script><script defer src="/diagram.js"></script><script defer src="/progress.js"></script></body></html>
