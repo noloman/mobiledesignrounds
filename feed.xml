@@ -4,9 +4,16 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-10-19T00:00:00Z</updated>
+<updated>2026-10-20T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
+<entry>
+<title>Design reels, video and photos for a travel app</title>
+<link href="https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/"/>
+<id>https://mobiledesignrounds.com/mobile-system-design/travel-reels-app/</id>
+<updated>2026-10-20T00:00:00Z</updated>
+<summary>How to play, cache, upload and manage the memory of short videos and large photos in a travel app, on Android and iOS.</summary>
+</entry>
 <entry>
 <title>Follow-up round: a new post arrives while you scroll</title>
 <link href="https://mobiledesignrounds.com/follow-up/new-post-while-scrolling/"/>
