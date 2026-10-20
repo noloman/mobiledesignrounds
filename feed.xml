@@ -8,6 +8,13 @@
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
 <entry>
+<title>Follow-up round: the user changes the phone clock</title>
+<link href="https://mobiledesignrounds.com/follow-up/offer-countdown/"/>
+<id>https://mobiledesignrounds.com/follow-up/offer-countdown/</id>
+<updated>2026-10-20T00:00:00Z</updated>
+<summary>An offer countdown in Compose. The user moves the phone date forward. What does the card show, and why?</summary>
+</entry>
+<entry>
 <title>Design a notifications screen in Jetpack Compose</title>
 <link href="https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/"/>
 <id>https://mobiledesignrounds.com/mobile-system-design/travel-notifications-app/</id>
