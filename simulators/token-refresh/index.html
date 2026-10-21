@@ -1,0 +1,315 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-lOuuWCs6haBWRMuOQNNtKXBA88VAto4NhKYVUQZKgXk=' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Token refresh explorer: expired access tokens | Mobile Design Rounds</title><meta name="description" content="Expire an access token under parallel requests. Turn single-flight, rotation and a grace window on or off. See the refresh calls and whether the user is logged out.">
+<link rel="canonical" href="https://mobiledesignrounds.com/simulators/token-refresh/"><meta property="og:title" content="Token refresh explorer: expired access tokens | Mobile Design Rounds"><meta property="og:description" content="Expire an access token under parallel requests. Turn single-flight, rotation and a grace window on or off. See the refresh calls and whether the user is logged out."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/simulators/token-refresh/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/token-refresh.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Token refresh explorer: expired access tokens | Mobile Design Rounds">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage-700-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Token refresh explorer", "url": "https://mobiledesignrounds.com/simulators/token-refresh/", "description": "Expire an access token under parallel requests. Turn single-flight, rotation and a grace window on or off. See the refresh calls and whether the user is logged out.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "inLanguage": "en", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Practice", "item": "https://mobiledesignrounds.com/simulators/"}, {"@type": "ListItem", "position": 3, "name": "Token refresh explorer", "item": "https://mobiledesignrounds.com/simulators/token-refresh/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/concepts/">Concepts</a><a href="/practice/">Practice</a><a href="/search/">Search</a><a href="/about/">About</a><a class="navcta" href="/#cheat-sheet-signup">Free cheat sheet</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/simulators/">Practice tools</a></li><li aria-current="page">Token refresh explorer</li></ol></nav><div class="chips"><span>Simulator</span></div>
+<h1>Token refresh explorer: what happens when many requests get a 401</h1>
+<p>An access token expires while the app has several requests in flight. The app must refresh it. Change one setting and see how many refresh calls the app makes and whether the user is logged out. This is a simplified model. Its numbers are my assumptions.</p></div>
+<div class="prose tk" style="max-width:760px">
+<style>
+.tk h2{scroll-margin-top:16px}
+.tk [hidden]{display:none!important}
+.tk fieldset{border:1.5px solid var(--line);border-radius:12px;padding:10px 14px 14px;margin:16px 0;background:var(--panel);min-width:0}
+.tk legend{font:700 1rem var(--display);padding:0 6px}
+.tk label{display:block;font-size:.92rem;font-weight:600;margin:10px 0 4px}
+.tk select{display:block;width:100%;min-height:44px;font:inherit;font-size:.95rem;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:8px;padding:0 10px}
+.tk .chk{display:flex;align-items:center;gap:12px;min-height:44px;margin:6px 0;font-weight:600;cursor:pointer}
+.tk .chk input{width:24px;height:24px;flex:none;accent-color:var(--blue)}
+.tk .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:0 16px}
+.tk button{font:600 .92rem var(--body);min-height:44px;padding:10px 14px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.tk button:hover{border-color:var(--blue)}
+.tk .run{background:var(--blue);border-color:var(--blue);color:var(--on-blue);margin-top:6px}
+.tk .presets{display:flex;flex-wrap:wrap;gap:8px}
+.tk .rules{font-size:.9rem;color:var(--ink2);margin:6px 0 0}
+.tk .res{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px;margin:12px 0}
+.tk .res div{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel)}
+.tk .res dt{font:500 .74rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.tk .res dd{margin:4px 0 0;font:700 1.35rem var(--display)}
+.tk .line{font-weight:700;font-size:1.05rem}
+.tk .res .good{border-color:var(--green);background:var(--green-bg)}
+.tk .res .bad{border-color:var(--amber);background:var(--amber-bg)}
+.tk ol.tl{list-style:none;padding:0;margin:12px 0}
+.tk ol.tl li{border:1.5px solid var(--line);border-left-width:6px;border-radius:10px;padding:10px 14px;margin:10px 0;background:var(--panel);max-width:none}
+.tk ol.tl li.ok{border-left-color:var(--green)}
+.tk ol.tl li.bad{border-left-color:var(--amber)}
+.tk ol.tl li.wait{border-style:dashed;background:transparent}
+.tk ul.shows{margin:8px 0}
+.tk ul.shows li{max-width:none}
+.tk ol.tl dl{margin:6px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:2px}
+.tk ol.tl dt{font:500 .74rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-top:6px}
+.tk ol.tl dd{margin:0}
+.tk .tw{overflow-x:auto}
+@media(min-width:640px){.tk ol.tl dl{grid-template-columns:130px minmax(0,1fr);gap:4px 12px}.tk ol.tl dt{margin-top:0;padding-top:3px}}
+</style>
+<h2 id="idea">The idea</h2>
+<ul>
+<li>The app sends an access token with every request. It is short-lived, for example 15 minutes.</li>
+<li>When it expires, the server answers 401. The app sends its refresh token to get a new access token.</li>
+<li>One screen can start many requests. When the token expires, they can all get a 401 at the same time.</li>
+<li>If each request refreshes by itself, the server sees the same refresh token many times.</li>
+<li>With <strong>rotation</strong>, every refresh gives a new refresh token and the old one stops working. If the server sees an old one again, it treats it as stolen and ends the whole session. This is called reuse detection.</li>
+<li>With <strong>single-flight</strong>, the first 401 starts one refresh call. The other requests wait and share its result.</li>
+<li>Two failures break the rotation even with single-flight. The app can be killed before it saves the new refresh token. The reply can be lost, so the app never gets the new token.</li>
+<li>A short <strong>grace window</strong> lets the server accept the old token once more for a few seconds.</li>
+<li>Only <code>invalid_grant</code> ends a session. A timeout or a 5xx error does not. The session is then unconfirmed: keep the tokens and try again later.</li>
+</ul>
+<p>This is a simplified model. Every number in it is my assumption, not a rule of any server or standard. Real servers differ, so check yours.</p>
+<p>A suggested order:</p>
+<ol>
+<li>Run the first preset. Rotation ends the session.</li>
+<li>Run the second preset. One shared refresh fixes it.</li>
+<li>Run the third preset. The refresh works, but a kill before the save still logs the user out later.</li>
+<li>Run the fourth preset. Saving first and a grace window recover from a lost reply and a kill.</li>
+<li>Then change one control at a time.</li>
+</ol>
+
+<div id="tk-app" hidden>
+<h2 id="try">Try it</h2>
+<fieldset><legend>Start with a preset</legend>
+<div class="presets"><button type="button" data-p="0">10 requests, no single-flight</button><button type="button" data-p="1">Single-flight (safe)</button><button type="button" data-p="2">Killed mid-refresh, saved after use</button><button type="button" data-p="3">Reply lost, new token written first</button></div>
+<p class="rules" id="tk-pdesc">A preset sets every control below and runs the simulation. The result shows below the controls.</p></fieldset>
+<fieldset><legend>The tokens and the requests</legend>
+<div class="grid">
+<div><label for="tk-life">Access token lifetime</label><select id="tk-life"><option value="5">5 minutes</option><option value="15" selected>15 minutes</option><option value="30">30 minutes</option><option value="60">60 minutes</option></select></div>
+<div><label for="tk-n">Requests that get a 401 at the same time</label><select id="tk-n"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option></select></div>
+</div>
+<label class="chk" for="tk-sf"><input type="checkbox" id="tk-sf" checked> Single-flight: one shared refresh call</label><label class="chk" for="tk-rot"><input type="checkbox" id="tk-rot" checked> Refresh token rotation</label></fieldset>
+<fieldset><legend>What can go wrong</legend>
+<label class="chk" for="tk-save"><input type="checkbox" id="tk-save" checked> The app saves the new refresh token before it uses it</label><label class="chk" for="tk-kill"><input type="checkbox" id="tk-kill"> The app is killed right after the refresh</label><label class="chk" for="tk-lost"><input type="checkbox" id="tk-lost"> The reply to the first refresh call is lost</label><label class="chk" for="tk-grace"><input type="checkbox" id="tk-grace"> The server has a grace window (30 s)</label>
+<p class="rules">The grace window and the save order only matter when rotation is on. The kill and the lost reply happen at the first expiry only.</p></fieldset>
+<button type="button" class="run" id="tk-run">Run the simulation</button>
+
+<h2 id="result">Result</h2>
+<p class="line" id="tk-line">Press "Run the simulation" or pick a preset.</p>
+<p class="sr" id="tk-say" role="status" aria-live="polite" aria-atomic="true"></p>
+<dl class="res" id="tk-res"></dl>
+<p class="rules">The counts cover 60 minutes of steady use. The access token expires many times in that time. If the user is logged out, the run stops there.</p>
+<h3 id="tk-tlh">Timeline of the first expiry</h3>
+<ol class="tl" id="tk-tl"><li>Press "Run the simulation" or pick a preset.</li></ol>
+<h2 id="shows">What this shows</h2>
+<ul class="shows" id="tk-why"><li>Run the simulation to see what it shows.</li></ul>
+</div>
+
+<h2 id="presets">Without JavaScript</h2>
+<p>The controls in Try it need JavaScript. If JavaScript is off, use this table. It shows what the four presets give over 60 minutes with a 15-minute lifetime. With JavaScript on, you can change every setting.</p>
+<div class="tw stack" tabindex="0" role="region" aria-label="Table 1, scrollable"><table><thead><tr><th scope="col">Preset</th><th scope="col">What happens</th><th scope="col">Refresh calls</th><th scope="col">Requests that succeeded</th><th scope="col">User logged out</th></tr></thead><tbody><tr><th scope="row" data-label="Preset">10 requests, no single-flight</th><td data-label="What happens">Ten requests start ten refresh calls. The first swaps the token. The second sends the old one, and the server ends the session.</td><td data-label="Refresh calls">10</td><td data-label="Requests that succeeded">1 of 10</td><td data-label="User logged out">Yes</td></tr><tr><th scope="row" data-label="Preset">Single-flight (safe)</th><td data-label="What happens">One call serves all ten requests. It repeats at each of the 4 expiries.</td><td data-label="Refresh calls">4</td><td data-label="Requests that succeeded">40 of 40</td><td data-label="User logged out">No</td></tr><tr><th scope="row" data-label="Preset">Killed mid-refresh, saved after use</th><td data-label="What happens">The refresh and all ten requests work. The app is killed before it saves the new token. At the next start it sends the old one.</td><td data-label="Refresh calls">2</td><td data-label="Requests that succeeded">10 of 10</td><td data-label="User logged out">Yes</td></tr><tr><th scope="row" data-label="Preset">Reply lost, new token written first</th><td data-label="What happens">The first call is swapped on the server but its reply is lost. The retry is accepted by the grace window. The app saved the new token first, so the kill does no harm.</td><td data-label="Refresh calls">6</td><td data-label="Requests that succeeded">40 of 40</td><td data-label="User logged out">No</td></tr></tbody></table></div>
+
+<h2 id="model">How the model works</h2>
+<p>The rules this tool uses. They are common practice, in a simplified form:</p>
+<ul>
+<li>A request with an expired access token gets a 401. The app then calls the refresh endpoint with its refresh token.</li>
+<li>With rotation, a refresh gives a new access token and a new refresh token. The old refresh token stops working.</li>
+<li>Reuse detection: if the server gets an old refresh token again, it ends the whole session. It answers <code>invalid_grant</code>.</li>
+<li>Access tokens that were already issued keep working until they expire. Ending the session only stops refreshing.</li>
+<li>A grace window: the server accepts the token it just replaced, once more, for a short time. It answers with the current refresh token.</li>
+<li>Only <code>invalid_grant</code> ends a session. A timeout or a 5xx leaves it unconfirmed. The app keeps its tokens and retries.</li>
+<li>Single-flight: while one refresh is running, every other request waits for it and uses its result.</li>
+<li>Save first: the app writes the new refresh token to disk, then uses the new access token. Save after: it uses the token first and writes it later. A kill in between loses the new token. The access token lives in memory only.</li>
+</ul>
+<p>My own choices for this tool, not from any standard:</p>
+<ul>
+<li>One network hop takes 0.3 s.</li>
+<li>A timeout is 10 s. After a timeout the app retries once, 2 s later, with the refresh token it still has.</li>
+<li>The grace window is 30 s. Real servers use other values, and some have none.</li>
+<li>After a kill, the user opens the app again 60 s later. That is longer than the grace window.</li>
+<li>The reply is lost for the first refresh call at the first expiry. The server has already processed that call. The app is killed once, after the first refresh finishes.</li>
+<li>The server answers parallel refresh calls in the order they were sent.</li>
+<li>The session is 60 minutes of steady use. The app sends the same burst of requests at each expiry.</li>
+<li>The refresh token does not expire. The clocks are exact. There is one device.</li>
+</ul>
+<p>What it leaves out: refreshing a little before the token expires, refresh tokens that expire, several devices, a 5xx error on the refresh call, being offline, clock errors and background work.</p>
+<h2 id="more">Read more</h2>
+<ul>
+<li><a href="/mobile-system-design/chat-app/#4-1-the-send-path-minutes-22-to-33">Chat app case: the send path</a>, where a 401 means refresh once, then retry</li>
+<li><a href="/simulators/retry/">Retry explorer</a>: what a lost reply does to a chat message</li>
+<li><a href="/guides/idempotency-keys/">Idempotency keys on mobile</a></li>
+</ul>
+</div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">All case studies</a></li><li><a href="/compare/">Compare design choices</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Concepts</p><ul><li><a href="/concepts/">All concepts</a></li><li><a href="/patterns/">Design patterns</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/guides/">Guides</a></li><li><a href="/mobile-system-design/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/practice/">Practice timer</a></li><li><a href="/practice/#kit">Practice kit</a></li><li><a href="/follow-up/">Follow-up rounds</a></li><li><a href="/simulators/">Interactive tools</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li><li><a href="/simulators/cache/">Cache explorer</a></li><li><a href="/simulators/token-refresh/">Token refresh explorer</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "547404bc5ae84ae7bcb0a39fce029e3e"}'></script><script>(()=>{
+const GRACE=30,TIMEOUT=10,RETRY_WAIT=2,RESTART=60,HOP=0.3,WINDOW=60;
+const PRESETS=[
+ {life:15,n:10,sf:false,rot:true,save:true,kill:false,lost:false,grace:false},
+ {life:15,n:10,sf:true,rot:true,save:true,kill:false,lost:false,grace:false},
+ {life:15,n:10,sf:true,rot:true,save:false,kill:true,lost:false,grace:false},
+ {life:15,n:10,sf:true,rot:true,save:true,kill:true,lost:true,grace:true}];
+const PDESC=['10 requests get a 401 together. Each one starts its own refresh. Rotation is on and there is no grace window.','10 requests get a 401 together. They share one refresh call. Rotation is on.','One shared refresh works, but the app is killed after it uses the new token and before it saves it. Rotation is on.','The reply to the refresh is lost, and then the app is killed. The app saves the new token first. A grace window is on.'];
+const fmt=s=>{if(s<60)return (Math.round(s*10)/10).toFixed(1)+' s';const r=Math.round(s);return Math.floor(r/60)+' min '+(r%60)+' s'};
+const pl=(n,w)=>n+' '+w+(n===1?'':'s');
+const R=i=>'R'+i;
+function sim(c){
+ const srv={cur:1,prev:0,prevAt:0,next:2,revoked:false};
+ const cl={rt:1,stored:1,pend:null,out:false};
+ let calls=0,okReq=0,runRounds=0,reason='',lastCalls=0;
+ const ev=[];
+ const rounds=Math.floor(WINDOW/c.life);
+ function refresh(rt,t){
+  calls++;
+  if(srv.revoked)return{ok:false,tag:'ended',used:rt};
+  if(!c.rot)return{ok:true,tag:'same',used:rt,rt:srv.cur};
+  if(rt===srv.cur){srv.prev=srv.cur;srv.prevAt=t;srv.cur=srv.next++;return{ok:true,tag:'rotated',used:rt,rt:srv.cur}}
+  if(c.grace&&rt===srv.prev&&t-srv.prevAt<=GRACE)return{ok:true,tag:'grace',used:rt,rt:srv.cur};
+  srv.revoked=true;return{ok:false,tag:'reuse',used:rt};
+ }
+ function receive(res){cl.rt=res.rt;if(c.save){cl.stored=res.rt;cl.pend=null}else cl.pend=res.rt}
+ function flush(){if(cl.pend!==null){cl.stored=cl.pend;cl.pend=null}}
+ function logout(why){cl.out=true;cl.rt=null;cl.stored=null;cl.pend=null;if(!reason)reason=why}
+ function srvText(r,lost){
+  const u=R(r.used);let s;
+  if(r.tag==='rotated')s='Accepts '+u+'. Replaces it with '+R(r.rt)+' and gives a new access token. '+u+' is now old.';
+  else if(r.tag==='same')s='Accepts '+u+' and gives a new access token. Rotation is off, so '+u+' stays valid.';
+  else if(r.tag==='grace')s=u+' is old, but it was replaced less than '+GRACE+' s ago. The grace window accepts it. Gives a new access token and the current refresh token '+R(r.rt)+'.';
+  else if(r.tag==='reuse')s=u+' is old and nothing covers it ('+(c.grace?'the grace window is over':'the grace window is off')+'). The server reads this as reuse and ends the whole session. Answers invalid_grant.';
+  else s='The session is already ended. Answers invalid_grant.';
+  return lost?s+' The reply is lost on the way.':s;
+ }
+ function thenOk(r,reqs){
+  const w=reqs>1?'the '+reqs+' waiting requests':'the request';
+  return c.save?'Saves '+R(r.rt)+' first, then retries '+w+' with the new access token. '+(reqs>1?'They succeed.':'It succeeds.')
+   :'Retries '+w+' with the new access token. '+(reqs>1?'They succeed.':'It succeeds.')+' Then it saves '+R(r.rt)+'.';
+ }
+ function round(k){
+  const first=k===1,t0=k*c.life*60,E=first?ev:[],n=c.n;
+  const c0=calls,ok0=okReq;
+  runRounds++;
+  const T1=t0+HOP,rt0=cl.rt;
+  const rel=t=>Math.round((t-t0)*10)/10;
+  if(first)E.push({t:0,cls:'bad',title:'The access token has expired',rows:[['App','Sends '+pl(n,'request')+' with the expired access token.'],['Server','Answers 401 to '+(n===1?'it':'each one')+'.']]});
+  const m=c.sf?1:n,list=[];
+  for(let i=1;i<=m;i++){
+   const lost=first&&c.lost&&i===1;
+   list.push({i,lost,res:refresh(rt0,T1),reqs:c.sf?n:1});
+  }
+  const tReply=T1+HOP;let tEnd=tReply+HOP;
+  const groups=[];
+  for(const x of list){
+   let then='';
+   if(x.lost)then='Nothing arrives. The app waits.';
+   else if(x.res.ok){receive(x.res);okReq+=x.reqs;then=thenOk(x.res,x.reqs)}
+   else{logout(!c.sf&&x.i>1?'parallel':'other');then=(x.reqs>1?x.reqs+' requests fail. ':'The request fails. ')+'invalid_grant is final. The app clears its tokens and shows the sign-in screen.'}
+   x.then=then;x.sig=[x.res.tag,x.lost,x.res.ok,x.res.used,x.res.rt].join('|');
+   const g=groups[groups.length-1];
+   if(g&&g.sig===x.sig&&!x.lost)g.to=x.i;else groups.push({sig:x.sig,from:x.i,to:x.i,x});
+  }
+  if(first)for(const g of groups){
+   const x=g.x,many=g.to>g.from;
+   const title=c.sf?'One refresh call':many?'Refresh calls '+g.from+' to '+g.to:'Refresh call '+g.from;
+   const app=c.sf?(n===1?'The 401 starts a refresh call with '+R(rt0)+'.':'The first 401 starts one refresh call with '+R(rt0)+'. The other '+(n-1)+' requests wait and share it.')
+    :(many?'Requests '+g.from+' to '+g.to+' each start their own refresh call with '+R(rt0)+'.':'Request '+g.from+' starts its own refresh call with '+R(rt0)+'.');
+   E.push({t:rel(T1),cls:x.lost?'wait':x.res.ok?'ok':'bad',title,rows:[['App',app],['Server',srvText(x.res,x.lost)],['Then',x.then]]});
+  }
+  // lost reply: timeout, then one retry
+  const lostCall=list.find(x=>x.lost);
+  if(lostCall){
+   const tB=T1+TIMEOUT,tR=tB+RETRY_WAIT;
+   if(cl.out){
+    E.push({t:rel(tB),cls:'bad',title:'The first call times out',rows:[['App','The app already ended the session, so it does not retry. '+(lostCall.reqs>1?lostCall.reqs+' requests fail.':'The request fails.')]]});
+   }else{
+    E.push({t:rel(tB),cls:'wait',title:'The first call times out',rows:[['App','No reply after '+TIMEOUT+' s. A timeout is not invalid_grant, so the session is unconfirmed. The app keeps its tokens and tries again in '+RETRY_WAIT+' s.']]});
+    const used=cl.rt,res=refresh(used,tR);
+    let then;
+    if(res.ok){receive(res);okReq+=lostCall.reqs;then=thenOk(res,lostCall.reqs);tEnd=tR+3*HOP}
+    else{logout('lost');then=(lostCall.reqs>1?lostCall.reqs+' requests fail. ':'The request fails. ')+'invalid_grant is final. The app clears its tokens and shows the sign-in screen.'}
+    E.push({t:rel(tR),cls:res.ok?'ok':'bad',title:'The app retries the refresh',rows:[['App','Sends the refresh call again with '+R(used)+', the token it still has.'],['Server',srvText(res,false)],['Then',then]]});
+   }
+  }
+  if(!cl.out&&!(first&&c.kill))flush();
+  if(first&&c.kill&&!cl.out){
+   const saved=c.save?'It had already saved '+R(cl.rt)+'.':'It had not saved '+R(cl.rt)+' yet.';
+   E.push({t:rel(tEnd),cls:'bad',title:'The app is killed',rows:[['App',(c.save?'The system stops the app after it used the new token. ':'The system stops the app after it used the new token and before it saved it. ')+saved]]});
+   cl.rt=null;cl.pend=null;
+   const tS=tEnd+RESTART,used=cl.stored,res=refresh(used,tS);
+   let then;
+   if(res.ok){receive(res);flush();then='Saves '+R(res.rt)+'. The user stays signed in.'}
+   else{logout('killed');then='invalid_grant is final. The app clears its tokens and shows the sign-in screen.'}
+   E.push({t:rel(tS),cls:res.ok?'ok':'bad',title:'The user opens the app again',rows:[['App','Has no access token, so it refreshes with '+R(used)+', the token on disk. The user came back '+RESTART+' s after the kill.'],['Server',srvText(res,false)],['Then',then]]});
+  }
+  return{calls:calls-c0,ok:okReq-ok0,tEnd};
+ }
+ const first=round(1);
+ let later=null;
+ if(!cl.out)for(let k=2;k<=rounds;k++){const r=round(k);if(!later)later=r;lastCalls=r.calls;if(cl.out)break}
+ const total=runRounds*c.n;
+ return{events:ev,calls,okReq,total,out:cl.out,reason:cl.out?reason:'',rounds,runRounds,firstCalls:first.calls,laterCalls:later?later.calls:0,failed:total-okReq};
+}
+if(typeof document==='undefined'){globalThis.__sim={sim,PRESETS};return}
+const $=id=>document.getElementById(id);
+function why(c,r){
+ const p=[];
+ if(r.out){
+  if(r.reason==='parallel')p.push('The server swapped the refresh token on the first call. The other calls still held the old one. With rotation, an old token that arrives again looks like a stolen token. So the server ended the session. A shared refresh (single-flight) sends one call, so this cannot happen.');
+  else if(r.reason==='lost')p.push('The first call worked on the server, but the reply was lost. The app still held the old token and sent it again. The server saw an old token and ended the session. The user did nothing wrong. A short grace window would have accepted the retry.');
+  else if(r.reason==='killed')p.push('The new refresh token was only in memory when the app was killed. The disk still held the old one. On the next start the app sent it, and the server ended the session. All '+r.okReq+' requests had worked, so nothing looked wrong until then. Save the new token before you use it.');
+  p.push('Only invalid_grant ends a session. Here the server sent it, so the app signs the user out.');
+ }else{
+  if(c.sf)p.push('One refresh call served '+pl(c.n,'request')+'. The token was swapped once, so there was no old token to send again.');
+  else if(c.n>1&&!c.rot)p.push('Rotation is off, so the same refresh token works every time. All '+c.n+' parallel calls worked. It is safe, but it cost '+c.n+' calls instead of 1.');
+  else if(c.n>1&&c.grace)p.push('The extra calls arrived inside the grace window, so the server accepted the old token. It still cost '+c.n+' calls instead of 1.');
+  if(c.lost&&!c.rot)p.push('The reply was lost. Rotation is off, so the old token still worked on the retry.');
+  else if(c.lost&&c.grace)p.push('The reply was lost, so the app still held the old token. The retry came '+(TIMEOUT+RETRY_WAIT)+' s after the first call. That is inside the '+GRACE+' s grace window, so the server accepted it. A timeout leaves the session unconfirmed. It does not end it.');
+  if(c.kill&&c.rot&&c.save)p.push('The app was killed after it used the new token. It had saved the token first, so the next start used a token that works.');
+  else if(c.kill&&!c.rot)p.push('The app was killed before it saved the new token. Rotation is off, so the old token still worked.');
+  if(!p.length)p.push('No failure was set, so one refresh worked and the requests succeeded.');
+ }
+ if(c.kill&&!c.save&&c.rot&&c.grace&&r.reason==='killed')p.push('The grace window is '+GRACE+' s. The user opened the app '+RESTART+' s later, so the window had closed. A grace window helps a quick retry. It does not rescue a restart.');
+ if(!c.rot&&c.grace)p.push('The grace window does nothing while rotation is off.');
+ if(!c.rot)p.push('Rotation off also means a stolen refresh token keeps working until it expires. That is the cost of this safe-looking setting.');
+ if(c.sf&&c.n>1&&c.rot&&!c.grace&&!r.out&&!c.kill&&!c.lost)p.push('Turn single-flight off to see the same requests end the session.');
+ if(r.rounds>1&&!r.out)p.push('A lifetime of '+c.life+' min means '+r.rounds+' expiries in 60 minutes. Each one costs at least one refresh call. A longer lifetime means fewer calls, and a stolen access token works for longer.');
+ return p;
+}
+function line(c,r){
+ if(r.out){
+  if(r.reason==='parallel')return 'Logged out: a second refresh call used a refresh token that the first call had already replaced.';
+  if(r.reason==='lost')return 'Logged out: the reply was lost, the app retried with the old token, and the server read that as reuse.';
+  return 'Logged out: the app was killed before it saved the new token, so the old one was sent on the next start.';
+ }
+ if(c.lost&&c.rot&&c.grace)return 'Signed in: the reply was lost, and the grace window accepted the retry.';
+ if(c.kill&&c.rot&&c.save&&!c.lost&&c.sf)return 'Signed in: the app was killed, but it had saved the new token first.';
+ if(c.sf)return 'Signed in: one shared refresh call served all the waiting requests.';
+ if(!c.rot)return 'Signed in: rotation is off, so the same token worked every time.';
+ if(c.grace&&c.n>1)return 'Signed in: the grace window accepted the extra calls.';
+ return 'Signed in: no failure broke the refresh.';
+}
+function run(){
+ const c={life:+$('tk-life').value,n:+$('tk-n').value,sf:$('tk-sf').checked,rot:$('tk-rot').checked,save:$('tk-save').checked,kill:$('tk-kill').checked,lost:$('tk-lost').checked,grace:$('tk-grace').checked};
+ const r=sim(c);
+ const all=r.okReq===r.total;
+ $('tk-res').innerHTML='<div><dt>Refresh calls made</dt><dd>'+r.calls+'</dd></div>'
+  +'<div class="'+(all?'good':'bad')+'"><dt>Requests that succeeded</dt><dd>'+r.okReq+' of '+r.total+'</dd></div>'
+  +'<div class="'+(r.out?'bad':'good')+'"><dt>User logged out</dt><dd>'+(r.out?'Yes':'No')+'</dd></div>'
+  +'<div><dt>Expiries in 60 min</dt><dd>'+r.runRounds+(r.runRounds<r.rounds?' of '+r.rounds:'')+'</dd></div>';
+ let h='';
+ for(const s of r.events){
+  h+='<li class="'+s.cls+'"><strong>'+fmt(s.t)+': '+s.title+'</strong><dl>'+s.rows.map(x=>'<dt>'+x[0]+'</dt><dd>'+x[1]+'</dd>').join('')+'</dl></li>';
+ }
+ if(r.out){if(r.runRounds<r.rounds)h+='<li class="bad"><strong>Later expiries are not reached</strong><dl><dt>Then</dt><dd>The session is over. The user must sign in again.</dd></dl></li>'}
+ else if(r.rounds>1){
+  const a=[];for(let k=2;k<=r.rounds;k++)a.push(k*c.life);
+  h+='<li class="ok"><strong>'+(r.rounds===2?'Expiry 2 (minute '+a[0]+')':'Expiries 2 to '+r.rounds+' (minutes '+a.join(', ')+')')+'</strong><dl><dt>Then</dt><dd>The same steps run again with no failure. Each expiry makes '+pl(r.laterCalls,'refresh call')+' and '+pl(c.n,'request')+' succeed'+(c.n===1?'s':'')+'.</dd></dl></li>';
+ }
+ $('tk-tl').innerHTML=h;
+ $('tk-tlh').textContent='Timeline of the first expiry (minute '+c.life+')';
+ $('tk-line').textContent=line(c,r);
+ $('tk-why').innerHTML=why(c,r).map(t=>'<li>'+t+'</li>').join('');
+ $('tk-say').textContent='Result: '+(r.out?'logged out':'signed in')+'. '+pl(r.calls,'refresh call')+'. '+r.okReq+' of '+pl(r.total,'request')+' succeeded. '+line(c,r);
+}
+function load(i){
+ const c=PRESETS[i];
+ $('tk-life').value=String(c.life);$('tk-n').value=String(c.n);
+ for(const k of ['sf','rot','save','kill','lost','grace'])$('tk-'+k).checked=c[k];
+ $('tk-pdesc').textContent='Preset loaded: '+document.querySelector('[data-p="'+i+'"]').textContent+'. '+PDESC[i]+' The result is below.';
+ run();
+}
+$('tk-run').addEventListener('click',run);
+document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>load(+b.dataset.p)));
+$('tk-app').hidden=false;
+})();
+</script></body></html>
