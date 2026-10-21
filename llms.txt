@@ -59,13 +59,14 @@
 - [Native vs cross-platform: write the decision record](https://mobiledesignrounds.com/guides/native-vs-cross-platform-decision-guide/): A staff-level decision record (ADR) for choosing a framework. It covers criteria, the assumption that would change the choice, migration, parity tests, libraries with no owner, rollback, and a free template.
 
 ## Practice tools
-- [Practice tools](https://mobiledesignrounds.com/simulators/): a timer and five simulators that let you change one thing and see what happens
+- [Practice tools](https://mobiledesignrounds.com/simulators/): a timer and six simulators that let you change one thing and see what happens
 - [Practice timer](https://mobiledesignrounds.com/practice/): A 45-minute clock for a mobile system design round, with a prompt, five steps and a checklist.
 - [Retry explorer](https://mobiledesignrounds.com/simulators/retry/): Change the retry rules and see if a lost reply makes a duplicate message.
 - [Pagination race](https://mobiledesignrounds.com/simulators/pagination/): Change one thing and watch a list repeat or miss posts. Compare page numbers with a cursor.
 - [Offline chat simulator](https://mobiledesignrounds.com/simulators/offline-chat/): Send a chat message with no connection and lose a reply. Watch the outbox and the server.
 - [Cache explorer](https://mobiledesignrounds.com/simulators/cache/): Change the cache size, the removal rule and the expiry time. See what stays and what is fetched again.
 - [Token refresh explorer](https://mobiledesignrounds.com/simulators/token-refresh/): Expire an access token under parallel requests. Turn single-flight, rotation and a grace window on or off. See whether the user is logged out.
+- [Relaunch explorer](https://mobiledesignrounds.com/simulators/relaunch/): Kill the app while a message is sending, then reopen it. Change the outbox, the message ID and server dedupe. See if the message is sent once, twice or never.
 
 ## Compare and look up
 - [Concepts and reference](https://mobiledesignrounds.com/concepts/): a hub for design patterns, failure modes, comparisons, guides and the glossary
