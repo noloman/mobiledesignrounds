@@ -1,0 +1,302 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-DYtAjVgnucZuU5Q22Wnk+27EpKqKns7enh6UTuUphgU=' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; form-action 'self' https://app.kit.com; base-uri 'self'"><meta name="theme-color" content="#2F5BFF">
+<title>Relaunch explorer: killed during a send | Mobile Design Rounds</title><meta name="description" content="Kill the app while a message is sending, then reopen it. Change the outbox, the message ID and server dedupe. See if the message is sent once, twice or never.">
+<link rel="canonical" href="https://mobiledesignrounds.com/simulators/relaunch/"><meta property="og:title" content="Relaunch explorer: killed during a send | Mobile Design Rounds"><meta property="og:description" content="Kill the app while a message is sending, then reopen it. Change the outbox, the message ID and server dedupe. See if the message is sent once, twice or never."><meta property="og:type" content="website"><meta property="og:site_name" content="Mobile Design Rounds"><meta property="og:locale" content="en_US"><meta property="og:url" content="https://mobiledesignrounds.com/simulators/relaunch/">
+<meta name="twitter:card" content="summary_large_image"><meta property="og:image" content="https://mobiledesignrounds.com/og/relaunch.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Relaunch explorer: killed during a send | Mobile Design Rounds">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon.ico" sizes="any"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="alternate" type="application/atom+xml" title="Mobile Design Rounds" href="/feed.xml">
+<link rel="preload" href="/fonts/bricolage-700-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/style.css"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Relaunch explorer", "url": "https://mobiledesignrounds.com/simulators/relaunch/", "description": "Kill the app while a message is sending, then reopen it. Change the outbox, the message ID and server dedupe. See if the message is sent once, twice or never.", "applicationCategory": "EducationalApplication", "operatingSystem": "Any", "browserRequirements": "Requires JavaScript", "isAccessibleForFree": true, "inLanguage": "en", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "Manuel Lorenzo", "url": "https://mobiledesignrounds.com/about/"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://mobiledesignrounds.com/"}, {"@type": "ListItem", "position": 2, "name": "Practice", "item": "https://mobiledesignrounds.com/simulators/"}, {"@type": "ListItem", "position": 3, "name": "Relaunch explorer", "item": "https://mobiledesignrounds.com/simulators/relaunch/"}]}</script></head><body>
+<a class="skip" href="#main">Skip to content</a><svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.8 20h18.4z"/><path d="M12 10v4.5M12 17.5v.01"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8 5.4-5.8"/></symbol><symbol id="i-ask" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M9.8 9.6a2.3 2.3 0 1 1 3.3 2.1c-.7.4-1.1.8-1.1 1.5M12 14.2v.01"/></symbol><symbol id="i-signpost" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="M12 5h6.5l1.5 2.5-1.5 2.5H12zM12 12H5.5L4 14.5 5.5 17H12z"/></symbol><symbol id="i-speech" viewBox="0 0 24 24"><path d="M4 5h16v11h-8.5L7 20v-4H4z"/><path d="M8 9.5h8M8 12.5h5"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol><symbol id="i-server" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="6.5" rx="2"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="2"/><path d="M7 7.25v.01M7 16.75v.01M11 7.25h6M11 16.75h6"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21.5 10.5v3M6 10.5v3M9.5 10.5v3"/></symbol><symbol id="i-waves" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><path d="M8.6 8.6a5 5 0 0 0 0 6.8M15.4 8.6a5 5 0 0 1 0 6.8M5.7 5.7a9 9 0 0 0 0 12.6M18.3 5.7a9 9 0 0 1 0 12.6"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.5 3.1 8 7.5 9.5 4.4-1.5 7.5-5 7.5-9.5V6z"/><path d="m9 12 2.2 2.2L15.2 10"/></symbol><symbol id="i-fork" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M6 7.2v9.6M18 11.2v.8c0 2-1.5 3-4 3H6"/></symbol><symbol id="i-rollback" viewBox="0 0 24 24"><path d="M9 7 4.5 11.5 9 16"/><path d="M5 11.5h9a4.5 4.5 0 0 1 0 9H9"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18.2 8.8a4.9 4.9 0 0 1-.7 9.7z"/></symbol><symbol id="i-queue" viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="16" width="17" height="4.5" rx="1.5"/></symbol><symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.2 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4.5 3.5"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15z"/><path d="M10 20.5h4"/></symbol><symbol id="i-film" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M4 8h16M4 16h16M8 3.5V8M16 3.5V8M8 16v4.5M16 16v4.5M9 12h6"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M9.5 7V4.5h5V7M7 7l.8 12.5h8.4L17 7"/></symbol><symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7.5 9.5 12 5l4.5 4.5"/><path d="M5 19h14"/></symbol><symbol id="i-sync" viewBox="0 0 24 24"><path d="M5 12a7 7 0 0 1 12-4.9L19 9"/><path d="M19 4.5V9h-4.5"/><path d="M19 12a7 7 0 0 1-12 4.9L5 15"/><path d="M5 19.5V15h4.5"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5c-.8 0-1.5-.7-1.5-1.5z"/><path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5c.8 0 1.5-.7 1.5-1.5z"/></symbol></svg>
+<div class="wrap"><header class="top"><a class="brand" href="/"><svg viewBox="0 0 26 26" aria-hidden="true"><rect x="1.5" y="1.5" width="23" height="23" rx="7" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9" r="2.4" fill="currentColor"/><circle cx="17.5" cy="17" r="2.4" fill="currentColor"/><path d="M10.4 10.6l5.2 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Mobile Design Rounds</a>
+<nav class="nav" aria-label="Main"><a href="/start/">Start here</a><a href="/mobile-system-design/">Case studies</a><a href="/concepts/">Concepts</a><a href="/practice/">Practice</a><a href="/search/">Search</a><a href="/about/">About</a><a class="navcta" href="/#cheat-sheet-signup">Free cheat sheet</a></nav></header></div>
+<main id="main"><div class="wrap"><div class="art-head"><nav class="crumb" aria-label="Breadcrumb"><ol><li><a href="/">Home</a></li><li><a href="/simulators/">Practice tools</a></li><li aria-current="page">Relaunch explorer</li></ol></nav><div class="chips"><span>Simulator</span></div>
+<h1>Relaunch explorer: the app is killed during a send</h1>
+<p>A user taps Send. The app is killed while the message is in flight. The user opens the app again. Is the message sent once, twice or never? Change one setting and see the answer. This is a simplified model. Its numbers are my assumptions.</p></div>
+<div class="prose rl" style="max-width:760px">
+<style>
+.rl h2{scroll-margin-top:16px}
+.rl [hidden]{display:none!important}
+.rl fieldset{border:1.5px solid var(--line);border-radius:12px;padding:10px 14px 14px;margin:16px 0;background:var(--panel);min-width:0}
+.rl legend{font:700 1rem var(--display);padding:0 6px}
+.rl label{display:block;font-size:.92rem;font-weight:600;margin:10px 0 4px}
+.rl select{display:block;width:100%;min-height:44px;font:inherit;font-size:.95rem;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:8px;padding:0 10px}
+.rl .chk{display:flex;align-items:center;gap:12px;min-height:44px;margin:6px 0;font-weight:600;cursor:pointer}
+.rl .chk input{width:24px;height:24px;flex:none;accent-color:var(--blue)}
+.rl .chk input:disabled{cursor:not-allowed}
+.rl .chk:has(input:disabled){opacity:.6;cursor:not-allowed}
+.rl .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:0 16px}
+.rl button{font:600 .92rem var(--body);min-height:44px;padding:10px 14px;border-radius:8px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.rl button:hover{border-color:var(--blue)}
+.rl .run{background:var(--blue);border-color:var(--blue);color:var(--on-blue);margin-top:6px}
+.rl .presets{display:flex;flex-wrap:wrap;gap:8px}
+.rl .rules{font-size:.9rem;color:var(--ink2);margin:6px 0 0}
+.rl .res{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px;margin:12px 0}
+.rl .res div{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel)}
+.rl .res dt{font:500 .74rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.rl .res dd{margin:4px 0 0;font:700 1.35rem var(--display)}
+.rl .line{font-weight:700;font-size:1.05rem}
+.rl .res .good{border-color:var(--green);background:var(--green-bg)}
+.rl .res .bad{border-color:var(--amber);background:var(--amber-bg)}
+.rl ol.tl{list-style:none;padding:0;margin:12px 0}
+.rl ol.tl li{border:1.5px solid var(--line);border-left-width:6px;border-radius:10px;padding:10px 14px;margin:10px 0;background:var(--panel);max-width:none}
+.rl ol.tl li.ok{border-left-color:var(--green)}
+.rl ol.tl li.bad{border-left-color:var(--amber)}
+.rl ol.tl li.wait{border-style:dashed;background:transparent}
+.rl ul.shows{margin:8px 0}
+.rl ul.shows li{max-width:none}
+.rl ol.tl dl{margin:6px 0 0;display:grid;grid-template-columns:minmax(0,1fr);gap:2px}
+.rl ol.tl dt{font:500 .74rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-top:6px}
+.rl ol.tl dd{margin:0}
+.rl .tw{overflow-x:auto}
+@media(min-width:640px){.rl ol.tl dl{grid-template-columns:130px minmax(0,1fr);gap:4px 12px}.rl ol.tl dt{margin-top:0;padding-top:3px}}
+</style>
+<h2 id="idea">The idea</h2>
+<ul>
+<li>A send is a few steps: the user taps, the app saves the message, the app sends a request, the server stores the message, the server replies.</li>
+<li>The system can stop the app at any step. A crash does the same.</li>
+<li>The <strong>outbox</strong> is a local table of messages that the server has not acknowledged. The app writes the row before it sends. A kill before the write loses the message. A kill after the write does not.</li>
+<li>The <strong>client message ID</strong> names the message. If the app saves it with the message and reuses it, a retry carries the same ID. If the app makes a new ID at retry time, the server sees a new message.</li>
+<li><strong>Dedupe</strong> means the server remembers IDs. A request with a known ID gets the first result and stores nothing new.</li>
+<li>After a kill, the app must <strong>retry pending messages when it starts</strong>. If it does not, a saved message stays pending.</li>
+<li>Exactly once needs all of these together: save before you send, keep the ID, dedupe on the server and retry on launch.</li>
+</ul>
+<p>This is a simplified model. Every number in it is my assumption, not a rule of any app or server. Real systems differ, so check yours. For the same idea with a lost reply and no kill, see the <a href="/simulators/retry/">Retry explorer</a>. The <a href="/mobile-system-design/chat-app/#4-1-the-send-path-minutes-22-to-33">chat app case</a> shows the design.</p>
+<p>A suggested order:</p>
+<ol>
+<li>Run the first preset. A kill before the save loses the message.</li>
+<li>Run the second preset. The retry makes a new ID, so the server stores a second copy.</li>
+<li>Run the third preset. The same kill gives exactly one copy.</li>
+<li>Run the fourth preset. The same ID is not enough when the server does not check it.</li>
+<li>Then change one control at a time. Try turning off the outbox, or turning off retry on launch.</li>
+</ol>
+
+<div id="rl-app" hidden>
+<h2 id="try">Try it</h2>
+<fieldset><legend>Start with a preset</legend>
+<div class="presets"><button type="button" data-p="0">Kill before the outbox save</button><button type="button" data-p="1">Outbox but fresh ID on retry</button><button type="button" data-p="2">Outbox, same ID, server dedupes</button><button type="button" data-p="3">No dedupe on the server</button></div>
+<p class="rules" id="rl-pdesc">A preset sets every control below and runs the simulation. The result shows below the controls.</p></fieldset>
+<fieldset><legend>What the app does</legend>
+<label class="chk" for="rl-outbox"><input type="checkbox" id="rl-outbox" checked> The app saves the message to a local outbox before it sends</label>
+<div class="grid"><div><label for="rl-id">The client message ID</label><select id="rl-id"><option value="keep" selected>Stored with the message and reused at retry</option><option value="fresh">Generated again at retry (a fresh ID)</option></select></div></div>
+<label class="chk" for="rl-retry"><input type="checkbox" id="rl-retry" checked> The app retries pending messages when it starts</label></fieldset>
+<fieldset><legend>What the server does</legend>
+<label class="chk" for="rl-dedupe"><input type="checkbox" id="rl-dedupe" checked> The server dedupes by message ID</label></fieldset>
+<fieldset><legend>What goes wrong</legend>
+<div class="grid"><div><label for="rl-kill">When the app is killed</label><select id="rl-kill"><option value="none">The app is not killed</option><option value="save">Before the outbox save</option><option value="request">After the save, before the request</option><option value="reply" selected>After the request, before the reply</option></select></div></div>
+<label class="chk" for="rl-lost"><input type="checkbox" id="rl-lost"> The reply to the first request is lost</label>
+<p class="rules" id="rl-lostnote" hidden>The lost reply applies only when the app is not killed. After a kill the reply is lost anyway.</p>
+<p class="rules">Without an outbox, killed before the save and killed after the save give the same result, because there is no save.</p></fieldset>
+<button type="button" class="run" id="rl-run">Run the simulation</button>
+
+<h2 id="result">Result</h2>
+<p class="line" id="rl-line">Press "Run the simulation" or pick a preset.</p>
+<p class="sr" id="rl-say" role="status" aria-live="polite" aria-atomic="true"></p>
+<dl class="res" id="rl-res"></dl>
+<p class="rules">Copies on the server is what the other person can see. The sender's screen is what the sender sees after the relaunch. The app shows only what it saved on disk.</p>
+<h3 id="rl-tlh">Timeline</h3>
+<ol class="tl" id="rl-tl"><li>Press "Run the simulation" or pick a preset.</li></ol>
+<h2 id="shows">What this shows</h2>
+<ul class="shows" id="rl-why"><li>Run the simulation to see what it shows.</li></ul>
+</div>
+
+<h2 id="presets">Without JavaScript</h2>
+<p>The controls in Try it need JavaScript. If JavaScript is off, use this table. It shows what the four presets give. With JavaScript on, you can change every setting.</p>
+<div class="tw stack" tabindex="0" role="region" aria-label="Table 1, scrollable"><table><thead><tr><th scope="col">Preset</th><th scope="col">What happens</th><th scope="col">Copies on the server</th><th scope="col">Sender's screen</th><th scope="col">Stuck pending</th></tr></thead><tbody><tr><th scope="row" data-label="Preset">Kill before the outbox save</th><td data-label="What happens">The app is killed after the tap and before the row is written. Nothing is saved, so nothing is sent after the relaunch.</td><td data-label="Copies on the server">0</td><td data-label="Sender's screen">Gone</td><td data-label="Stuck pending">No</td></tr><tr><th scope="row" data-label="Preset">Outbox but fresh ID on retry</th><td data-label="What happens">The message is saved and sent, then the app is killed before the reply. On launch the app retries with a new ID. The server cannot match it.</td><td data-label="Copies on the server">2</td><td data-label="Sender's screen">Sent</td><td data-label="Stuck pending">No</td></tr><tr><th scope="row" data-label="Preset">Outbox, same ID, server dedupes</th><td data-label="What happens">The same kill. The row kept the ID, so the retry carries it. The server recognises it and stores nothing new.</td><td data-label="Copies on the server">1</td><td data-label="Sender's screen">Sent</td><td data-label="Stuck pending">No</td></tr><tr><th scope="row" data-label="Preset">No dedupe on the server</th><td data-label="What happens">The same kill and the same ID. The server does not check IDs, so the retry becomes a second copy.</td><td data-label="Copies on the server">2</td><td data-label="Sender's screen">Sent</td><td data-label="Stuck pending">No</td></tr></tbody></table></div>
+
+<h2 id="model">How the model works</h2>
+<p>The rules this tool uses. They are common practice, in a simplified form:</p>
+<ul>
+<li>The user taps Send. The app makes the message ID, shows a bubble and, if the outbox is on, writes a pending row. Then it sends the request.</li>
+<li>The server stores the message when the request arrives. If dedupe is on and it already knows the ID, it stores nothing new and answers with the first result.</li>
+<li>When the acknowledgement arrives, the app marks the message as sent.</li>
+<li>If the app is still running and the reply is lost, the request times out and the app sends the message again.</li>
+<li>If the app is killed, it comes back later. With the outbox on and retry on launch on, it sends every pending message again. With retry on launch off, a pending message stays pending.</li>
+<li>With the ID stored, the retry reads the same ID from the row. With a fresh ID, the retry makes a new one.</li>
+<li>With no outbox, the message exists only in memory. After a kill nothing is left to retry.</li>
+<li>After the relaunch the app shows what it saved on disk, plus what it receives in reply to its own sends.</li>
+</ul>
+<p>My own choices for this tool, not from any standard:</p>
+<ul>
+<li>One network hop takes 0.3 s. A timeout is 10 s. After a timeout the app sends again once, at once.</li>
+<li>After a kill the user opens the app again 30 s later.</li>
+<li>A request that was sent before the kill has already reached the server and was stored. Only the reply is missing.</li>
+<li>The server remembers every ID it has seen. Real servers keep IDs for a limited time.</li>
+<li>The network works after the relaunch, and the reply to a retry arrives.</li>
+<li>There is one message, one user and one device. A kill happens once.</li>
+<li>The ID made at the tap is ID A. An ID made again at retry time is ID B.</li>
+<li>The outbox row is written in one step. It is either on disk or not.</li>
+</ul>
+<p>What it leaves out: a history sync on launch that would bring a message back, matching server messages to pending rows by ID, the user typing the message again or tapping retry, several messages and their order, errors such as 4xx and 5xx, backoff, no network at launch, a server that stores the message and fails before it replies, and several devices.</p>
+<h2 id="more">Read more</h2>
+<ul>
+<li><a href="/mobile-system-design/chat-app/#4-1-the-send-path-minutes-22-to-33">Chat app case: the send path</a>, where a pending row keeps its clientId after a kill</li>
+<li><a href="/simulators/retry/">Retry explorer</a>: what a lost reply does to a chat message</li>
+<li><a href="/simulators/offline-chat/">Offline chat simulator</a>: restart the app and turn on a new ID on retry</li>
+<li><a href="/guides/idempotency-keys/">Idempotency keys on mobile</a></li>
+</ul>
+</div></div></main>
+<div class="wrap"><footer class="foot"><nav class="fnav" aria-label="Site map"><div><p class="fh">Learn</p><ul><li><a href="/start/">Start here</a></li><li><a href="/mobile-system-design/#method">The five-step method</a></li><li><a href="/start/#map">Learning map</a></li><li><a href="/mobile-system-design/">All case studies</a></li><li><a href="/compare/">Compare design choices</a></li></ul></div><div><p class="fh">Case studies by topic</p><ul><li><a href="/mobile-system-design/offline-and-sync/">Offline and sync</a></li><li><a href="/mobile-system-design/feeds-and-media/">Feeds and media</a></li><li><a href="/mobile-system-design/sdks-and-libraries/">SDKs and libraries</a></li><li><a href="/mobile-system-design/live-data-and-payments/">Live data and payments</a></li></ul></div><div><p class="fh">Concepts</p><ul><li><a href="/concepts/">All concepts</a></li><li><a href="/patterns/">Design patterns</a></li><li><a href="/failure-modes/">Failure modes</a></li><li><a href="/guides/">Guides</a></li><li><a href="/mobile-system-design/#build">Build guides</a></li><li><a href="/glossary/">Glossary</a></li></ul></div><div><p class="fh">Practice</p><ul><li><a href="/practice/">Practice timer</a></li><li><a href="/practice/#kit">Practice kit</a></li><li><a href="/follow-up/">Follow-up rounds</a></li><li><a href="/simulators/">Interactive tools</a></li><li><a href="/simulators/retry/">Retry explorer</a></li><li><a href="/simulators/pagination/">Pagination race</a></li><li><a href="/simulators/offline-chat/">Offline chat simulator</a></li><li><a href="/simulators/cache/">Cache explorer</a></li><li><a href="/simulators/token-refresh/">Token refresh explorer</a></li><li><a href="/simulators/relaunch/">Relaunch explorer</a></li></ul></div><div><p class="fh">Project</p><ul><li><a href="/about/">About</a></li><li><a href="/alternatives/">Prep options compared</a></li><li><a href="/pack/">Pack waitlist</a></li><li><a href="/license/">Licence and credits</a></li><li><a href="/privacy/">Privacy</a></li><li><a href="/feed.xml">RSS feed</a></li></ul></div></nav><p>&copy; Mobile Design Rounds. This site is independent and is not affiliated with Google or Apple. Android is a trademark of Google LLC. Drafted with AI assistance, then edited and reviewed by <a href="/about/#who">Manuel Lorenzo</a>, an Android developer. Text: CC BY-NC 4.0. Code: MIT. Diagrams: CC BY 4.0. See the <a href="/license/">licence and credits</a>.</p></footer></div>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "547404bc5ae84ae7bcb0a39fce029e3e"}'></script><script>(()=>{
+const HOP=0.3,TIMEOUT=10,RESTART=30;
+const PRESETS=[
+ {outbox:true,id:'keep',dedupe:true,kill:'save',lost:false,retry:true},
+ {outbox:true,id:'fresh',dedupe:true,kill:'reply',lost:false,retry:true},
+ {outbox:true,id:'keep',dedupe:true,kill:'reply',lost:false,retry:true},
+ {outbox:true,id:'keep',dedupe:false,kill:'reply',lost:false,retry:true}];
+const PDESC=['The app is killed after the tap and before the row is written. The outbox is on, but it has nothing to keep.','The message is saved and sent, then the app is killed before the reply. On launch the app retries, but it makes a new ID.','The same kill, but the row keeps the ID and the server dedupes by ID.','The same kill and the same ID, but the server does not check IDs.'];
+const fmt=s=>(Math.round(s*10)/10).toFixed(1)+' s';
+const ID=n=>'ID '+'AB'[n];
+function sim(c){
+ const ev=[],seen=[];
+ let copies=0,screen='gone',retried=false,dedupeHit=false,retryId=0;
+ const push=(t,cls,title,rows)=>ev.push({t:Math.round(t*10)/10,cls,title,rows});
+ const keep=c.id==='keep';
+ function deliver(id){
+  const known=seen.includes(id);
+  let s;
+  if(known&&c.dedupe){dedupeHit=true;s=ID(id)+' is already stored. Dedupe is on, so the server stores nothing new. It answers with the first acknowledgement.'}
+  else{
+   copies++;
+   if(!known)seen.push(id);
+   if(known)s=ID(id)+' is already stored, but the server does not check IDs. It stores the message again.';
+   else if(copies>1)s=ID(id)+' is new to the server. It cannot tell that this is the same message, so it stores it again.';
+   else s='Stores the message with '+ID(id)+'.';
+  }
+  return s+' Copies on the server: '+copies+'.';
+ }
+ function retryWith(t,title,lead){
+  const id=keep?0:1;
+  retried=true;retryId=id;
+  const idText=keep?'Reads '+ID(0)+' back from the saved message.':'Makes the ID again, because it was not stored. The new ID is '+ID(1)+'.';
+  const srv=deliver(id);
+  screen='sent';
+  push(t,'ok',title,[['App',lead+' '+idText+' Sends the message.'],['Server',srv],['Then','The acknowledgement arrives. The app marks the message as sent.']]);
+ }
+ function relaunch(t,rowSaved){
+  if(!rowSaved){
+   screen='gone';
+   push(t,'bad','The user opens the app again',[['App','Finds nothing saved. '+(c.outbox?'':'There is no outbox. ')+'The bubble is gone.'],['Server',copies?'Holds '+copies+' copy of the message. The app does not know about it.':'Never received the message.'],['Then',copies?'The user sees no message and may type it again.':'Nothing is left to send. The user must type the message again.']]);
+   return;
+  }
+  if(!c.retry){
+   screen='pending';
+   push(t,'bad','The user opens the app again',[['App','Finds the pending message in the outbox. The app does not retry pending messages when it starts, so nothing sends it.'],['Server',copies?'Holds '+copies+' copy of the message.':'Never received the message.'],['Then','The bubble stays pending.']]);
+   return;
+  }
+  retryWith(t,'The user opens the app again','Finds the pending message in the outbox and retries it.');
+ }
+ const tTap=0;
+ push(tTap,'ok','The user taps Send',[['App','Makes the message ID, '+ID(0)+', and shows a bubble.'+(c.outbox?'':' There is no outbox, so the message is only in memory.')]]);
+ if(c.kill==='save'){
+  push(0.05,'bad','The app is killed before the save',[['App','The system stops the app'+(c.outbox?' before the outbox row is written. ':'. ')+'Nothing is on disk and nothing was sent.']]);
+  relaunch(0.05+RESTART,false);
+ }else{
+  let t=0.1;
+  if(c.outbox){
+   push(t,'ok','The app saves the message',[['App','Writes a row to the outbox with the message text'+(keep?' and '+ID(0)+'.':'. It does not store the ID.')+' Status: pending.']]);
+   t=0.2;
+  }
+  if(c.kill==='request'){
+   push(t-0.05,'bad','The app is killed before the request',[['App','The system stops the app. '+(c.outbox?'The row is on disk. ':'Nothing is on disk. ')+'Nothing was sent.']]);
+   relaunch(t-0.05+RESTART,c.outbox);
+  }else{
+   const srv=deliver(0);
+   push(t,'ok','The app sends the request',[['App','Sends the message with '+ID(0)+'.'],['Server',srv]]);
+   if(c.kill==='reply'){
+    push(t+HOP+0.1,'bad','The app is killed before the reply',[['App','The system stops the app. The request is already on the server, but the reply has not arrived.']]);
+    relaunch(t+HOP+0.1+RESTART,c.outbox);
+   }else if(c.lost){
+    push(t+2*HOP,'wait','The reply is lost',[['Server','Sent the acknowledgement. It never arrives.']]);
+    push(t+TIMEOUT,'wait','The request times out',[['App','No reply after '+TIMEOUT+' s. The app is still running, so it sends the message again.']]);
+    retryWith(t+TIMEOUT,'The app retries','The retry:');
+   }else{
+    screen='sent';
+    push(t+2*HOP,'ok','The reply arrives',[['App','Gets the acknowledgement and marks the message as sent.']]);
+   }
+  }
+ }
+ let code;
+ if(copies===0)code=screen==='pending'?'pending0':'gone';
+ else if(copies>=2)code=retryId===1?'fresh':'nodedupe';
+ else if(screen==='pending')code='pending1';
+ else if(screen==='gone')code='ghost';
+ else if(!retried)code='clean';
+ else code=dedupeHit?'dedupe':'firstsend';
+ const word=copies===0?'Never':copies>=2?'Twice':screen==='sent'?'Once':'Once, not shown as sent';
+ return{events:ev,copies,screen,stuck:screen==='pending',code,word,good:copies===1&&screen==='sent'};
+}
+if(typeof document==='undefined'){globalThis.__sim={sim,PRESETS};return}
+const $=id=>document.getElementById(id);
+const SCR={sent:'Sent',pending:'Pending',gone:'Gone'};
+function line(c,r){
+ switch(r.code){
+  case 'gone':return c.outbox?'Never sent: the app was killed before the outbox save, so nothing was left to send. The user must type it again.':'Never sent: there is no outbox, so the kill erased the message. The user must type it again.';
+  case 'pending0':return 'Not sent yet: the message is saved, but the app does not retry it on launch, so it stays pending.';
+  case 'clean':return 'Sent once: nothing went wrong.';
+  case 'firstsend':return 'Sent once: the kill came before the request, so the retry on launch was the first send.';
+  case 'dedupe':return 'Sent once: the retry carried the same ID and the server recognised it.';
+  case 'fresh':return 'Sent twice: the retry used a new ID, so the server could not tell it was the same message.';
+  case 'nodedupe':return 'Sent twice: the retry used the same ID, but the server does not check IDs.';
+  case 'pending1':return 'Sent once, but the app shows it as pending: it never saw the reply and does not retry on launch.';
+  default:return 'Sent once, but the app forgot it: with no outbox, the sender sees no bubble after the relaunch.';
+ }
+}
+function why(c,r){
+ const p=[];
+ switch(r.code){
+  case 'gone':
+   if(c.outbox)p.push('The outbox only helps after the row is written. A kill between the tap and the write loses the message, and no retry can bring it back.','Show the bubble only after the row is saved. Then the user never sees a message that can still vanish.');
+   else p.push('Without an outbox the message lives only in memory. A kill erases it, and there is nothing to retry.','Save a pending row before you send. Then a kill after the save cannot lose the message.');
+   break;
+  case 'pending0':p.push('Saved is not sent. Something must read the outbox and send what is pending: a hook at launch, or a background job.','If nothing does, the bubble stays pending until the user taps it.');break;
+  case 'clean':p.push('No failure was set, so one request and one reply were enough.');break;
+  case 'firstsend':p.push('The kill came before any request left the app, so the server had nothing yet. The saved message made the first send possible after the relaunch.','The ID setting did not matter here, because no earlier request existed.');break;
+  case 'dedupe':p.push('Exactly once needs three things together: save before you send, keep the same ID in the saved message, and let the server dedupe by that ID. This run has all three.','The server stored the first request. The retry carried the same ID, so the server answered with the first result.');break;
+  case 'fresh':p.push('An ID made at retry time is a new message to the server. Dedupe cannot help, because the IDs differ.','Make the ID once, when the user taps. Store it in the same write as the message and read it back at retry.');break;
+  case 'nodedupe':p.push('The ID is only a label until the server checks it. This server stores every request it gets, so a repeat becomes a second copy.','The server must remember IDs and answer a repeat with the first result. Do not rely on the app alone.');break;
+  case 'pending1':p.push('The server did the work, but the app never saw the reply. Because it does not retry on launch, the bubble stays pending.','Retrying here is safe when the ID is kept and the server dedupes. Then a retry costs a request, not a duplicate.');break;
+  default:p.push('The server stored the message, but the app kept nothing on disk. After the relaunch there is no bubble, so the user may type the message again and send a second copy.','A saved row keeps the message visible and lets the app retry it with the same ID.');
+ }
+ if(r.copies>=2)p.push('The sender sees one bubble. The other person sees the message twice.');
+ if(c.kill==='none'&&c.lost)p.push('The app was not killed, so a duplicate needs only a lost reply. This is the case in the Retry explorer.');
+ if(c.kill==='none'&&!c.lost&&r.code==='clean')p.push('Turn on a kill or a lost reply to see what the outbox, the ID and the server rules do.');
+ if(c.kill!=='none'&&c.lost)p.push('The lost reply setting is not used when the app is killed. After a kill the reply is lost anyway.');
+ if(c.kill==='none'&&c.retry)p.push('The app was not killed, so the retry on launch never ran.');
+ if(!c.outbox&&c.retry&&c.kill!=='none')p.push('Retry on launch does nothing without an outbox. There is no saved message to retry.');
+ if(!c.outbox&&c.kill==='request')p.push('Without an outbox, killed after the save and killed before the save give the same result, because there is no save.');
+ return p;
+}
+function read(){
+ return{outbox:$('rl-outbox').checked,id:$('rl-id').value,dedupe:$('rl-dedupe').checked,kill:$('rl-kill').value,lost:$('rl-lost').checked,retry:$('rl-retry').checked};
+}
+function syncLost(){
+ const k=$('rl-kill').value!=='none';
+ $('rl-lost').disabled=k;
+ $('rl-lostnote').hidden=!k;
+}
+function run(){
+ const c=read();
+ const r=sim(c);
+ $('rl-res').innerHTML='<div class="'+(r.copies===1?'good':'bad')+'"><dt>Copies on the server</dt><dd>'+r.copies+'</dd></div>'
+  +'<div class="'+(r.screen==='sent'?'good':'bad')+'"><dt>Sender\'s screen</dt><dd>'+SCR[r.screen]+'</dd></div>'
+  +'<div class="'+(r.stuck?'bad':'good')+'"><dt>Stuck pending</dt><dd>'+(r.stuck?'Yes':'No')+'</dd></div>'
+  +'<div class="'+(r.good?'good':'bad')+'"><dt>Times sent</dt><dd>'+r.word+'</dd></div>';
+ $('rl-tl').innerHTML=r.events.map(s=>'<li class="'+s.cls+'"><strong>'+fmt(s.t)+': '+s.title+'</strong><dl>'+s.rows.map(x=>'<dt>'+x[0]+'</dt><dd>'+x[1]+'</dd>').join('')+'</dl></li>').join('');
+ $('rl-line').textContent=line(c,r);
+ $('rl-why').innerHTML=why(c,r).map(t=>'<li>'+t+'</li>').join('');
+ $('rl-say').textContent='Result: '+r.word.toLowerCase()+'. '+r.copies+' '+(r.copies===1?'copy':'copies')+' on the server. Sender screen: '+SCR[r.screen].toLowerCase()+'. '+line(c,r);
+}
+function load(i){
+ const c=PRESETS[i];
+ $('rl-outbox').checked=c.outbox;$('rl-id').value=c.id;$('rl-dedupe').checked=c.dedupe;$('rl-kill').value=c.kill;$('rl-lost').checked=c.lost;$('rl-retry').checked=c.retry;
+ syncLost();
+ $('rl-pdesc').textContent='Preset loaded: '+document.querySelector('[data-p="'+i+'"]').textContent+'. '+PDESC[i]+' The result is below.';
+ run();
+}
+$('rl-run').addEventListener('click',run);
+$('rl-kill').addEventListener('change',syncLost);
+document.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',()=>load(+b.dataset.p)));
+syncLost();
+$('rl-app').hidden=false;
+})();
+</script></body></html>
