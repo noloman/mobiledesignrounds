@@ -437,3 +437,7 @@ details.quiz p{margin:.8em 0 0;color:var(--ink2)}
 .phone .pf{fill:var(--panel);stroke:var(--ink2);stroke-width:2}
 .phone .mk circle{fill:#1F2328;stroke:#fff;stroke-width:2}
 .phone .mk text{font:700 13px var(--body);fill:#fff;text-anchor:middle}
+/* Code highlighting (scripts/highlight-code.py) */
+.tk-kw{color:#C4A5FF}.tk-ty{color:#7FD6E8}.tk-str{color:#A5E58F}.tk-com{color:#8FA1BC;font-style:italic}
+.tk-num{color:#FFB86B}.tk-ann{color:#F2D56B}.tk-fn{color:#8FB8FF}
+@media print{.tk-kw{color:#6B2FBF}.tk-ty{color:#0B6B80}.tk-str{color:#1B6B1B}.tk-com{color:#555}.tk-num{color:#A04A00}.tk-ann{color:#7A5A00}.tk-fn{color:#1F4FA8}}

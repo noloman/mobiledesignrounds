@@ -17,42 +17,42 @@
 <p>None of it belongs in a 45-minute round (the length I assume). I draw it only if asked.</p>
 <p>The snippets use <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> 2.x (<code>androidx.room</code>, Android's local database library). The official <a href="https://developer.android.com/training/data-storage/room">Room guide</a> now shows Room 3 (<code>androidx.room3</code>, KSP only, <code>SQLiteDriver</code> required). The design is the same either way.</p>
 <h2 id="1-local-schema-room">1. Local schema (Room)</h2>
-<pre tabindex="0"><code>@Entity(tableName = &quot;items&quot;, indices = [Index(value = [&quot;localUri&quot;], unique = true)])
-data class ItemEntity(
-    @PrimaryKey val itemId: String,       // client-generated UUID
-    val localUri: String,                 // MediaStore content URI or file path
-    val size: Long,
-    val contentHash: String?,             // whole-file hash, filled after hashing
-    val remoteFileId: String? = null,     // null until the server has created the file
-    val baseVersion: Long? = null,        // version this edit is based on, for conflict checks
-    val state: State,
-) { enum class State { DETECTED, HASHING, UPLOADING, DONE, FAILED } }
+<pre tabindex="0"><code><span class="tk-ann">@Entity</span>(tableName = <span class="tk-str">"items"</span>, indices = [<span class="tk-ty">Index</span>(<span class="tk-kw">value</span> = [<span class="tk-str">"localUri"</span>], unique = <span class="tk-kw">true</span>)])
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">ItemEntity</span>(
+    <span class="tk-ann">@PrimaryKey</span> <span class="tk-kw">val</span> itemId: <span class="tk-ty">String</span>,       <span class="tk-com">// client-generated UUID</span>
+    <span class="tk-kw">val</span> localUri: <span class="tk-ty">String</span>,                 <span class="tk-com">// MediaStore content URI or file path</span>
+    <span class="tk-kw">val</span> size: <span class="tk-ty">Long</span>,
+    <span class="tk-kw">val</span> contentHash: <span class="tk-ty">String</span>?,             <span class="tk-com">// whole-file hash, filled after hashing</span>
+    <span class="tk-kw">val</span> remoteFileId: <span class="tk-ty">String</span>? = <span class="tk-kw">null</span>,     <span class="tk-com">// null until the server has created the file</span>
+    <span class="tk-kw">val</span> baseVersion: <span class="tk-ty">Long</span>? = <span class="tk-kw">null</span>,        <span class="tk-com">// version this edit is based on, for conflict checks</span>
+    <span class="tk-kw">val</span> state: <span class="tk-ty">State</span>,
+) { <span class="tk-kw">enum</span> <span class="tk-kw">class</span> <span class="tk-ty">State</span> { <span class="tk-ty">DETECTED</span>, <span class="tk-ty">HASHING</span>, <span class="tk-ty">UPLOADING</span>, <span class="tk-ty">DONE</span>, <span class="tk-ty">FAILED</span> } }
 
-@Entity(tableName = &quot;blocks&quot;, primaryKeys = [&quot;itemId&quot;, &quot;index&quot;])
-data class BlockEntity(
-    val itemId: String, val index: Int,
-    val hash: String,                     // SHA-256 of the block bytes
-    val length: Int,
-    val state: BlockState,                // PENDING, PRESENT_ON_SERVER, UPLOADED
+<span class="tk-ann">@Entity</span>(tableName = <span class="tk-str">"blocks"</span>, primaryKeys = [<span class="tk-str">"itemId"</span>, <span class="tk-str">"index"</span>])
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">BlockEntity</span>(
+    <span class="tk-kw">val</span> itemId: <span class="tk-ty">String</span>, <span class="tk-kw">val</span> index: <span class="tk-ty">Int</span>,
+    <span class="tk-kw">val</span> hash: <span class="tk-ty">String</span>,                     <span class="tk-com">// SHA-256 of the block bytes</span>
+    <span class="tk-kw">val</span> length: <span class="tk-ty">Int</span>,
+    <span class="tk-kw">val</span> state: <span class="tk-ty">BlockState</span>,                <span class="tk-com">// PENDING, PRESENT_ON_SERVER, UPLOADED</span>
 )
 
-@Entity(tableName = &quot;upload_sessions&quot;)
-data class UploadSessionEntity(
-    @PrimaryKey val itemId: String,
-    val sessionUri: String,               // server-issued resumable session
-    val expiresAt: Long,
+<span class="tk-ann">@Entity</span>(tableName = <span class="tk-str">"upload_sessions"</span>)
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">UploadSessionEntity</span>(
+    <span class="tk-ann">@PrimaryKey</span> <span class="tk-kw">val</span> itemId: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> sessionUri: <span class="tk-ty">String</span>,               <span class="tk-com">// server-issued resumable session</span>
+    <span class="tk-kw">val</span> expiresAt: <span class="tk-ty">Long</span>,
 )</code></pre>
 <p>A block is a fixed-size piece of a file. The server's <code>missing</code> list (the blocks it does not have) is the truth about what is stored. A block is <code>UPLOADED</code> only after the server confirmed it. Treat anything the server did not confirm as unsent.</p>
 <h2 id="2-rest-sketch">2. REST (sketch)</h2>
-<pre tabindex="0"><code>POST /v1/files/{id}/uploads         body: { size, blockHashes: [...] }
-     → { sessionUri, missing: [3, 4, 9] }          (blocks the server does not have)
-PUT  &lt;sessionUri&gt;?block=3   Content-Range: bytes 12582912-16777215/52428800
-     X-Block-Hash: &lt;sha256&gt;   → 200 { stored: true } | 422 (hash mismatch, resend)
-POST /v1/files/{id}/uploads  again with the same body        (after a failure: returns the current missing list)
-POST /v1/files/{id}/commit          body: { baseVersion, blockHashes }
-     → 200 { version } | 409 { currentVersion }     (conflict)
-                                                   (a retry with the same block list returns the version it already created)
-GET  /v1/changes?cursor=&lt;opaque&gt;                   (what changed in the cloud; the server returns the next cursor)</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">POST</span> /v1/files/{id}/uploads         body: { size, blockHashes: [...] }
+     → { sessionUri, missing: [<span class="tk-num">3</span>, <span class="tk-num">4</span>, <span class="tk-num">9</span>] }          (blocks the server does not have)
+<span class="tk-ty">PUT</span>  &lt;sessionUri&gt;?block=<span class="tk-num">3</span>   <span class="tk-ty">Content</span>-<span class="tk-ty">Range</span>: bytes <span class="tk-num">12582912</span>-<span class="tk-num">16777215</span>/<span class="tk-num">52428800</span>
+     <span class="tk-ty">X</span>-<span class="tk-ty">Block</span>-<span class="tk-ty">Hash</span>: &lt;sha256&gt;   → <span class="tk-num">200</span> { stored: <span class="tk-kw">true</span> } | <span class="tk-num">422</span> (hash mismatch, resend)
+<span class="tk-ty">POST</span> /v1/files/{id}/uploads  again with the same body        (after a failure: returns the current missing list)
+<span class="tk-ty">POST</span> /v1/files/{id}/commit          body: { baseVersion, blockHashes }
+     → <span class="tk-num">200</span> { version } | <span class="tk-num">409</span> { currentVersion }     (conflict)
+                                                   (a retry with the same block list returns the version <span class="tk-kw">it</span> already created)
+<span class="tk-ty">GET</span>  /v1/changes?cursor=&lt;opaque&gt;                   (what changed <span class="tk-kw">in</span> the cloud; the server returns the next cursor)</code></pre>
 <p>The session borrows from Google's <a class="gl" href="/glossary/#resumable-upload" title="An upload that can continue after a break.">resumable upload</a> model (a session URI, chunks with <code>Content-Range</code>) and from the <a href="https://tus.io/protocols/resumable-upload">tus protocol</a> (an open resumable-upload protocol). I changed one thing.</p>
 <p>Drive's resumable upload and core tus both take one continuous stream of bytes. After a failure they ask the server for its offset (a byte count). tus has a separate concatenation extension for parallel parts. This model cannot skip blocks the server already has.</p>
 <p>So in my sketch each block is its own <code>PUT</code> into the session. The server owns the <code>missing</code> list instead of an offset. That is my design, not Google's or tus's behavior. Whichever shape you pick, say why: the server, not the client, decides what is stored.</p>
@@ -60,22 +60,22 @@ GET  /v1/changes?cursor=&lt;opaque&gt;                   (what changed in the cl
 <h2 id="3-resumable-block-upload">3. Resumable block upload</h2>
 <p>The core flow, per item:</p>
 <ol><li>Detect the new or changed item and insert it as <code>DETECTED</code> (see section 4).</li><li>Split the file into blocks. Read it as a stream and hash each block (a hash is a short fingerprint of the data). Do not read the whole file into memory.</li><li>Send the block hashes. The server replies with the blocks it is missing. It already has some blocks, from this user or from an earlier version of the file. You never upload those.</li><li>Upload only the missing blocks, in order, one <code>PUT</code> each. Check that the block still has the hash you sent in step 3. After the server confirms each block, mark its <code>BlockEntity</code> <code>UPLOADED</code>.</li><li>Send a commit with the full list of block hashes and the <code>baseVersion</code>. Only the commit makes the new version visible.</li><li>Mark the item <code>DONE</code>.</li></ol>
-<pre tabindex="0"><code>// Sketch: upload only the blocks the server said it is missing. Constant memory: one reused buffer.
-// Runs in a data-layer component called by the worker (never by a Composable or ViewModel); dispatcher injection and entity mapping omitted for brevity
-suspend fun uploadMissing(item: ItemEntity, session: UploadSessionEntity, missing: List&lt;Int&gt;) {
-    contentResolver.openInputStream(item.localUri.toUri())!!.use { input -&gt;
-        val buf = ByteArray(BLOCK_SIZE)                    // for example 4 MiB
-        var pos = 0L                                       // where the stream is now
-        for (index in missing.sorted()) {
-            val block = dao.block(item.itemId, index)      // hash and length saved while hashing
-            val start = index.toLong() * BLOCK_SIZE
-            input.skipNBytes(start - pos)                  // API 33+; throws EOFException if the file shrank
-            val n = input.readNBytes(buf, 0, block.length) // API 33+; on older versions loop on read()
+<pre tabindex="0"><code><span class="tk-com">// Sketch: upload only the blocks the server said it is missing. Constant memory: one reused buffer.</span>
+<span class="tk-com">// Runs in a data-layer component called by the worker (never by a Composable or ViewModel); dispatcher injection and entity mapping omitted for brevity</span>
+<span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">uploadMissing</span>(item: <span class="tk-ty">ItemEntity</span>, session: <span class="tk-ty">UploadSessionEntity</span>, missing: <span class="tk-ty">List</span>&lt;<span class="tk-ty">Int</span>&gt;) {
+    contentResolver.<span class="tk-fn">openInputStream</span>(item.localUri.<span class="tk-fn">toUri</span>())!!.use { input -&gt;
+        <span class="tk-kw">val</span> buf = <span class="tk-ty">ByteArray</span>(<span class="tk-ty">BLOCK_SIZE</span>)                    <span class="tk-com">// for example 4 MiB</span>
+        <span class="tk-kw">var</span> pos = <span class="tk-num">0L</span>                                       <span class="tk-com">// where the stream is now</span>
+        <span class="tk-kw">for</span> (index <span class="tk-kw">in</span> missing.<span class="tk-fn">sorted</span>()) {
+            <span class="tk-kw">val</span> block = dao.<span class="tk-fn">block</span>(item.itemId, index)      <span class="tk-com">// hash and length saved while hashing</span>
+            <span class="tk-kw">val</span> start = index.<span class="tk-fn">toLong</span>() * <span class="tk-ty">BLOCK_SIZE</span>
+            input.<span class="tk-fn">skipNBytes</span>(start - pos)                  <span class="tk-com">// API 33+; throws EOFException if the file shrank</span>
+            <span class="tk-kw">val</span> n = input.<span class="tk-fn">readNBytes</span>(buf, <span class="tk-num">0</span>, block.length) <span class="tk-com">// API 33+; on older versions loop on read()</span>
             pos = start + n
-            check(n == block.length &amp;&amp; sha256(buf, n) == block.hash) { &quot;file changed since hashing&quot; }
-            val ack = api.putBlock(session.sessionUri, index, buf, n, start, item.size)  // Content-Range
-            check(ack.stored) { &quot;server did not keep block $index&quot; }
-            dao.setBlockState(item.itemId, index, BlockState.UPLOADED)
+            <span class="tk-fn">check</span>(n == block.length &amp;&amp; <span class="tk-fn">sha256</span>(buf, n) == block.hash) { <span class="tk-str">"file changed since hashing"</span> }
+            <span class="tk-kw">val</span> ack = api.<span class="tk-fn">putBlock</span>(session.sessionUri, index, buf, n, start, item.size)  <span class="tk-com">// Content-Range</span>
+            <span class="tk-fn">check</span>(ack.stored) { <span class="tk-str">"server did not keep block $index"</span> }
+            dao.<span class="tk-fn">setBlockState</span>(item.itemId, index, <span class="tk-ty">BlockState</span>.<span class="tk-ty">UPLOADED</span>)
         }
     }
 }</code></pre>
@@ -124,21 +124,21 @@ suspend fun uploadMissing(item: ItemEntity, session: UploadSessionEntity, missin
 <p><strong>What really changes:</strong></p>
 <ul><li><strong>The system owns the transfer, not you.</strong> Background <code>URLSession</code> tasks continue after your app is suspended, but you cannot count on running code between blocks. Plan blocks ahead, write them to files, and create several tasks. Do not loop in a coroutine.</li><li><strong>Uploads should come from files.</strong> Write each block to a temporary file. Delete it after the server confirms the block.</li><li><strong>Originals may be in iCloud.</strong> With "Optimize iPhone Storage", the original may not be on the phone. Export the resource with <code>PHAssetResourceManager</code> (<code>writeData(for:toFile:options:)</code>) and set <code>isNetworkAccessAllowed</code> to true on the options. Do this before the upload task, and handle failure and slow downloads.</li><li><strong>Force-quit stops everything.</strong> Unlike WorkManager, nothing starts the app again. Say this in the interview and describe the recovery at the next launch.</li><li><strong>No guaranteed schedule.</strong> Do cheap work (detect, hash) at launch and in the foreground. Let the background session carry the bytes.</li><li><strong>Delegate setup.</strong> A SwiftUI-lifecycle app needs <code>@UIApplicationDelegateAdaptor</code> to receive <code>application(_:handleEventsForBackgroundURLSession:completionHandler:)</code>.</li></ul>
 <p>This sketch uploads one block that was written to a temporary file in the background:</p>
-<pre tabindex="0"><code>// One session per identifier, created once (for example in the SDK singleton), never per request.
-static let backgroundSession: URLSession = {
-    let config = URLSessionConfiguration.background(withIdentifier: &quot;app.backup.uploads&quot;)
-    config.isDiscretionary = true            // bulk backup: system may wait for Wi-Fi and power; applies to transfers started in the foreground. For a user-started upload set it to false
-    config.allowsCellularAccess = false      // user setting
-    return URLSession(configuration: config, delegate: UploadDelegate.shared, delegateQueue: nil)
+<pre tabindex="0"><code><span class="tk-com">// One session per identifier, created once (for example in the SDK singleton), never per request.</span>
+<span class="tk-kw">static</span> <span class="tk-kw">let</span> backgroundSession: <span class="tk-ty">URLSession</span> = {
+    <span class="tk-kw">let</span> config = <span class="tk-ty">URLSessionConfiguration</span>.<span class="tk-fn">background</span>(withIdentifier: <span class="tk-str">"app.backup.uploads"</span>)
+    config.isDiscretionary = <span class="tk-kw">true</span>            <span class="tk-com">// bulk backup: system may wait for Wi-Fi and power; applies to transfers started in the foreground. For a user-started upload set it to false</span>
+    config.allowsCellularAccess = <span class="tk-kw">false</span>      <span class="tk-com">// user setting</span>
+    <span class="tk-kw">return</span> <span class="tk-ty">URLSession</span>(configuration: config, delegate: <span class="tk-ty">UploadDelegate</span>.shared, delegateQueue: <span class="tk-kw">nil</span>)
 }()
 
-func uploadBlock(itemId: String, index: Int, sessionUri: URL, offset: Int, len: Int, total: Int, blockFileURL: URL) {
-    var req = URLRequest(url: sessionUri)
-    req.httpMethod = &quot;PUT&quot;
-    req.setValue(&quot;bytes \(offset)-\(offset + len - 1)/\(total)&quot;, forHTTPHeaderField: &quot;Content-Range&quot;)
-    let task = Self.backgroundSession.uploadTask(with: req, fromFile: blockFileURL)
-    task.taskDescription = &quot;\(itemId):\(index)&quot;    // after a relaunch, the delegate maps the task back to its block
-    task.resume()
+<span class="tk-kw">func</span> <span class="tk-fn">uploadBlock</span>(itemId: <span class="tk-ty">String</span>, index: <span class="tk-ty">Int</span>, sessionUri: <span class="tk-ty">URL</span>, offset: <span class="tk-ty">Int</span>, len: <span class="tk-ty">Int</span>, total: <span class="tk-ty">Int</span>, blockFileURL: <span class="tk-ty">URL</span>) {
+    <span class="tk-kw">var</span> req = <span class="tk-ty">URLRequest</span>(url: sessionUri)
+    req.httpMethod = <span class="tk-str">"PUT"</span>
+    req.<span class="tk-fn">setValue</span>(<span class="tk-str">"bytes \(offset)-\(offset + len - 1)/\(total)"</span>, forHTTPHeaderField: <span class="tk-str">"Content-Range"</span>)
+    <span class="tk-kw">let</span> task = <span class="tk-ty">Self</span>.backgroundSession.<span class="tk-fn">uploadTask</span>(with: req, fromFile: blockFileURL)
+    task.taskDescription = <span class="tk-str">"\(itemId):\(index)"</span>    <span class="tk-com">// after a relaunch, the delegate maps the task back to its block</span>
+    task.<span class="tk-fn">resume</span>()
 }</code></pre>
 <h2 id="11-more-practice-prompts">11. More practice prompts</h2>
 <ol><li>How would you back up a 4 GB video (example size) on a flaky connection? (Block upload, server-owned missing list, constraints, foreground or UIDT work, progress in the database.)</li><li>How do you avoid re-uploading a photo the user already backed up from another device? (Block hashes show which blocks the server already has. A whole-file hash is a cheaper first check for exact copies, if the server offers one.)</li><li>Two devices edit the same file offline. What happens? (<code>baseVersion</code>, <code>409</code>, conflicted copy, no silent overwrite.)</li><li>How would you add end-to-end encryption? (Encrypt before upload, effect on dedupe, thumbnails, and search, key recovery.)</li><li>The user's storage fills halfway through a 4 GB upload (example size). What do they see, and what does the uploader do? (Pause with a reason, no retry loop, resume with the blocks still missing.)</li><li>How would a "free up space" button decide what is safe to delete? (Only committed, server-confirmed items, with a confirmation.)</li><li>How do you show "backup complete" honestly? (Count only committed items; show reasons for the rest.)</li></ol>

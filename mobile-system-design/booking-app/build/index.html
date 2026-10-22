@@ -21,15 +21,15 @@
 <div class="tw" tabindex="0" role="region" aria-label="Table 1, scrollable"><table><thead><tr><th>Where</th><th>Name</th><th>What it is</th></tr></thead><tbody><tr><td>HTTP header</td><td><code>Idempotency-Key</code></td><td>The key as the server sees it</td></tr><tr><td>Room column</td><td><code>idempotencyKey</code></td><td>The key, stored before the first send</td></tr><tr><td>Kotlin <code>BookingApi.confirm</code></td><td><code>key</code></td><td>The same value, passed as a header</td></tr><tr><td>Swift <code>PayDelegate</code></td><td><code>attemptKey</code> and <code>idempotencyKey</code></td><td>The same value, property and parameter</td></tr></tbody></table></div>
 <p>From here on, "the key" means this idempotency key.</p>
 <h2 id="2-rest">2. REST</h2>
-<pre tabindex="0"><code>GET  /v1/places/suggest?q=lis
-GET  /v1/offers?placeId=..&amp;dates=..&amp;cursor=..   → items + nextCursor (opaque), each with quoteId, price, quotedAt
-GET  /v1/offers?bbox=..&amp;dates=..                (map viewport)
-POST /v1/holds     { offerId, quoteId }     Idempotency-Key → { holdId, expiresInMs, price }
-POST /v1/bookings  { holdId, paymentToken } Idempotency-Key → { bookingId, state, version, nextAction? }
-GET  /v1/bookings/{id}
-GET  /v1/bookings?attempt=&lt;idempotencyKey&gt;      (recovery lookup)
-POST /v1/attempts/{idempotencyKey}/close  → booking, or "closed" (later requests with this key are refused)
-GET  /v1/holds/{holdId}                 → { state, expiresInMs }</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">GET</span>  /v1/places/suggest?q=lis
+<span class="tk-ty">GET</span>  /v1/offers?placeId=..&amp;dates=..&amp;cursor=..   → items + nextCursor (opaque), each with quoteId, price, quotedAt
+<span class="tk-ty">GET</span>  /v1/offers?bbox=..&amp;dates=..                (map viewport)
+<span class="tk-ty">POST</span> /v1/holds     { offerId, quoteId }     <span class="tk-ty">Idempotency</span>-<span class="tk-ty">Key</span> → { holdId, expiresInMs, price }
+<span class="tk-ty">POST</span> /v1/bookings  { holdId, paymentToken } <span class="tk-ty">Idempotency</span>-<span class="tk-ty">Key</span> → { bookingId, state, version, nextAction? }
+<span class="tk-ty">GET</span>  /v1/bookings/{id}
+<span class="tk-ty">GET</span>  /v1/bookings?attempt=&lt;idempotencyKey&gt;      (recovery lookup)
+<span class="tk-ty">POST</span> /v1/attempts/{idempotencyKey}/close  → booking, or <span class="tk-str">"closed"</span> (later requests with <span class="tk-kw">this</span> key are refused)
+<span class="tk-ty">GET</span>  /v1/holds/{holdId}                 → { state, expiresInMs }</code></pre>
 <p>A <a class="gl" href="/glossary/#cursor" title="A saved place in a list.">cursor</a> is a saved position in a list. The server gives the cursor to the client, and the client does not read it ("opaque"). A quote is a price offer with an ID (<code>quoteId</code>) and a time (<code>quotedAt</code>).</p>
 <p>The server returns <code>expiresInMs</code>, a duration that it computes when it sends the response. It does not send only an absolute end time. A duration does not depend on the clock of the device.</p>
 <h2 id="3-states-quotes-dates-and-money">3. States, quotes, dates and money</h2>
@@ -42,22 +42,22 @@ GET  /v1/holds/{holdId}                 → { state, expiresInMs }</code></pre>
 <h2 id="4-the-hold-clock">4. The hold clock</h2>
 <p>A hold means that the server keeps the room for the user for a short time. The common mistake is to use <code>System.currentTimeMillis()</code>. A user whose clock is, for example, 20 minutes fast sees a hold that has already ended. The server decides when the hold ends, and the client only shows it.</p>
 <ol><li><code>POST /holds</code> returns <code>expiresInMs</code>.</li><li>Record a <a class="gl" href="/glossary/#monotonic-clock" title="A clock that only moves forward.">monotonic</a> timestamp before you send the request, and compute the time left from it. Network delay then makes the screen show slightly less time than the server grants, never more.</li><li>Use a monotonic clock (<code>SystemClock.elapsedRealtime()</code>). It does not jump when the user changes the date.</li><li>At zero, lock the pay button, but read the hold again with <code>GET /holds/{holdId}</code>. The server may have extended it.</li><li>Save <code>expiresInMs</code> and the monotonic reading in <code>booking_attempt</code>. After a restart, the countdown can be rebuilt from them. If <code>elapsedRealtime()</code> is lower than the saved reading, the phone rebooted. Then read the hold from the server.</li><li>The server still checks the pay request. On <code>EXPIRED</code>, show "Room no longer held" with an action to check again.</li></ol>
-<pre tabindex="0"><code>// Sketch: countdown anchored to a monotonic clock
-data class HoldClock(val expiresInMs: Long, val sentAtElapsed: Long) {
-    fun remainingMs(now: Long = SystemClock.elapsedRealtime()): Long =
-        (expiresInMs - (now - sentAtElapsed)).coerceAtLeast(0)
+<pre tabindex="0"><code><span class="tk-com">// Sketch: countdown anchored to a monotonic clock</span>
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">HoldClock</span>(<span class="tk-kw">val</span> expiresInMs: <span class="tk-ty">Long</span>, <span class="tk-kw">val</span> sentAtElapsed: <span class="tk-ty">Long</span>) {
+    <span class="tk-kw">fun</span> <span class="tk-fn">remainingMs</span>(now: <span class="tk-ty">Long</span> = <span class="tk-ty">SystemClock</span>.<span class="tk-fn">elapsedRealtime</span>()): <span class="tk-ty">Long</span> =
+        (expiresInMs - (now - sentAtElapsed)).<span class="tk-fn">coerceAtLeast</span>(<span class="tk-num">0</span>)
 }</code></pre>
 <h2 id="5-idempotency-in-detail">5. Idempotency in detail</h2>
 <p>This is the classic failure. The request reaches the server, the response is lost, and a retry (a second try) or a second tap sends the request again. Without protection, that is two charges.</p>
 <ul><li><strong>Generate the key once for each checkout attempt</strong> (a <a class="gl" href="/glossary/#uuid" title="A random unique ID.">UUID</a>, a random unique ID). Write it to <code>booking_attempt</code> before the first send. Use the same key on every retry of that attempt.</li><li><strong>Send it as <code>Idempotency-Key</code>.</strong> The docs of Stripe describe this pattern for the caller of their API, which is your server. The phone sends its key to your server, and your server maps it to the provider call. V4 UUIDs are suggested, up to 255 characters. For API v1, the server saves the first result and returns it on retries.</li><li><strong>A saved failure is sent again.</strong> For API v1, the saved response includes <code>500</code> errors. So the same key gives the same <code>500</code> again. Requests that fail validation, or that collide with a request still running, are not saved. You can retry those with the same key.</li><li><strong>A changed cart needs a new key.</strong> Stripe compares the new parameters with the original request. It returns an error if they do not match.</li><li><strong>A fresh attempt is a new key.</strong> A new wallet authorization makes a new token, so it is a fresh attempt. Close the old key first (the Close call), so a late request cannot charge as well. Some providers say to start a new key after the user leaves the bank page, after a failed challenge or after a change of payment method. I have not verified that rule on the page of Stripe, so I follow the rules of my provider.</li><li><strong>Keys expire.</strong> Stripe says API v1 keys can be pruned (deleted) once they are at least 24 hours old. Your backend picks its own time window.</li><li><strong>The hold call has its own key.</strong> If the hold response is lost, retry with the same key. The server makes one hold.</li><li><strong>Double tap:</strong> the <a class="gl" href="/glossary/#viewmodel" title="A class that holds the state of one screen.">ViewModel</a> (the class that holds the screen state) ignores <code>Pay</code> while the state is <code>Submitting</code>. The key is the safety net, not the first protection.</li><li><strong>After a timeout, look before you send again:</strong> <code>GET /bookings?attempt=&lt;key&gt;</code>. If a booking exists, use it. If not, send again with the same key.</li><li><strong>Retry rule (my choice, not Stripe's):</strong> retry network errors, 408 and 429, and obey <code>Retry-After</code> when it is present. After a 5xx, do not just resend: the saved <code>500</code> comes back. Look up the key first. If a booking exists, use it. If not, close the key and start a new attempt with a new key. Any other 4xx is final. The exceptions are answers that this API defines as states, such as <code>409 PRICE_CHANGED</code> and <code>SOLD_OUT</code>. Those go to the user.</li><li><strong>A <code>401</code> is not a failed payment.</strong> The login can expire while the user is in the bank page. Then the pay call or the lookup returns <code>401</code>. Refresh the token once, then call again with the same key. A new key here could charge twice. The booking lookup after a relaunch uses the refreshed token.</li></ul>
 <p>This is the same pattern as the <a href="/mobile-system-design/chat-app/">send path of the chat app</a> and the second mistake in the <a href="/guides/offline-first-hub/">offline-first guide</a>. The difference here is that a retry costs money. The app saves the key before the first send. Unlike the chat app, there is no outbox (a table of waiting writes). There is only the one attempt record.</p>
-<pre tabindex="0"><code>// Sketch: the key comes from the persisted attempt (wrapped by a data source; not called from the ViewModel)
-interface BookingApi {
-    @POST(&quot;v1/bookings&quot;)
-    suspend fun confirm(
-        @Header(&quot;Idempotency-Key&quot;) key: String,
-        @Body body: ConfirmRequest,
-    ): BookingDto
+<pre tabindex="0"><code><span class="tk-com">// Sketch: the key comes from the persisted attempt (wrapped by a data source; not called from the ViewModel)</span>
+<span class="tk-kw">interface</span> <span class="tk-ty">BookingApi</span> {
+    <span class="tk-ann">@POST</span>(<span class="tk-str">"v1/bookings"</span>)
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">confirm</span>(
+        <span class="tk-ann">@Header</span>(<span class="tk-str">"Idempotency-Key"</span>) key: <span class="tk-ty">String</span>,
+        <span class="tk-ann">@Body</span> body: <span class="tk-ty">ConfirmRequest</span>,
+    ): <span class="tk-ty">BookingDto</span>
 }</code></pre>
 <p>The pay call runs in a scope that the repository owns (the repository is the class that reads and writes data). It does not run in <code>viewModelScope</code>, because leaving the screen must not cancel a charge in flight. The ViewModel only waits for the result. <code>BookingApi</code> sits behind a remote data source and <code>BookingRepository</code>, so the ViewModel never calls it.</p>
 <p>The recovery lookup at launch could be a WorkManager job (Android's scheduler for work that survives restarts). A plain call at startup is enough here.</p>
@@ -75,23 +75,23 @@ interface BookingApi {
 <p>Debounce (wait a short time after the last key press, for example 250 ms, tuned with data), trim, drop duplicates, and cancel the previous request. Then a slow "lis" cannot replace "lisbon".</p>
 <ul><li>Show recent searches from Room when the field is short, and cache suggestion responses by query.</li><li>Short input skips the debounce, so the recents appear at once.</li><li>If the suggest call fails with an <code>IOException</code> (for example when offline) or an <code>HttpException</code> (a 4xx or 5xx), the list becomes empty. Without this, the error would reach <code>viewModelScope</code> and crash the app on a key press.</li><li>Other exceptions still go up, because I would rather see a real bug than hide it.</li></ul>
 <p>The snippet needs <code>import java.io.IOException</code> and <code>import retrofit2.HttpException</code>, which the block does not show. A Retrofit call throws <code>HttpException</code> for a 4xx or 5xx, so catch it too.</p>
-<pre tabindex="0"><code>// Sketch: debounce + cancel-previous with flatMapLatest
-@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-class SearchViewModel(private val repo: PlaceRepository): ViewModel() {
-    private val query = MutableStateFlow(&quot;&quot;)
+<pre tabindex="0"><code><span class="tk-com">// Sketch: debounce + cancel-previous with flatMapLatest</span>
+<span class="tk-ann">@OptIn</span>(<span class="tk-ty">FlowPreview</span>::<span class="tk-kw">class</span>, <span class="tk-ty">ExperimentalCoroutinesApi</span>::<span class="tk-kw">class</span>)
+<span class="tk-kw">class</span> <span class="tk-ty">SearchViewModel</span>(<span class="tk-kw">private</span> <span class="tk-kw">val</span> repo: <span class="tk-ty">PlaceRepository</span>): <span class="tk-ty">ViewModel</span>() {
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> query = <span class="tk-ty">MutableStateFlow</span>(<span class="tk-str">""</span>)
 
-    val suggestions: StateFlow&lt;List&lt;Place&gt;&gt; = query
-        .debounce { if (it.trim().length &lt; 2) 0L else 250L }   // recents show at once
-        .map { it.trim() }
-        .distinctUntilChanged()
+    <span class="tk-kw">val</span> suggestions: <span class="tk-ty">StateFlow</span>&lt;<span class="tk-ty">List</span>&lt;<span class="tk-ty">Place</span>&gt;&gt; = query
+        .debounce { <span class="tk-kw">if</span> (<span class="tk-kw">it</span>.<span class="tk-fn">trim</span>().length &lt; <span class="tk-num">2</span>) <span class="tk-num">0L</span> <span class="tk-kw">else</span> <span class="tk-num">250L</span> }   <span class="tk-com">// recents show at once</span>
+        .map { <span class="tk-kw">it</span>.<span class="tk-fn">trim</span>() }
+        .<span class="tk-fn">distinctUntilChanged</span>()
         .flatMapLatest { q -&gt;
-            if (q.length &lt; 2) repo.recents()        // Flow&lt;List&lt;Place&gt;&gt; from Room
-            else flow { emit(repo.suggest(q)) }     // cancelled by the next query
-                .catch { if (it is IOException || it is HttpException) emit(emptyList()) else throw it }
+            <span class="tk-kw">if</span> (q.length &lt; <span class="tk-num">2</span>) repo.<span class="tk-fn">recents</span>()        <span class="tk-com">// Flow&lt;List&lt;Place&gt;&gt; from Room</span>
+            <span class="tk-kw">else</span> flow { <span class="tk-fn">emit</span>(repo.<span class="tk-fn">suggest</span>(q)) }     <span class="tk-com">// cancelled by the next query</span>
+                .<span class="tk-kw">catch</span> { <span class="tk-kw">if</span> (<span class="tk-kw">it</span> <span class="tk-kw">is</span> <span class="tk-ty">IOException</span> || <span class="tk-kw">it</span> <span class="tk-kw">is</span> <span class="tk-ty">HttpException</span>) <span class="tk-fn">emit</span>(<span class="tk-fn">emptyList</span>()) <span class="tk-kw">else</span> <span class="tk-kw">throw</span> <span class="tk-kw">it</span> }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        .<span class="tk-fn">stateIn</span>(viewModelScope, <span class="tk-ty">SharingStarted</span>.<span class="tk-ty">WhileSubscribed</span>(<span class="tk-num">5_000</span>), <span class="tk-fn">emptyList</span>())
 
-    fun onQueryChanged(q: String) { query.value = q }
+    <span class="tk-kw">fun</span> <span class="tk-fn">onQueryChanged</span>(q: <span class="tk-ty">String</span>) { query.<span class="tk-kw">value</span> = q }
 }</code></pre>
 <h2 id="9-list-map-staleness-and-offline">9. List, map, staleness and offline</h2>
 <p><strong>List and map.</strong> Use Paging 3 with a <code>RemoteMediator</code>. The <a href="/mobile-system-design/news-feed/">news feed</a> case explains it. The database is the source of truth. The mediator is the signal that the cached data ran out, so it fetches the next page into Room.</p>
@@ -117,36 +117,36 @@ class SearchViewModel(private val repo: PlaceRepository): ViewModel() {
 <p>Keep the server call short. The sketch sets no timeout, so add a short one on <code>confirm</code>. Then the three outcomes are:</p>
 <ul><li>A definite error from the server fails the sheet.</li><li>A <code>URLError</code>, such as a timeout, means I do not know whether the card was charged. I still fail the sheet, because I will not show a success mark for a payment that I have not confirmed.</li><li>The delegate also tells the screen to move to <code>PROCESSING</code>, and the screen looks the booking up by the attempt key. If the card was charged, the lookup finds the booking. If not, close the key. The next Apple Pay try makes a new token, so it is a new attempt with a new key.</li></ul>
 <p>The other option is to report success and reconcile later. That looks smoother, but it is wrong whenever the charge failed.</p>
-<pre tabindex="0"><code>// Sketch: Apple Pay delegate sending the wallet token with the persisted attempt key
-@MainActor
-final class PayDelegate: NSObject, PKPaymentAuthorizationControllerDelegate {
-    let api: BookingAPI
-    let attemptKey: String
-    let onUnknownOutcome: () -&gt; Void   // the screen moves to Processing and looks the booking up by key
-    init(api: BookingAPI, attemptKey: String, onUnknownOutcome: @escaping () -&gt; Void) {
-        self.api = api; self.attemptKey = attemptKey; self.onUnknownOutcome = onUnknownOutcome
+<pre tabindex="0"><code><span class="tk-com">// Sketch: Apple Pay delegate sending the wallet token with the persisted attempt key</span>
+<span class="tk-ann">@MainActor</span>
+<span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">PayDelegate</span>: <span class="tk-ty">NSObject</span>, <span class="tk-ty">PKPaymentAuthorizationControllerDelegate</span> {
+    <span class="tk-kw">let</span> api: <span class="tk-ty">BookingAPI</span>
+    <span class="tk-kw">let</span> attemptKey: <span class="tk-ty">String</span>
+    <span class="tk-kw">let</span> onUnknownOutcome: () -&gt; <span class="tk-ty">Void</span>   <span class="tk-com">// the screen moves to Processing and looks the booking up by key</span>
+    <span class="tk-kw">init</span>(api: <span class="tk-ty">BookingAPI</span>, attemptKey: <span class="tk-ty">String</span>, onUnknownOutcome: <span class="tk-ann">@escaping</span> () -&gt; <span class="tk-ty">Void</span>) {
+        <span class="tk-kw">self</span>.api = api; <span class="tk-kw">self</span>.attemptKey = attemptKey; <span class="tk-kw">self</span>.onUnknownOutcome = onUnknownOutcome
     }
 
-    func paymentAuthorizationController(
-        _ controller: PKPaymentAuthorizationController,
-        didAuthorizePayment payment: PKPayment
-    ) async -&gt; PKPaymentAuthorizationResult {
-        let token = payment.token.paymentData
-        do {
-            _ = try await api.confirm(idempotencyKey: attemptKey, walletToken: token)
-            return PKPaymentAuthorizationResult(status: .success, errors: nil)
-        } catch is URLError {
-            // Timeout or dropped connection: the server may already have charged.
-            // Fail the sheet, then look the booking up by the attempt key. If none exists, close the key; a new try gets a new key.
-            onUnknownOutcome()
-            return PKPaymentAuthorizationResult(status: .failure, errors: nil)
-        } catch {
-            return PKPaymentAuthorizationResult(status: .failure, errors: nil)
+    <span class="tk-kw">func</span> <span class="tk-fn">paymentAuthorizationController</span>(
+        _ controller: <span class="tk-ty">PKPaymentAuthorizationController</span>,
+        didAuthorizePayment payment: <span class="tk-ty">PKPayment</span>
+    ) <span class="tk-kw">async</span> -&gt; <span class="tk-ty">PKPaymentAuthorizationResult</span> {
+        <span class="tk-kw">let</span> token = payment.token.paymentData
+        <span class="tk-kw">do</span> {
+            _ = <span class="tk-kw">try</span> <span class="tk-kw">await</span> api.<span class="tk-fn">confirm</span>(idempotencyKey: attemptKey, walletToken: token)
+            <span class="tk-kw">return</span> <span class="tk-ty">PKPaymentAuthorizationResult</span>(status: .success, errors: <span class="tk-kw">nil</span>)
+        } <span class="tk-kw">catch</span> <span class="tk-kw">is</span> <span class="tk-ty">URLError</span> {
+            <span class="tk-com">// Timeout or dropped connection: the server may already have charged.</span>
+            <span class="tk-com">// Fail the sheet, then look the booking up by the attempt key. If none exists, close the key; a new try gets a new key.</span>
+            <span class="tk-fn">onUnknownOutcome</span>()
+            <span class="tk-kw">return</span> <span class="tk-ty">PKPaymentAuthorizationResult</span>(status: .failure, errors: <span class="tk-kw">nil</span>)
+        } <span class="tk-kw">catch</span> {
+            <span class="tk-kw">return</span> <span class="tk-ty">PKPaymentAuthorizationResult</span>(status: .failure, errors: <span class="tk-kw">nil</span>)
         }
     }
 
-    func paymentAuthorizationControllerDidFinish(_ controller: PKPaymentAuthorizationController) {
-        controller.dismiss()
+    <span class="tk-kw">func</span> <span class="tk-fn">paymentAuthorizationControllerDidFinish</span>(_ controller: <span class="tk-ty">PKPaymentAuthorizationController</span>) {
+        controller.<span class="tk-fn">dismiss</span>()
     }
 }</code></pre>
 <h2 id="14-edge-cases-checklist">14. Edge cases checklist</h2>

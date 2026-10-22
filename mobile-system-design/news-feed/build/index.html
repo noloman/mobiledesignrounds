@@ -20,30 +20,30 @@
 <h3 id="the-key-modeling-decision-separate-posts-from-feed-order">The key modeling decision: separate posts from feed order</h3>
 <p>The server ranks the feed, so the same post can move between refreshes. Suppose you store the order on the post row itself, or sort by <code>createdAt</code>. Then an update to one post can change the order of the list, and the user sees posts jump.</p>
 <p>Use two tables:</p>
-<pre tabindex="0"><code>@Entity(tableName = &quot;posts&quot;)
-data class PostEntity(
-    @PrimaryKey val id: String,
-    val authorName: String,
-    val body: String,
-    val imageUrl: String?,
-    val likeCount: Int,
-    val likedByMe: Boolean,
-    val pendingLike: Boolean? = null,   // local intent not yet confirmed by the server
+<pre tabindex="0"><code><span class="tk-ann">@Entity</span>(tableName = <span class="tk-str">"posts"</span>)
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">PostEntity</span>(
+    <span class="tk-ann">@PrimaryKey</span> <span class="tk-kw">val</span> id: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> authorName: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> body: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> imageUrl: <span class="tk-ty">String</span>?,
+    <span class="tk-kw">val</span> likeCount: <span class="tk-ty">Int</span>,
+    <span class="tk-kw">val</span> likedByMe: <span class="tk-ty">Boolean</span>,
+    <span class="tk-kw">val</span> pendingLike: <span class="tk-ty">Boolean</span>? = <span class="tk-kw">null</span>,   <span class="tk-com">// local intent not yet confirmed by the server</span>
 )
 
-@Entity(tableName = &quot;feed_items&quot;, primaryKeys = [&quot;feedId&quot;, &quot;postId&quot;])
-data class FeedItemEntity(
-    val feedId: String,        // &quot;home&quot;
-    val postId: String,
-    val position: Int,         // the server&#x27;s rank order, assigned when the page is stored
-    val nextCursor: String?,   // cursor that follows this item&#x27;s page (remote key)
+<span class="tk-ann">@Entity</span>(tableName = <span class="tk-str">"feed_items"</span>, primaryKeys = [<span class="tk-str">"feedId"</span>, <span class="tk-str">"postId"</span>])
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">FeedItemEntity</span>(
+    <span class="tk-kw">val</span> feedId: <span class="tk-ty">String</span>,        <span class="tk-com">// "home"</span>
+    <span class="tk-kw">val</span> postId: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> position: <span class="tk-ty">Int</span>,         <span class="tk-com">// the server's rank order, assigned when the page is stored</span>
+    <span class="tk-kw">val</span> nextCursor: <span class="tk-ty">String</span>?,   <span class="tk-com">// cursor that follows this item's page (remote key)</span>
 )</code></pre>
 <p>Updating a post changes only <code>posts</code>. The list order comes from <code>feed_items.position</code>, which changes only when the app stores a page.</p>
 <h3 id="rest">REST</h3>
-<pre tabindex="0"><code>GET  /v1/feed?cursor=&lt;opaque&gt;&amp;limit=20     → { items: [...], nextCursor: &quot;...&quot; | null }
-GET  /v1/feed/head?since=&lt;newestPostId&gt;    → { newCount: 3 }       (head check for the &quot;New posts&quot; pill, not the paging cursor)
-PUT  /v1/posts/{id}/like                   → { likeCount, likedByMe: true }   (idempotent)
-DELETE /v1/posts/{id}/like                 → { likeCount, likedByMe: false }  (idempotent)</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">GET</span>  /v1/feed?cursor=&lt;opaque&gt;&amp;limit=<span class="tk-num">20</span>     → { items: [...], nextCursor: <span class="tk-str">"..."</span> | <span class="tk-kw">null</span> }
+<span class="tk-ty">GET</span>  /v1/feed/head?since=&lt;newestPostId&gt;    → { newCount: <span class="tk-num">3</span> }       (head check <span class="tk-kw">for</span> the <span class="tk-str">"New posts"</span> pill, not the paging cursor)
+<span class="tk-ty">PUT</span>  /v1/posts/{id}/like                   → { likeCount, likedByMe: <span class="tk-kw">true</span> }   (idempotent)
+<span class="tk-ty">DELETE</span> /v1/posts/{id}/like                 → { likeCount, likedByMe: <span class="tk-kw">false</span> }  (idempotent)</code></pre>
 <p>Two details I would make sure to say:</p>
 <ul><li><strong><a class="gl" href="/glossary/#cursor" title="A saved place in a list.">Cursors</a>, not offsets.</strong> A cursor is a saved place in the list that the server gives the app. The app never reads it. If new posts arrive between page requests, offset <a class="gl" href="/glossary/#paging" title="Loading a long list in small parts.">paging</a> skips or repeats items. A cursor points to a fixed place, so a new post at the top does not move page 2. The app only stores <code>nextCursor</code> and sends it back.</li></ul>
 <p>  - A cursor does not stop a re-rank from repeating posts.   - For a ranked feed, the server has to keep the ranked list fixed behind the cursor, or the app has to remove repeats by post ID.   - I would ask which one the backend does, and remove repeats anyway.</p>
@@ -52,63 +52,63 @@ DELETE /v1/posts/{id}/like                 → { likeCount, likedByMe: false }  
 <p><strong>Android:</strong> use Paging 3 with a <code>RemoteMediator</code>. Room supplies the <code>PagingSource</code>, and the mediator fetches from the network only when the cache (the saved copy of the feed in the database) runs out.</p>
 <p>The mediator is data layer code. <code>FeedRepository</code> builds the <code>Pager</code>, and the <a class="gl" href="/glossary/#viewmodel" title="A class that holds the state of one screen.">ViewModel</a> exposes <code>pagingData.cachedIn(viewModelScope)</code> as its screen state. The Paging overview describes the <code>Pager</code> as part of the ViewModel layer, and building it in the <a class="gl" href="/glossary/#repository" title="The class that reads and writes data for the rest of the app.">repository</a> is a common variant.</p>
 <p>The snippets use Room rows (<code>FeedRow</code>) directly to stay short. In a larger app, convert them to UI models in the repository. The library side of this contract is in the <a href="/mobile-system-design/pagination-library/">pagination library case study</a>.</p>
-<pre tabindex="0"><code>// Shape adapted from the Paging 3 network-and-database sample (Apache License 2.0),
-// https://developer.android.com/topic/libraries/architecture/paging/v3-network-db
-@OptIn(ExperimentalPagingApi::class)
-class FeedMediator(
-    private val db: AppDatabase, private val api: FeedApi,
-): RemoteMediator&lt;Int, FeedRow&gt;() {
+<pre tabindex="0"><code><span class="tk-com">// Shape adapted from the Paging 3 network-and-database sample (Apache License 2.0),</span>
+<span class="tk-com">// https://developer.android.com/topic/libraries/architecture/paging/v3-network-db</span>
+<span class="tk-ann">@OptIn</span>(<span class="tk-ty">ExperimentalPagingApi</span>::<span class="tk-kw">class</span>)
+<span class="tk-kw">class</span> <span class="tk-ty">FeedMediator</span>(
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> db: <span class="tk-ty">AppDatabase</span>, <span class="tk-kw">private</span> <span class="tk-kw">val</span> api: <span class="tk-ty">FeedApi</span>,
+): <span class="tk-ty">RemoteMediator</span>&lt;<span class="tk-ty">Int</span>, <span class="tk-ty">FeedRow</span>&gt;() {
 
-    override suspend fun initialize(): InitializeAction =
-        if (System.currentTimeMillis() - db.feedDao().lastUpdated() &lt; TimeUnit.MINUTES.toMillis(10))
-            InitializeAction.SKIP_INITIAL_REFRESH      // show the cache, no spinner
-        else InitializeAction.LAUNCH_INITIAL_REFRESH   // stale: refresh, appends wait for it
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">initialize</span>(): <span class="tk-ty">InitializeAction</span> =
+        <span class="tk-kw">if</span> (<span class="tk-ty">System</span>.<span class="tk-fn">currentTimeMillis</span>() - db.<span class="tk-fn">feedDao</span>().<span class="tk-fn">lastUpdated</span>() &lt; <span class="tk-ty">TimeUnit</span>.<span class="tk-ty">MINUTES</span>.<span class="tk-fn">toMillis</span>(<span class="tk-num">10</span>))
+            <span class="tk-ty">InitializeAction</span>.<span class="tk-ty">SKIP_INITIAL_REFRESH</span>      <span class="tk-com">// show the cache, no spinner</span>
+        <span class="tk-kw">else</span> <span class="tk-ty">InitializeAction</span>.<span class="tk-ty">LAUNCH_INITIAL_REFRESH</span>   <span class="tk-com">// stale: refresh, appends wait for it</span>
 
-    override suspend fun load(loadType: LoadType, state: PagingState&lt;Int, FeedRow&gt;): MediatorResult {
-        val cursor = when (loadType) {
-            LoadType.REFRESH -&gt; null
-            LoadType.PREPEND -&gt; return MediatorResult.Success(endOfPaginationReached = true)
-            LoadType.APPEND -&gt; db.feedDao().lastCursor(&quot;home&quot;)
-                ?: return MediatorResult.Success(endOfPaginationReached = true)
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">load</span>(loadType: <span class="tk-ty">LoadType</span>, state: <span class="tk-ty">PagingState</span>&lt;<span class="tk-ty">Int</span>, <span class="tk-ty">FeedRow</span>&gt;): <span class="tk-ty">MediatorResult</span> {
+        <span class="tk-kw">val</span> cursor = <span class="tk-kw">when</span> (loadType) {
+            <span class="tk-ty">LoadType</span>.<span class="tk-ty">REFRESH</span> -&gt; <span class="tk-kw">null</span>
+            <span class="tk-ty">LoadType</span>.<span class="tk-ty">PREPEND</span> -&gt; <span class="tk-kw">return</span> <span class="tk-ty">MediatorResult</span>.<span class="tk-ty">Success</span>(endOfPaginationReached = <span class="tk-kw">true</span>)
+            <span class="tk-ty">LoadType</span>.<span class="tk-ty">APPEND</span> -&gt; db.<span class="tk-fn">feedDao</span>().<span class="tk-fn">lastCursor</span>(<span class="tk-str">"home"</span>)
+                ?: <span class="tk-kw">return</span> <span class="tk-ty">MediatorResult</span>.<span class="tk-ty">Success</span>(endOfPaginationReached = <span class="tk-kw">true</span>)
         }
-        return try {
-            val page = api.feed(cursor, limit = 20)
+        <span class="tk-kw">return</span> <span class="tk-kw">try</span> {
+            <span class="tk-kw">val</span> page = api.<span class="tk-fn">feed</span>(cursor, limit = <span class="tk-num">20</span>)
             db.withTransaction {
-                if (loadType == LoadType.REFRESH) db.feedDao().clearFeed(&quot;home&quot;)   // after the network succeeded
-                db.postDao().upsertKeepingLocalIntent(page.items)
-                val start = if (loadType == LoadType.REFRESH) 0 else (db.feedDao().lastPosition(&quot;home&quot;) ?: -1) + 1
-                db.feedDao().insertItems(page.toFeedItems(&quot;home&quot;, start))   // positions continue after the last stored item
+                <span class="tk-kw">if</span> (loadType == <span class="tk-ty">LoadType</span>.<span class="tk-ty">REFRESH</span>) db.<span class="tk-fn">feedDao</span>().<span class="tk-fn">clearFeed</span>(<span class="tk-str">"home"</span>)   <span class="tk-com">// after the network succeeded</span>
+                db.<span class="tk-fn">postDao</span>().<span class="tk-fn">upsertKeepingLocalIntent</span>(page.items)
+                <span class="tk-kw">val</span> start = <span class="tk-kw">if</span> (loadType == <span class="tk-ty">LoadType</span>.<span class="tk-ty">REFRESH</span>) <span class="tk-num">0</span> <span class="tk-kw">else</span> (db.<span class="tk-fn">feedDao</span>().<span class="tk-fn">lastPosition</span>(<span class="tk-str">"home"</span>) ?: -<span class="tk-num">1</span>) + <span class="tk-num">1</span>
+                db.<span class="tk-fn">feedDao</span>().<span class="tk-fn">insertItems</span>(page.<span class="tk-fn">toFeedItems</span>(<span class="tk-str">"home"</span>, start))   <span class="tk-com">// positions continue after the last stored item</span>
             }
-            MediatorResult.Success(endOfPaginationReached = page.nextCursor == null)
-        } catch (e: IOException) { MediatorResult.Error(e) }
-          catch (e: HttpException) { MediatorResult.Error(e) }
+            <span class="tk-ty">MediatorResult</span>.<span class="tk-ty">Success</span>(endOfPaginationReached = page.nextCursor == <span class="tk-kw">null</span>)
+        } <span class="tk-kw">catch</span> (e: <span class="tk-ty">IOException</span>) { <span class="tk-ty">MediatorResult</span>.<span class="tk-ty">Error</span>(e) }
+          <span class="tk-kw">catch</span> (e: <span class="tk-ty">HttpException</span>) { <span class="tk-ty">MediatorResult</span>.<span class="tk-ty">Error</span>(e) }
     }
 }</code></pre>
 <p>What I would point out:</p>
 <ul><li>Refresh clears only after the network succeeds, inside one transaction. If the request fails, the user keeps the old feed instead of an empty screen.</li><li><code>initialize()</code> is where I decide between showing the cache as it is, or showing it and refreshing in the background (show old data first, then refresh it). Per the Paging guide, <code>LAUNCH_INITIAL_REFRESH</code> also holds back prepend and append until the refresh succeeds. The guide's own sample uses a one-hour window; my ten minutes is an example.</li><li><a class="gl" href="/glossary/#prefetch" title="Loading data before the user asks for it.">Prefetch</a> distance: <code>PagingConfig(pageSize = 20, prefetchDistance = 10)</code>, so the next page starts loading before the user reaches the end. Both numbers are examples, and I would adjust the distance to how fast people scroll.</li></ul>
 <p><strong>iOS:</strong> Apple has no paging library like Paging 3. You write a small loader that keeps one running task and stores <code>nextCursor</code>. The loader starts when the user is within about 5 to 10 rows of the end (my choice, not an Apple value):</p>
-<pre tabindex="0"><code>// Sketch: cursor loader (call loadMoreIfNeeded from each row&#x27;s onAppear, or from UIKit prefetching)
-@MainActor final class FeedLoader: ObservableObject {
-    enum State { case idle, loading, failed, finished }
-    @Published private(set) var state = State.idle        // the list shows a retry row when this is .failed
+<pre tabindex="0"><code><span class="tk-com">// Sketch: cursor loader (call loadMoreIfNeeded from each row's onAppear, or from UIKit prefetching)</span>
+<span class="tk-ann">@MainActor</span> <span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">FeedLoader</span>: <span class="tk-ty">ObservableObject</span> {
+    <span class="tk-kw">enum</span> <span class="tk-ty">State</span> { <span class="tk-kw">case</span> idle, loading, failed, finished }
+    <span class="tk-ann">@Published</span> <span class="tk-kw">private</span>(<span class="tk-kw">set</span>) <span class="tk-kw">var</span> state = <span class="tk-ty">State</span>.idle        <span class="tk-com">// the list shows a retry row when this is .failed</span>
 
-    func loadMoreIfNeeded(currentIndex: Int, total: Int) {
-        guard state == .idle, total - currentIndex &lt;= 8, let cursor = store.nextCursor else { return }
-        load(cursor)
+    <span class="tk-kw">func</span> <span class="tk-fn">loadMoreIfNeeded</span>(currentIndex: <span class="tk-ty">Int</span>, total: <span class="tk-ty">Int</span>) {
+        <span class="tk-kw">guard</span> state == .idle, total - currentIndex &lt;= <span class="tk-num">8</span>, <span class="tk-kw">let</span> cursor = store.nextCursor <span class="tk-kw">else</span> { <span class="tk-kw">return</span> }
+        <span class="tk-fn">load</span>(cursor)
     }
-    func retry() {                                        // called by the retry row
-        guard state == .failed, let cursor = store.nextCursor else { return }
-        load(cursor)
+    <span class="tk-kw">func</span> <span class="tk-fn">retry</span>() {                                        <span class="tk-com">// called by the retry row</span>
+        <span class="tk-kw">guard</span> state == .failed, <span class="tk-kw">let</span> cursor = store.nextCursor <span class="tk-kw">else</span> { <span class="tk-kw">return</span> }
+        <span class="tk-fn">load</span>(cursor)
     }
-    private func load(_ cursor: String) {
+    <span class="tk-kw">private</span> <span class="tk-kw">func</span> <span class="tk-fn">load</span>(_ cursor: <span class="tk-ty">String</span>) {
         state = .loading
-        Task {
-            do {
-                let page = try await api.feed(cursor: cursor)
-                try await store.append(page)              // one save: posts and order, dedupe by post ID
-                state = page.nextCursor == nil ? .finished : .idle
-            } catch {
-                state = .failed                           // keep the cursor, show a retry row
+        <span class="tk-ty">Task</span> {
+            <span class="tk-kw">do</span> {
+                <span class="tk-kw">let</span> page = <span class="tk-kw">try</span> <span class="tk-kw">await</span> api.<span class="tk-fn">feed</span>(cursor: cursor)
+                <span class="tk-kw">try</span> <span class="tk-kw">await</span> store.<span class="tk-fn">append</span>(page)              <span class="tk-com">// one save: posts and order, dedupe by post ID</span>
+                state = page.nextCursor == <span class="tk-kw">nil</span> ? .finished : .idle
+            } <span class="tk-kw">catch</span> {
+                state = .failed                           <span class="tk-com">// keep the cursor, show a retry row</span>
             }
         }
     }

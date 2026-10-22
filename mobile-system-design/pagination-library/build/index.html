@@ -31,23 +31,23 @@
 <figure class="diagram dg" id="fig-pager-layers" data-ix="{&quot;flows&quot;:[{&quot;name&quot;:&quot;Walk through&quot;,&quot;cum&quot;:true,&quot;steps&quot;:[{&quot;on&quot;:[&quot;r1&quot;],&quot;t&quot;:&quot;App code calls Pager with a config and a source, and gets a flow.&quot;},{&quot;on&quot;:[&quot;r2&quot;,&quot;a2&quot;],&quot;t&quot;:&quot;The public API has PageSource, PagingConfig, LoadState, PagingData and Mediator.&quot;},{&quot;on&quot;:[&quot;r3&quot;,&quot;a3&quot;],&quot;t&quot;:&quot;Inside, hidden from the app: PageFetcher, LoadCoordinator, PageStore, PrefetchPolicy and metrics hooks.&quot;},{&quot;on&quot;:[&quot;r4&quot;,&quot;a4&quot;,&quot;r5&quot;,&quot;a5&quot;],&quot;t&quot;:&quot;The library calls the app-supplied PageSource. Optionally it also calls an app-supplied Mediator.&quot;},{&quot;on&quot;:[&quot;r6&quot;,&quot;a6&quot;],&quot;t&quot;:&quot;The Mediator writes to a local database.&quot;}]}]}"><svg viewBox="0 0 340 576" role="img" aria-label="Layers of the pagination library, top to bottom. App code calls Pager with a config and a source and gets a flow. The public API has PageSource, PagingConfig, LoadState, PagingData and Mediator. Inside, hidden from the app, are the PageFetcher, LoadCoordinator, PageStore, PrefetchPolicy and metrics hooks. The library calls the app-supplied PageSource. Optionally it calls an app-supplied Mediator, which writes to a local database."><g class="mn" data-id="r1"><rect class="b " x="8" y="8" width="324" height="46" rx="10"/><use href="#i-phone" class="di " x="16" y="21.0" width="20" height="20"/><text class="t" x="42" y="27.0" text-anchor="start">App code</text><text class="s" x="42" y="43.0" text-anchor="start">ViewModel or presenter</text></g><g class="ed" data-id="a2"><path class="l m" d="M40 54 L40 78"/><path class="hd m" d="M40 84L43.5 76.8L36.5 76.8z"/><text class="s" x="50" y="74" text-anchor="start">Pager(config, source).flow</text></g><g class="mn" data-id="r2"><rect class="b m" x="8" y="84" width="324" height="146" rx="10"/><text class="t m" x="20" y="106">Public API</text><text class="s m" x="108" y="106">what your app sees</text><rect class="b t" x="18" y="120" width="144" height="30" rx="8"/><text class="t" x="90.0" y="140" text-anchor="middle">PageSource&lt;K, V&gt;</text><rect class="b t" x="172" y="120" width="144" height="30" rx="8"/><text class="t" x="244.0" y="140" text-anchor="middle">PagingConfig</text><rect class="b t" x="18" y="156" width="144" height="30" rx="8"/><text class="t" x="90.0" y="176" text-anchor="middle">LoadState</text><rect class="b t" x="172" y="156" width="144" height="30" rx="8"/><text class="t" x="244.0" y="176" text-anchor="middle">PagingData&lt;V&gt;</text><rect class="b t" x="18" y="192" width="298" height="30" rx="8"/><text class="t" x="167.0" y="212" text-anchor="middle">Mediator</text></g><g class="ed" data-id="a3"><path class="l m" d="M170 230 L170 256"/><path class="hd m" d="M170 262L173.5 254.8L166.5 254.8z"/></g><g class="mn" data-id="r3"><rect class="b " x="8" y="262" width="324" height="146" rx="10"/><text class="t" x="20" y="284">Internal</text><text class="s" x="92" y="284">hidden from your app</text><rect class="b t" x="18" y="298" width="144" height="30" rx="8"/><text class="t" x="90.0" y="318" text-anchor="middle">PageFetcher</text><rect class="b t" x="172" y="298" width="144" height="30" rx="8"/><text class="t" x="244.0" y="318" text-anchor="middle">LoadCoordinator</text><rect class="b t" x="18" y="334" width="144" height="30" rx="8"/><text class="t" x="90.0" y="354" text-anchor="middle">PageStore</text><rect class="b t" x="172" y="334" width="144" height="30" rx="8"/><text class="t" x="244.0" y="354" text-anchor="middle">PrefetchPolicy</text><rect class="b t" x="18" y="370" width="298" height="30" rx="8"/><text class="t" x="167.0" y="390" text-anchor="middle">Metrics hooks</text></g><g class="ed" data-id="a4"><path class="l m" d="M83 408 L83 438"/><path class="hd m" d="M83 444L86.5 436.8L79.5 436.8z"/><text class="s" x="93" y="430" text-anchor="start">calls</text><text class="s" x="267" y="430" text-anchor="start">optional</text></g><g class="ed" data-id="a5"><path class="l m" d="M257 408 L257 438"/><path class="hd m" d="M257 444L260.5 436.8L253.5 436.8z"/></g><g class="mn" data-id="r4"><rect class="b " x="8" y="444" width="150" height="62" rx="10"/><text class="t" x="83.0" y="471.0" text-anchor="middle">Your PageSource</text><text class="s" x="83.0" y="487.0" text-anchor="middle">app-supplied</text></g><g class="mn" data-id="r5"><rect class="b " x="182" y="444" width="150" height="62" rx="10"/><text class="t" x="257.0" y="471.0" text-anchor="middle">Your Mediator</text><text class="s" x="257.0" y="487.0" text-anchor="middle">app-supplied</text></g><g class="ed" data-id="a6"><path class="l m" d="M257 506 L257 528"/><path class="hd m" d="M257 534L260.5 526.8L253.5 526.8z"/><text class="s" x="267" y="526" text-anchor="start">writes</text></g><g class="mn" data-id="r6"><rect class="b " x="182" y="534" width="150" height="34" rx="10"/><text class="t" x="257.0" y="555.0" text-anchor="middle">Local database</text></g></svg><figcaption><span>Your app sees five small types. The fetcher, the coordinator and the cache stay inside. You supply the source and, if you want offline paging, a mediator.</span></figcaption></figure>
 <h2 id="2-generics-and-the-data-source-abstraction">2. Generics and the data source abstraction</h2>
 <p>The library should know nothing about how a key is encoded. A generic key type covers all three styles.</p>
-<pre tabindex="0"><code>// Sketch: the core contract
-interface PageSource&lt;K : Any, V : Any&gt; {
-    suspend fun load(params: LoadParams&lt;K&gt;): LoadResult&lt;K, V&gt;
-    fun refreshKey(state: PagingState&lt;K, V&gt;): K?     // where to restart after invalidation
+<pre tabindex="0"><code><span class="tk-com">// Sketch: the core contract</span>
+<span class="tk-kw">interface</span> <span class="tk-ty">PageSource</span>&lt;<span class="tk-ty">K</span> : <span class="tk-ty">Any</span>, <span class="tk-ty">V</span> : <span class="tk-ty">Any</span>&gt; {
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">load</span>(params: <span class="tk-ty">LoadParams</span>&lt;<span class="tk-ty">K</span>&gt;): <span class="tk-ty">LoadResult</span>&lt;<span class="tk-ty">K</span>, <span class="tk-ty">V</span>&gt;
+    <span class="tk-kw">fun</span> <span class="tk-fn">refreshKey</span>(state: <span class="tk-ty">PagingState</span>&lt;<span class="tk-ty">K</span>, <span class="tk-ty">V</span>&gt;): <span class="tk-ty">K</span>?     <span class="tk-com">// where to restart after invalidation</span>
 }
 
-sealed interface LoadParams&lt;K&gt; {
-    val key: K?            // null on first load
-    val loadSize: Int
-    class Refresh&lt;K&gt;(override val key: K?, override val loadSize: Int): LoadParams&lt;K&gt;
-    class Append&lt;K&gt;(override val key: K, override val loadSize: Int): LoadParams&lt;K&gt;
-    class Prepend&lt;K&gt;(override val key: K, override val loadSize: Int): LoadParams&lt;K&gt;
+<span class="tk-kw">sealed</span> <span class="tk-kw">interface</span> <span class="tk-ty">LoadParams</span>&lt;<span class="tk-ty">K</span>&gt; {
+    <span class="tk-kw">val</span> key: <span class="tk-ty">K</span>?            <span class="tk-com">// null on first load</span>
+    <span class="tk-kw">val</span> loadSize: <span class="tk-ty">Int</span>
+    <span class="tk-kw">class</span> <span class="tk-ty">Refresh</span>&lt;<span class="tk-ty">K</span>&gt;(<span class="tk-kw">override</span> <span class="tk-kw">val</span> key: <span class="tk-ty">K</span>?, <span class="tk-kw">override</span> <span class="tk-kw">val</span> loadSize: <span class="tk-ty">Int</span>): <span class="tk-ty">LoadParams</span>&lt;<span class="tk-ty">K</span>&gt;
+    <span class="tk-kw">class</span> <span class="tk-ty">Append</span>&lt;<span class="tk-ty">K</span>&gt;(<span class="tk-kw">override</span> <span class="tk-kw">val</span> key: <span class="tk-ty">K</span>, <span class="tk-kw">override</span> <span class="tk-kw">val</span> loadSize: <span class="tk-ty">Int</span>): <span class="tk-ty">LoadParams</span>&lt;<span class="tk-ty">K</span>&gt;
+    <span class="tk-kw">class</span> <span class="tk-ty">Prepend</span>&lt;<span class="tk-ty">K</span>&gt;(<span class="tk-kw">override</span> <span class="tk-kw">val</span> key: <span class="tk-ty">K</span>, <span class="tk-kw">override</span> <span class="tk-kw">val</span> loadSize: <span class="tk-ty">Int</span>): <span class="tk-ty">LoadParams</span>&lt;<span class="tk-ty">K</span>&gt;
 }
 
-sealed interface LoadResult&lt;K, V&gt; {
-    data class Page&lt;K, V&gt;(val data: List&lt;V&gt;, val prevKey: K?, val nextKey: K?): LoadResult&lt;K, V&gt;
-    data class Error&lt;K, V&gt;(val cause: Throwable): LoadResult&lt;K, V&gt;
+<span class="tk-kw">sealed</span> <span class="tk-kw">interface</span> <span class="tk-ty">LoadResult</span>&lt;<span class="tk-ty">K</span>, <span class="tk-ty">V</span>&gt; {
+    <span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">Page</span>&lt;<span class="tk-ty">K</span>, <span class="tk-ty">V</span>&gt;(<span class="tk-kw">val</span> <span class="tk-kw">data</span>: <span class="tk-ty">List</span>&lt;<span class="tk-ty">V</span>&gt;, <span class="tk-kw">val</span> prevKey: <span class="tk-ty">K</span>?, <span class="tk-kw">val</span> nextKey: <span class="tk-ty">K</span>?): <span class="tk-ty">LoadResult</span>&lt;<span class="tk-ty">K</span>, <span class="tk-ty">V</span>&gt;
+    <span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">Error</span>&lt;<span class="tk-ty">K</span>, <span class="tk-ty">V</span>&gt;(<span class="tk-kw">val</span> cause: <span class="tk-ty">Throwable</span>): <span class="tk-ty">LoadResult</span>&lt;<span class="tk-ty">K</span>, <span class="tk-ty">V</span>&gt;
 }</code></pre>
 <p>How each key style fits:</p>
 <div class="tw" tabindex="0" role="region" aria-label="Table 1, scrollable"><table><thead><tr><th>Style</th><th><code>K</code></th><th><code>nextKey</code></th><th>Pitfall</th></tr></thead><tbody><tr><td>Page number</td><td><code>Int</code></td><td><code>key + 1</code></td><td>Skips or repeats rows when data is inserted mid-scroll</td></tr><tr><td>Offset</td><td><code>Int</code></td><td><code>key + loadSize</code></td><td>Same drift problem, plus slow deep offsets on the server</td></tr><tr><td><a class="gl" href="/glossary/#cursor" title="A saved place in a list.">Cursor</a></td><td><code>String</code> (opaque)</td><td>Server value</td><td>Cursors can expire; need a restart path</td></tr></tbody></table></div>
@@ -61,15 +61,15 @@ sealed interface LoadResult&lt;K, V&gt; {
 <p>Users of the library build spinners, retry rows and empty views from this model. So it is the most used part of the API. Paging 3 models it as three states for each load type:</p>
 <ul><li><code>NotLoading</code> with an <code>endOfPaginationReached</code> flag.</li><li><code>Loading</code>.</li><li><code>Error</code> with the cause.</li></ul>
 <p>The load types are <code>refresh</code> (the first load or a restart), <code>prepend</code> and <code>append</code>. A combined object also holds state for the source and for the mediator, kept apart. So the UI can tell "reading the local database" from "syncing with the network".</p>
-<pre tabindex="0"><code>sealed interface LoadState {
-    data class NotLoading(val endReached: Boolean): LoadState
-    data object Loading : LoadState
-    data class Error(val cause: Throwable): LoadState
+<pre tabindex="0"><code><span class="tk-kw">sealed</span> <span class="tk-kw">interface</span> <span class="tk-ty">LoadState</span> {
+    <span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">NotLoading</span>(<span class="tk-kw">val</span> endReached: <span class="tk-ty">Boolean</span>): <span class="tk-ty">LoadState</span>
+    <span class="tk-kw">data</span> <span class="tk-kw">object</span> <span class="tk-ty">Loading</span> : <span class="tk-ty">LoadState</span>
+    <span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">Error</span>(<span class="tk-kw">val</span> cause: <span class="tk-ty">Throwable</span>): <span class="tk-ty">LoadState</span>
 }
 
-data class CombinedLoadStates(
-    val refresh: LoadState, val prepend: LoadState, val append: LoadState,
-    val source: LoadStates, val mediator: LoadStates?,
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">CombinedLoadStates</span>(
+    <span class="tk-kw">val</span> refresh: <span class="tk-ty">LoadState</span>, <span class="tk-kw">val</span> prepend: <span class="tk-ty">LoadState</span>, <span class="tk-kw">val</span> append: <span class="tk-ty">LoadState</span>,
+    <span class="tk-kw">val</span> source: <span class="tk-ty">LoadStates</span>, <span class="tk-kw">val</span> mediator: <span class="tk-ty">LoadStates</span>?,
 )</code></pre>
 <p><code>LoadStates</code>, the type for one source, is not defined in the sketch. It is a refresh, prepend and append triple.</p>
 <p>Design points I would make here:</p>
@@ -94,11 +94,11 @@ data class CombinedLoadStates(
 <h2 id="6-composing-with-a-local-database">6. Composing with a local database</h2>
 <p>The library should not require a database, but it should make the database path easy. Paging 3 is the model to follow. The database is the source of truth.</p>
 <p>A <code>RemoteMediator</code> fetches from the network when the cached range runs out. It writes the results into the database. A source made by the database feeds the UI. When data is inserted, the source becomes invalid, and a new generation reads the updated rows.</p>
-<pre tabindex="0"><code>// Sketch: mediator contract, shape adapted from the Paging 3 network-and-database
-// sample (Apache License 2.0), https://developer.android.com/topic/libraries/architecture/paging/v3-network-db
-interface Mediator&lt;K : Any, V : Any&gt; {
-    suspend fun initialize(): InitializeAction      // skip or launch the first refresh
-    suspend fun load(type: LoadType, state: PagingState&lt;K, V&gt;): MediatorResult
+<pre tabindex="0"><code><span class="tk-com">// Sketch: mediator contract, shape adapted from the Paging 3 network-and-database</span>
+<span class="tk-com">// sample (Apache License 2.0), https://developer.android.com/topic/libraries/architecture/paging/v3-network-db</span>
+<span class="tk-kw">interface</span> <span class="tk-ty">Mediator</span>&lt;<span class="tk-ty">K</span> : <span class="tk-ty">Any</span>, <span class="tk-ty">V</span> : <span class="tk-ty">Any</span>&gt; {
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">initialize</span>(): <span class="tk-ty">InitializeAction</span>      <span class="tk-com">// skip or launch the first refresh</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">load</span>(type: <span class="tk-ty">LoadType</span>, state: <span class="tk-ty">PagingState</span>&lt;<span class="tk-ty">K</span>, <span class="tk-ty">V</span>&gt;): <span class="tk-ty">MediatorResult</span>
 }</code></pre>
 <p>Invalidation is the part people forget. A row may be edited, deleted or inserted under the list. Then the database-backed source invalidates itself. The library starts a new generation, and <code>refreshKey</code> picks the restart position. So the user stays near the same item.</p>
 <p>With Room, that trigger comes for free. With a source that you write by hand, the app must call invalidate itself. This is why the contract should say so.</p>
@@ -114,23 +114,23 @@ interface Mediator&lt;K : Any, V : Any&gt; {
 <ul><li><code>TestPager</code> loads a source page by page.</li><li><code>asSnapshot</code> collects a stream while you simulate scrolling.</li><li><code>asPagingSourceFactory</code> builds fake sources from lists. A flow of lists simulates invalidation.</li></ul>
 <p>Mediator tests check the returned result (valid data, empty response, thrown exception) and use an in-memory database. Make time injectable (pass in a clock and a dispatcher), so tests do not need to sleep.</p>
 <p>The use example in the one page of docs matters as much as the internals. This is a sketch against my API. I did not compile it:</p>
-<pre tabindex="0"><code>class FeedViewModel(source: PageSource&lt;String, Post&gt;): ViewModel() {
-    val posts = Pager(PagingConfig(pageSize = 20), source).flow.cachedIn(viewModelScope)
+<pre tabindex="0"><code><span class="tk-kw">class</span> <span class="tk-ty">FeedViewModel</span>(source: <span class="tk-ty">PageSource</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Post</span>&gt;): <span class="tk-ty">ViewModel</span>() {
+    <span class="tk-kw">val</span> posts = <span class="tk-ty">Pager</span>(<span class="tk-ty">PagingConfig</span>(pageSize = <span class="tk-num">20</span>), source).flow.<span class="tk-fn">cachedIn</span>(viewModelScope)
 }
 
-@Composable
-fun FeedScreen(vm: FeedViewModel) {
-    val items = vm.posts.collectAsLazyPagingItems()
-    LazyColumn { items(items.itemCount) { i -&gt; items[i]?.let { PostRow(it) } } }
+<span class="tk-ann">@Composable</span>
+<span class="tk-kw">fun</span> <span class="tk-ty">FeedScreen</span>(vm: <span class="tk-ty">FeedViewModel</span>) {
+    <span class="tk-kw">val</span> items = vm.posts.<span class="tk-fn">collectAsLazyPagingItems</span>()
+    <span class="tk-ty">LazyColumn</span> { <span class="tk-fn">items</span>(items.itemCount) { i -&gt; items[i]?.<span class="tk-kw">let</span> { <span class="tk-ty">PostRow</span>(<span class="tk-kw">it</span>) } } }
 }</code></pre>
 <p><strong>Versioning and compatibility.</strong></p>
 <ul><li>Use semantic versioning (the version number tells the size of the change). Removals and signature changes are major. Additions are minor. Fixes are patch.</li><li>Behavior is API. A change to a default page size, an error type, a callback thread or the retry policy breaks something for someone, even if the compiler says nothing.</li><li>Deprecate before you remove. Mark the symbol deprecated with a replacement. Keep it for a stated period, for example two minor releases and at least six months. Warn at build time, not at run time.</li><li>Binary compatibility: on Android, do not change public method signatures. Do not add abstract members to public interfaces. Use default methods or new interfaces. Use a binary-compatibility validator in CI. On iOS, a binary XCFramework needs library evolution mode, and <code>@frozen</code> should be used rarely.</li><li>Make config a builder or a data class with defaults. Adding a field with a default is compatible. Changing the order of constructor parameters is not. Prefer named parameters.</li><li>Ship a sample app and run it against each release as a contract test.</li></ul>
 <p><strong>Observability.</strong> Give an opt-in listener, not a logging dependency.</p>
-<pre tabindex="0"><code>interface PagingEvents {
-    fun onLoadStarted(type: LoadType, key: Any?) {}
-    fun onLoadFinished(type: LoadType, durationMs: Long, itemCount: Int, error: Throwable?) {}
-    fun onCacheHit(pageCount: Int) {}
-    fun onGenerationCancelled(reason: String) {}
+<pre tabindex="0"><code><span class="tk-kw">interface</span> <span class="tk-ty">PagingEvents</span> {
+    <span class="tk-kw">fun</span> <span class="tk-fn">onLoadStarted</span>(type: <span class="tk-ty">LoadType</span>, key: <span class="tk-ty">Any</span>?) {}
+    <span class="tk-kw">fun</span> <span class="tk-fn">onLoadFinished</span>(type: <span class="tk-ty">LoadType</span>, durationMs: <span class="tk-ty">Long</span>, itemCount: <span class="tk-ty">Int</span>, error: <span class="tk-ty">Throwable</span>?) {}
+    <span class="tk-kw">fun</span> <span class="tk-fn">onCacheHit</span>(pageCount: <span class="tk-ty">Int</span>) {}
+    <span class="tk-kw">fun</span> <span class="tk-fn">onGenerationCancelled</span>(reason: <span class="tk-ty">String</span>) {}
 }</code></pre>
 <p>Keep payloads free of item contents, so the hook is safe to send to analytics. Default to a no-op (a listener that does nothing). The aim is that each host app can answer "how slow are our pages, and how often do they fail" without changing the library.</p>
 <p>One gap: <code>onLoadStarted</code> as sketched passes the raw page key, and a cursor can encode user data. I would pass a key kind (offset, page number, cursor) instead of the key.</p>
@@ -139,36 +139,36 @@ fun FeedScreen(vm: FeedViewModel) {
 <p>The Paging release notes list iOS among the native targets of the common modules (3.3 for iOS compatibility, 3.4 for more targets). A core compiled from Kotlin is therefore a real option. Section 1 of the interview page says what I would test before choosing. Swift concurrency gives the building blocks:</p>
 <ul><li><code>async</code> functions for loads</li><li>Structured <code>Task</code> cancellation</li><li>An actor (a type that guards its own state) for engine state</li><li><code>AsyncSequence</code> (most often <code>AsyncStream</code>) for results</li></ul>
 <div class="tw" tabindex="0" role="region" aria-label="Table 3, scrollable"><table><thead><tr><th>Concern</th><th>Android</th><th>iOS</th></tr></thead><tbody><tr><td>Page source</td><td><code>suspend fun load</code></td><td><code>async throws</code> function</td></tr><tr><td>Result stream</td><td><code>Flow&lt;PagingData&lt;V&gt;&gt;</code></td><td><code>AsyncStream</code> of snapshots, one stream per subscriber</td></tr><tr><td>Engine isolation</td><td>Single dispatcher or mutex</td><td><code>actor</code></td></tr><tr><td>Cancellation</td><td>Coroutine cancellation</td><td><code>Task</code> cancellation (cooperative)</td></tr><tr><td>Prefetch trigger</td><td>Item access position</td><td>Row <code>onAppear</code> in SwiftUI, <code>UICollectionViewDataSourcePrefetching</code> in UIKit</td></tr><tr><td>Database</td><td>Room <code>PagingSource</code> + <code>RemoteMediator</code></td><td>SwiftData or Core Data + your mediator</td></tr><tr><td>API compatibility tools</td><td>Binary compatibility validator</td><td>Library evolution; SwiftPM has an API-breakage diagnosis command (see the notes)</td></tr><tr><td>Test tools</td><td><code>TestPager</code>, <code>asSnapshot</code></td><td>Fake source plus a manual executor; no official equivalent</td></tr></tbody></table></div>
-<pre tabindex="0"><code>// Sketch: iOS public surface (signatures only)
-public protocol PageSource&lt;Key, Item&gt;: Sendable {
-    associatedtype Key: Sendable
-    associatedtype Item: Sendable
-    func load(_ params: LoadParams&lt;Key&gt;) async throws -&gt; Page&lt;Key, Item&gt;
+<pre tabindex="0"><code><span class="tk-com">// Sketch: iOS public surface (signatures only)</span>
+<span class="tk-kw">public</span> <span class="tk-kw">protocol</span> <span class="tk-ty">PageSource</span>&lt;<span class="tk-ty">Key</span>, <span class="tk-ty">Item</span>&gt;: <span class="tk-ty">Sendable</span> {
+    associatedtype <span class="tk-ty">Key</span>: <span class="tk-ty">Sendable</span>
+    associatedtype <span class="tk-ty">Item</span>: <span class="tk-ty">Sendable</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">load</span>(_ params: <span class="tk-ty">LoadParams</span>&lt;<span class="tk-ty">Key</span>&gt;) <span class="tk-kw">async</span> <span class="tk-kw">throws</span> -&gt; <span class="tk-ty">Page</span>&lt;<span class="tk-ty">Key</span>, <span class="tk-ty">Item</span>&gt;
 }
 
-public actor Pager&lt;Key: Sendable, Item: Sendable&gt; {
-    public init(source: some PageSource&lt;Key, Item&gt;, config: PagingConfig)
-    // One stream per call, built with .bufferingNewest(1); snapshot must be Sendable
-    public func updates() -&gt; AsyncStream&lt;PagingSnapshot&lt;Item&gt;&gt;
-    public func loadMoreIfNeeded(visibleIndex: Int) async
-    public func refresh() async
-    public func retry() async
+<span class="tk-kw">public</span> <span class="tk-kw">actor</span> <span class="tk-ty">Pager</span>&lt;<span class="tk-ty">Key</span>: <span class="tk-ty">Sendable</span>, <span class="tk-ty">Item</span>: <span class="tk-ty">Sendable</span>&gt; {
+    <span class="tk-kw">public</span> <span class="tk-kw">init</span>(source: <span class="tk-kw">some</span> <span class="tk-ty">PageSource</span>&lt;<span class="tk-ty">Key</span>, <span class="tk-ty">Item</span>&gt;, config: <span class="tk-ty">PagingConfig</span>)
+    <span class="tk-com">// One stream per call, built with .bufferingNewest(1); snapshot must be Sendable</span>
+    <span class="tk-kw">public</span> <span class="tk-kw">func</span> <span class="tk-fn">updates</span>() -&gt; <span class="tk-ty">AsyncStream</span>&lt;<span class="tk-ty">PagingSnapshot</span>&lt;<span class="tk-ty">Item</span>&gt;&gt;
+    <span class="tk-kw">public</span> <span class="tk-kw">func</span> <span class="tk-fn">loadMoreIfNeeded</span>(visibleIndex: <span class="tk-ty">Int</span>) <span class="tk-kw">async</span>
+    <span class="tk-kw">public</span> <span class="tk-kw">func</span> <span class="tk-fn">refresh</span>() <span class="tk-kw">async</span>
+    <span class="tk-kw">public</span> <span class="tk-kw">func</span> <span class="tk-fn">retry</span>() <span class="tk-kw">async</span>
 }</code></pre>
 <p>Here is how a SwiftUI screen would use it. This is a sketch I did not compile. It assumes the snapshot has an <code>items</code> array.</p>
-<pre tabindex="0"><code>// Sketch: a model that owns the pager (not compiled)
-@MainActor @Observable final class FeedModel {
-    private let pager: Pager&lt;String, Post&gt;
-    var posts: [Post] = []
-    init(pager: Pager&lt;String, Post&gt;) {
-        self.pager = pager
-        Task { [weak self] in
-            let stream = await pager.updates()
-            for await snapshot in stream { self?.posts = snapshot.items }
+<pre tabindex="0"><code><span class="tk-com">// Sketch: a model that owns the pager (not compiled)</span>
+<span class="tk-ann">@MainActor</span> <span class="tk-ann">@Observable</span> <span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">FeedModel</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> pager: <span class="tk-ty">Pager</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Post</span>&gt;
+    <span class="tk-kw">var</span> posts: [<span class="tk-ty">Post</span>] = []
+    <span class="tk-kw">init</span>(pager: <span class="tk-ty">Pager</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Post</span>&gt;) {
+        <span class="tk-kw">self</span>.pager = pager
+        <span class="tk-ty">Task</span> { [<span class="tk-kw">weak</span> <span class="tk-kw">self</span>] <span class="tk-kw">in</span>
+            <span class="tk-kw">let</span> stream = <span class="tk-kw">await</span> pager.<span class="tk-fn">updates</span>()
+            <span class="tk-kw">for</span> <span class="tk-kw">await</span> snapshot <span class="tk-kw">in</span> stream { <span class="tk-kw">self</span>?.posts = snapshot.items }
         }
     }
-    func rowAppeared(_ index: Int) { Task { await pager.loadMoreIfNeeded(visibleIndex: index) } }
+    <span class="tk-kw">func</span> <span class="tk-fn">rowAppeared</span>(_ index: <span class="tk-ty">Int</span>) { <span class="tk-ty">Task</span> { <span class="tk-kw">await</span> pager.<span class="tk-fn">loadMoreIfNeeded</span>(visibleIndex: index) } }
 }
-// In the view: ForEach(model.posts.indices, id: \.self) { i in Row(model.posts[i]).onAppear { model.rowAppeared(i) } }</code></pre>
+<span class="tk-com">// In the view: ForEach(model.posts.indices, id: \.self) { i in Row(model.posts[i]).onAppear { model.rowAppeared(i) } }</span></code></pre>
 <p>The model, not the view, owns the pager. So a rotation or a view rebuild does not restart the load.</p>
 <p>What changes on iOS:</p>
 <ul><li><strong>One stream per subscriber.</strong> An <code>AsyncStream</code> is meant for a single consumer. Apple's page does not say this directly. But the proposal that added it, <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0314-async-stream.md">SE-0314</a>, calls concurrent iteration a programmer error. If two views, or a view and a test, read the same stream, they compete for items.</li><li><strong>So <code>updates()</code> is meant to create a stream on each call.</strong> The sketch shows signatures only. The real code keeps the continuations inside the actor and uses <code>.bufferingNewest(1)</code>, because only the latest snapshot matters. An <code>@Observable</code> snapshot is the other option.</li><li><strong>Swift cancellation is cooperative.</strong> Cancelling the task that reads an <code>AsyncSequence</code> does not force the source to stop. Document that sources must check for cancellation. Clean up in the continuation's <code>onTermination</code> callback, which Apple documents as called when iteration is cancelled. Keep that callback non-blocking. Apple says it has the same deadlock risks as <code>withTaskCancellationHandler</code>.</li><li><strong><code>Sendable</code> appears in the API.</strong> Key and item types must be <code>Sendable</code> (safe to pass between threads) to cross the actor boundary. State this requirement in the public signature. Do not let a user find it in their own build.</li><li><strong>No built-in list integration.</strong> You ship thin adapters in a separate module, so the core stays free of any UI toolkit. One is a SwiftUI helper that calls <code>loadMoreIfNeeded</code> from <code>onAppear</code>. The other is a UIKit prefetching delegate.</li><li><strong>Prefetch is a hint.</strong> Apple's prefetching page says the callback is not necessarily called for every cell. The cell provider must handle data that is ready, running or never requested. The page for the lazy vertical stack says nothing about appear callbacks. So the SwiftUI trigger is design intent.</li><li><strong>Binary distribution has stricter rules.</strong> If you ship an XCFramework, library evolution limits what you can change. If you ship source through Swift Package Manager, source compatibility is the main concern. Decide which one you offer.</li></ul>

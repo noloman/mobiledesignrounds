@@ -19,20 +19,20 @@
 <p>Never use <code>Double</code> or <code>Float</code> for a price. Binary floating point cannot store most decimal fractions exactly, so sums and comparisons drift.</p>
 <p>On Android, use <code>BigDecimal</code>. It stores an integer value plus a scale (the number of digits after the decimal point). It is <code>java.math.BigDecimal</code>, which Android also ships. On iOS, use <code>Decimal</code>, a base-10 number type. On the wire, send prices as strings (<code>"187.42"</code>), so JSON number parsing never turns them into floats.</p>
 <p>One trap: <code>BigDecimal</code> equality includes scale, so <code>1.0</code> and <code>1.00</code> are not <code>equals</code>. Compare with <code>compareTo</code>, and make the scale the same when you parse the value.</p>
-<pre tabindex="0"><code>data class Quote(
-    val symbol: String,
-    val price: BigDecimal,
-    val seq: Long,               // per-symbol sequence from the server
-    val serverTime: Instant,     // when the exchange or feed produced it
-    val marketState: MarketState // OPEN, CLOSED, PRE, POST, HALTED
+<pre tabindex="0"><code><span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">Quote</span>(
+    <span class="tk-kw">val</span> symbol: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> price: <span class="tk-ty">BigDecimal</span>,
+    <span class="tk-kw">val</span> seq: <span class="tk-ty">Long</span>,               <span class="tk-com">// per-symbol sequence from the server</span>
+    <span class="tk-kw">val</span> serverTime: <span class="tk-ty">Instant</span>,     <span class="tk-com">// when the exchange or feed produced it</span>
+    <span class="tk-kw">val</span> marketState: <span class="tk-ty">MarketState</span> <span class="tk-com">// OPEN, CLOSED, PRE, POST, HALTED</span>
 )</code></pre>
 <p><code>serverTime</code> drives the "last updated" label. The server assigns <code>seq</code> for each symbol. In this design it is contiguous (it has no missing numbers), so the client can find a gap by counting. It is a promise from my gateway to each client. An exchange feed does not give you this.</p>
 <p>Chat's <code>seq</code> is different. Gaps are allowed there, and a <a class="gl" href="/glossary/#cursor" title="A saved place in a list.">cursor</a> sync (a request for everything after a saved position) repairs them. The analytics page uses a client-side counter with the same name. See the <a href="/mobile-system-design/chat-app/">chat case study</a>.</p>
 <h2 id="2-rest-and-websocket-messages">2. REST and WebSocket messages</h2>
-<pre tabindex="0"><code>GET  /v1/quotes?symbols=AAPL,MSFT      → [{ symbol, price, seq, serverTime, marketState }]   (snapshot)
-GET  /v1/symbols/{s}/history?range=1D&amp;points=300   → { open, points: [[t, price], ...] }
-PUT  /v1/watchlist/{symbol}                          (idempotent)
-POST /v1/alerts   { symbol, condition, price, clientId }   (idempotent on clientId)</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">GET</span>  /v1/quotes?symbols=<span class="tk-ty">AAPL</span>,<span class="tk-ty">MSFT</span>      → [{ symbol, price, seq, serverTime, marketState }]   (snapshot)
+<span class="tk-ty">GET</span>  /v1/symbols/{s}/history?range=1<span class="tk-ty">D</span>&amp;points=<span class="tk-num">300</span>   → { <span class="tk-kw">open</span>, points: [[t, price], ...] }
+<span class="tk-ty">PUT</span>  /v1/watchlist/{symbol}                          (idempotent)
+<span class="tk-ty">POST</span> /v1/alerts   { symbol, condition, price, clientId }   (idempotent on clientId)</code></pre>
 <pre tabindex="0"><code>client → server:  subscribe { symbols }, unsubscribe { symbols }
 server → client:  snapshot { symbol, price, seq, ts }
                   tick     { symbol, price, seq, ts }
@@ -44,33 +44,33 @@ server → client:  snapshot { symbol, price, seq, ts }
 <p>On Android, the pipeline works in four steps. The app parses socket frames on a background dispatcher. It applies them to an in-memory map. It exposes the map as a <code>StateFlow</code>. The kotlinx.coroutines docs state that a <code>StateFlow</code> always <a class="gl" href="/glossary/#conflation" title="Joining many updates into one.">conflates</a> updates. Conflation means that a slow collector skips middle values and gets the most recent one. The <code>StateFlow</code> also ignores equal consecutive values, using <code>equals</code>.</p>
 <p>For a plain <code>Flow</code>, <code>conflate()</code> does the same thing. A slow collector never suspends the emitter, and the collector always gets the most recent value.</p>
 <p>The <code>sample(period)</code> operator emits at most the latest value for each period. It is marked <code>@FlowPreview</code>. Its docs say the latest element is not sent if it does not fit into the sampling window. For prices, this matters. The last value of a burst can be dropped, and a row can show an old number.</p>
-<pre tabindex="0"><code>// Sketch: applying ticks. Single collector coroutine, so book.value and resyncing are only touched from it.
-class QuoteStream(private val socket: QuoteSocket) {
-    private val book = MutableStateFlow&lt;Map&lt;String, Quote&gt;&gt;(emptyMap())
-    val quotes: StateFlow&lt;Map&lt;String, Quote&gt;&gt; = book.asStateFlow()
-    private val resyncing = HashSet&lt;String&gt;()   // symbols waiting for a snapshot
+<pre tabindex="0"><code><span class="tk-com">// Sketch: applying ticks. Single collector coroutine, so book.value and resyncing are only touched from it.</span>
+<span class="tk-kw">class</span> <span class="tk-ty">QuoteStream</span>(<span class="tk-kw">private</span> <span class="tk-kw">val</span> socket: <span class="tk-ty">QuoteSocket</span>) {
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> book = <span class="tk-ty">MutableStateFlow</span>&lt;<span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Quote</span>&gt;&gt;(<span class="tk-fn">emptyMap</span>())
+    <span class="tk-kw">val</span> quotes: <span class="tk-ty">StateFlow</span>&lt;<span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Quote</span>&gt;&gt; = book.<span class="tk-fn">asStateFlow</span>()
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> resyncing = <span class="tk-ty">HashSet</span>&lt;<span class="tk-ty">String</span>&gt;()   <span class="tk-com">// symbols waiting for a snapshot</span>
 
-    suspend fun run() = socket.events().collect { e -&gt;
-        when (e) {
-            is Event.Snapshot -&gt; {
-                resyncing.remove(e.quote.symbol)
-                book.update { it + (e.quote.symbol to e.quote) }
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">run</span>() = socket.<span class="tk-fn">events</span>().collect { e -&gt;
+        <span class="tk-kw">when</span> (e) {
+            <span class="tk-kw">is</span> <span class="tk-ty">Event</span>.<span class="tk-ty">Snapshot</span> -&gt; {
+                resyncing.<span class="tk-fn">remove</span>(e.quote.symbol)
+                book.update { <span class="tk-kw">it</span> + (e.quote.symbol to e.quote) }
             }
-            is Event.Tick -&gt; onTick(e)
-            Event.Reconnected -&gt; resyncing.clear()   // the server sends fresh snapshots after a reconnect
+            <span class="tk-kw">is</span> <span class="tk-ty">Event</span>.<span class="tk-ty">Tick</span> -&gt; <span class="tk-fn">onTick</span>(e)
+            <span class="tk-ty">Event</span>.<span class="tk-ty">Reconnected</span> -&gt; resyncing.<span class="tk-fn">clear</span>()   <span class="tk-com">// the server sends fresh snapshots after a reconnect</span>
         }
     }
 
-    private fun onTick(t: Event.Tick) {
-        val cur = book.value[t.symbol]
-        when {
-            t.symbol in resyncing -&gt; Unit                                  // waiting for the snapshot
-            cur != null &amp;&amp; t.seq &lt;= cur.seq -&gt; Unit                        // duplicate or old
-            cur == null || t.seq != cur.seq + 1 -&gt; {                       // no snapshot yet, or a gap
+    <span class="tk-kw">private</span> <span class="tk-kw">fun</span> <span class="tk-fn">onTick</span>(t: <span class="tk-ty">Event</span>.<span class="tk-ty">Tick</span>) {
+        <span class="tk-kw">val</span> cur = book.<span class="tk-kw">value</span>[t.symbol]
+        <span class="tk-kw">when</span> {
+            t.symbol <span class="tk-kw">in</span> resyncing -&gt; <span class="tk-ty">Unit</span>                                  <span class="tk-com">// waiting for the snapshot</span>
+            cur != <span class="tk-kw">null</span> &amp;&amp; t.seq &lt;= cur.seq -&gt; <span class="tk-ty">Unit</span>                        <span class="tk-com">// duplicate or old</span>
+            cur == <span class="tk-kw">null</span> || t.seq != cur.seq + <span class="tk-num">1</span> -&gt; {                       <span class="tk-com">// no snapshot yet, or a gap</span>
                 resyncing += t.symbol
-                socket.requestSnapshot(t.symbol)                           // asked once per gap
+                socket.<span class="tk-fn">requestSnapshot</span>(t.symbol)                           <span class="tk-com">// asked once per gap</span>
             }
-            else -&gt; book.update { it + (t.symbol to cur.copy(price = t.price, seq = t.seq, serverTime = t.ts)) }
+            <span class="tk-kw">else</span> -&gt; book.update { <span class="tk-kw">it</span> + (t.symbol to cur.<span class="tk-fn">copy</span>(price = t.price, seq = t.seq, serverTime = t.ts)) }
         }
     }
 }</code></pre>
@@ -84,22 +84,22 @@ class QuoteStream(private val socket: QuoteSocket) {
 <p>Replacing the whole map on every tick creates new objects each time. That is fine for tens of symbols. Say that you chose the simple form.</p>
 <h2 id="4-subscriptions-only-what-is-visible">4. Subscriptions: only what is visible</h2>
 <p>A socket that subscribes to everything wastes data and CPU. Subscribe to the union of two sets: the symbols on the visible screen, and the watchlist if it is on screen. Use a <strong>reference count per symbol</strong> (a ref count: how many screens use it). Then two screens that show AAPL cause one subscribe. The unsubscribe happens only when both screens are gone.</p>
-<pre tabindex="0"><code>// Sketch: ref-counted subscriptions, a data layer class; screens reach it only through the ViewModel and repository
-class Subscriptions(private val socket: QuoteSocket) {
-    private val refs = mutableMapOf&lt;String, Int&gt;()
+<pre tabindex="0"><code><span class="tk-com">// Sketch: ref-counted subscriptions, a data layer class; screens reach it only through the ViewModel and repository</span>
+<span class="tk-kw">class</span> <span class="tk-ty">Subscriptions</span>(<span class="tk-kw">private</span> <span class="tk-kw">val</span> socket: <span class="tk-ty">QuoteSocket</span>) {
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> refs = mutableMapOf&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Int</span>&gt;()
 
-    @Synchronized fun acquire(symbol: String) {
-        val n = (refs[symbol] ?: 0) + 1
+    <span class="tk-ann">@Synchronized</span> <span class="tk-kw">fun</span> <span class="tk-fn">acquire</span>(symbol: <span class="tk-ty">String</span>) {
+        <span class="tk-kw">val</span> n = (refs[symbol] ?: <span class="tk-num">0</span>) + <span class="tk-num">1</span>
         refs[symbol] = n
-        if (n == 1) socket.subscribe(symbol)
+        <span class="tk-kw">if</span> (n == <span class="tk-num">1</span>) socket.<span class="tk-fn">subscribe</span>(symbol)
     }
 
-    @Synchronized fun release(symbol: String) {
-        val n = (refs[symbol] ?: return) - 1
-        if (n == 0) { refs.remove(symbol); socket.unsubscribe(symbol) } else refs[symbol] = n
+    <span class="tk-ann">@Synchronized</span> <span class="tk-kw">fun</span> <span class="tk-fn">release</span>(symbol: <span class="tk-ty">String</span>) {
+        <span class="tk-kw">val</span> n = (refs[symbol] ?: <span class="tk-kw">return</span>) - <span class="tk-num">1</span>
+        <span class="tk-kw">if</span> (n == <span class="tk-num">0</span>) { refs.<span class="tk-fn">remove</span>(symbol); socket.<span class="tk-fn">unsubscribe</span>(symbol) } <span class="tk-kw">else</span> refs[symbol] = n
     }
 
-    @Synchronized fun active(): Set&lt;String&gt; = refs.keys.toSet()   // for re-subscribing after a reconnect
+    <span class="tk-ann">@Synchronized</span> <span class="tk-kw">fun</span> <span class="tk-fn">active</span>(): <span class="tk-ty">Set</span>&lt;<span class="tk-ty">String</span>&gt; = refs.keys.<span class="tk-fn">toSet</span>()   <span class="tk-com">// for re-subscribing after a reconnect</span>
 }</code></pre>
 <p>Tie <code>acquire</code> and <code>release</code> to visibility, not to the creation of objects. On Android, the screen calls ViewModel methods (for example <code>onSymbolsVisible</code>) from a <code>DisposableEffect</code> or a lifecycle effect. The ViewModel calls the repository, and never calls <code>Subscriptions</code> directly. On iOS, use <code>onAppear</code> and <code>onDisappear</code>.</p>
 <p>Delay the release a little, so quick back-and-forth navigation does not overload the server. After a reconnect, send the whole current set again. <code>active()</code> returns that set. The sketch calls the socket while it holds the lock. That is fine at this size. If the socket calls could block, I would move them out of the lock.</p>
@@ -142,59 +142,59 @@ class Subscriptions(private val socket: QuoteSocket) {
 <div class="tw" tabindex="0" role="region" aria-label="Table 2, scrollable"><table><thead><tr><th>Concern</th><th>Android</th><th>iOS</th></tr></thead><tbody><tr><td>Socket</td><td>OkHttp WebSocket</td><td><code>URLSessionWebSocketTask</code></td></tr><tr><td>Conflation</td><td><code>StateFlow</code>, <code>conflate()</code>, <code>sample()</code></td><td><code>AsyncStream</code> with <code>.bufferingNewest(1)</code></td></tr><tr><td>Money</td><td><code>BigDecimal</code></td><td><code>Decimal</code></td></tr><tr><td>Lifecycle</td><td><code>collectAsStateWithLifecycle</code>, <code>DisposableEffect</code></td><td><code>scenePhase</code>, <code>onAppear</code> / <code>onDisappear</code></td></tr><tr><td>Charts</td><td>Compose <code>Canvas</code></td><td>Swift Charts <code>LineMark</code>, or Core Graphics</td></tr><tr><td>Push</td><td>FCM</td><td>APNs</td></tr><tr><td>Fast-changing values and accessibility</td><td>Avoid <code>liveRegion</code> on ticks</td><td><code>updatesFrequently</code> trait</td></tr></tbody></table></div>
 <p><strong>What is really different:</strong></p>
 <ul><li><strong>Conflation is an explicit buffering choice.</strong> <code>AsyncStream</code> buffers without limit by default. A fast feed with a slow consumer then uses more and more memory. Choose <code>.bufferingNewest(1)</code>. When the buffer is full, it discards the oldest element, so the consumer sees the latest state.</li><li><strong>Apple documents no reconnect behavior for <code>URLSessionWebSocketTask</code>.</strong> Treat a failed <code>receive</code> as the end of the task. Then rebuild it and subscribe again yourself. It supports ping (<code>sendPing</code>) for liveness checks and <code>maximumMessageSize</code> as a safety limit. Apple's docs say the receive API returns a message once all of its frames are available.</li><li><strong>Backgrounding follows <code>scenePhase</code>.</strong> Close the socket with <code>cancel(with:reason:)</code> when the phase becomes <code>.background</code> (the scene is not visible), ideally after a short grace period. Do not close on <code>.inactive</code>. That phase also appears when the notification shade, the app switcher or a system alert covers the app, and closing there would make prices flicker to stale. iOS suspends the app soon after it goes to the background, so do not plan on a background socket.</li><li><strong>Money.</strong> <code>Decimal</code> is a base-10 type. Create it from a string, not from a <code>Double</code>. Otherwise you bring in the binary error you wanted to avoid. This is also why the wire format uses strings: <code>JSONDecoder</code> reads a JSON number through a <code>Double</code>, so a price sent as a number can lose digits.</li></ul>
-<pre tabindex="0"><code>// Sketch: sequence-checked book exposed as a conflated stream.
-// AsyncStream.makeStream is listed on Apple&#x27;s page for iOS 13+ (back-deployed before iOS 17).
-struct Quote: Sendable { let symbol: String; var price: Decimal; var seq: Int; var ts: Date }
+<pre tabindex="0"><code><span class="tk-com">// Sketch: sequence-checked book exposed as a conflated stream.</span>
+<span class="tk-com">// AsyncStream.makeStream is listed on Apple's page for iOS 13+ (back-deployed before iOS 17).</span>
+<span class="tk-kw">struct</span> <span class="tk-ty">Quote</span>: <span class="tk-ty">Sendable</span> { <span class="tk-kw">let</span> symbol: <span class="tk-ty">String</span>; <span class="tk-kw">var</span> price: <span class="tk-ty">Decimal</span>; <span class="tk-kw">var</span> seq: <span class="tk-ty">Int</span>; <span class="tk-kw">var</span> ts: <span class="tk-ty">Date</span> }
 
-actor QuoteBook {
-    let updates: AsyncStream&lt;[String: Quote]&gt;
-    private let out: AsyncStream&lt;[String: Quote]&gt;.Continuation
-    private var book: [String: Quote] = [:]
-    private var resyncing = Set&lt;String&gt;()   // symbols waiting for a snapshot
+<span class="tk-kw">actor</span> <span class="tk-ty">QuoteBook</span> {
+    <span class="tk-kw">let</span> updates: <span class="tk-ty">AsyncStream</span>&lt;[<span class="tk-ty">String</span>: <span class="tk-ty">Quote</span>]&gt;
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> <span class="tk-kw">out</span>: <span class="tk-ty">AsyncStream</span>&lt;[<span class="tk-ty">String</span>: <span class="tk-ty">Quote</span>]&gt;.<span class="tk-ty">Continuation</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> book: [<span class="tk-ty">String</span>: <span class="tk-ty">Quote</span>] = [:]
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> resyncing = <span class="tk-ty">Set</span>&lt;<span class="tk-ty">String</span>&gt;()   <span class="tk-com">// symbols waiting for a snapshot</span>
 
-    init() {
-        let pair = AsyncStream.makeStream(of: [String: Quote].self, bufferingPolicy: .bufferingNewest(1))
+    <span class="tk-kw">init</span>() {
+        <span class="tk-kw">let</span> pair = <span class="tk-ty">AsyncStream</span>.<span class="tk-fn">makeStream</span>(of: [<span class="tk-ty">String</span>: <span class="tk-ty">Quote</span>].<span class="tk-kw">self</span>, bufferingPolicy: .<span class="tk-fn">bufferingNewest</span>(<span class="tk-num">1</span>))
         updates = pair.stream
-        out = pair.continuation
+        <span class="tk-kw">out</span> = pair.continuation
     }
 
-    func reconnected() { resyncing.removeAll() }   // the server sends fresh snapshots
-    func snapshot(_ q: Quote) { resyncing.remove(q.symbol); book[q.symbol] = q; out.yield(book) }
+    <span class="tk-kw">func</span> <span class="tk-fn">reconnected</span>() { resyncing.<span class="tk-fn">removeAll</span>() }   <span class="tk-com">// the server sends fresh snapshots</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">snapshot</span>(_ q: <span class="tk-ty">Quote</span>) { resyncing.<span class="tk-fn">remove</span>(q.symbol); book[q.symbol] = q; <span class="tk-kw">out</span>.<span class="tk-fn">yield</span>(book) }
 
-    /// Returns true to request a snapshot: once per gap, or when there is no snapshot yet.
-    /// Ticks for a symbol that is waiting for its snapshot are ignored.
-    func tick(_ q: Quote) -&gt; Bool {
-        if resyncing.contains(q.symbol) { return false }
-        let cur = book[q.symbol]
-        if let cur, q.seq &lt;= cur.seq { return false }            // duplicate or old
-        guard let cur, q.seq == cur.seq + 1 else {               // no snapshot yet, or a gap
-            resyncing.insert(q.symbol)
-            return true
+    <span class="tk-com">/// Returns true to request a snapshot: once per gap, or when there is no snapshot yet.</span>
+    <span class="tk-com">/// Ticks for a symbol that is waiting for its snapshot are ignored.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">tick</span>(_ q: <span class="tk-ty">Quote</span>) -&gt; <span class="tk-ty">Bool</span> {
+        <span class="tk-kw">if</span> resyncing.<span class="tk-fn">contains</span>(q.symbol) { <span class="tk-kw">return</span> <span class="tk-kw">false</span> }
+        <span class="tk-kw">let</span> cur = book[q.symbol]
+        <span class="tk-kw">if</span> <span class="tk-kw">let</span> cur, q.seq &lt;= cur.seq { <span class="tk-kw">return</span> <span class="tk-kw">false</span> }            <span class="tk-com">// duplicate or old</span>
+        <span class="tk-kw">guard</span> <span class="tk-kw">let</span> cur, q.seq == cur.seq + <span class="tk-num">1</span> <span class="tk-kw">else</span> {               <span class="tk-com">// no snapshot yet, or a gap</span>
+            resyncing.<span class="tk-fn">insert</span>(q.symbol)
+            <span class="tk-kw">return</span> <span class="tk-kw">true</span>
         }
         book[q.symbol] = q
-        out.yield(book)
-        return false
+        <span class="tk-kw">out</span>.<span class="tk-fn">yield</span>(book)
+        <span class="tk-kw">return</span> <span class="tk-kw">false</span>
     }
 }
 
-// Consumer, e.g. in a @MainActor view model. The sleep caps the render rate.
-// for await latest in quoteBook.updates { self.quotes = latest; try? await Task.sleep(for: .milliseconds(100)) }</code></pre>
+<span class="tk-com">// Consumer, e.g. in a @MainActor view model. The sleep caps the render rate.</span>
+<span class="tk-com">// for await latest in quoteBook.updates { self.quotes = latest; try? await Task.sleep(for: .milliseconds(100)) }</span></code></pre>
 <p>The actor keeps the same <code>resyncing</code> set as the Kotlin version. <code>tick</code> returns true only when the caller should send <code>requestSnapshot</code> for that symbol. That happens once for each gap. Every later tick of that symbol returns false until <code>snapshot</code> clears the set. A reconnect calls <code>reconnected()</code>, which clears the set, as in the Kotlin version.</p>
 <p><strong>Who owns the socket on iOS.</strong> One actor owns the <code>URLSessionWebSocketTask</code>, the book above and the subscription counts. Views never touch the socket. A main-actor model reads the newest state. SwiftUI <code>onAppear</code> and <code>onDisappear</code> acquire and release symbols. The counts look like this:</p>
-<pre tabindex="0"><code>// Sketch: ref-counted subscriptions as an actor. The caller sends the message when the result is true.
-actor Subscriptions {
-    private var refs: [String: Int] = [:]
-    func acquire(_ symbol: String) -&gt; Bool {          // true: send subscribe
-        refs[symbol, default: 0] += 1
-        return refs[symbol] == 1
+<pre tabindex="0"><code><span class="tk-com">// Sketch: ref-counted subscriptions as an actor. The caller sends the message when the result is true.</span>
+<span class="tk-kw">actor</span> <span class="tk-ty">Subscriptions</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> refs: [<span class="tk-ty">String</span>: <span class="tk-ty">Int</span>] = [:]
+    <span class="tk-kw">func</span> <span class="tk-fn">acquire</span>(_ symbol: <span class="tk-ty">String</span>) -&gt; <span class="tk-ty">Bool</span> {          <span class="tk-com">// true: send subscribe</span>
+        refs[symbol, default: <span class="tk-num">0</span>] += <span class="tk-num">1</span>
+        <span class="tk-kw">return</span> refs[symbol] == <span class="tk-num">1</span>
     }
-    func release(_ symbol: String) -&gt; Bool {          // true: send unsubscribe
-        guard let n = refs[symbol] else { return false }
-        if n &lt;= 1 { refs[symbol] = nil; return true }
-        refs[symbol] = n - 1
-        return false
+    <span class="tk-kw">func</span> <span class="tk-fn">release</span>(_ symbol: <span class="tk-ty">String</span>) -&gt; <span class="tk-ty">Bool</span> {          <span class="tk-com">// true: send unsubscribe</span>
+        <span class="tk-kw">guard</span> <span class="tk-kw">let</span> n = refs[symbol] <span class="tk-kw">else</span> { <span class="tk-kw">return</span> <span class="tk-kw">false</span> }
+        <span class="tk-kw">if</span> n &lt;= <span class="tk-num">1</span> { refs[symbol] = <span class="tk-kw">nil</span>; <span class="tk-kw">return</span> <span class="tk-kw">true</span> }
+        refs[symbol] = n - <span class="tk-num">1</span>
+        <span class="tk-kw">return</span> <span class="tk-kw">false</span>
     }
-    func active() -&gt; Set&lt;String&gt; { Set(refs.keys) }   // send again after a reconnect
+    <span class="tk-kw">func</span> <span class="tk-fn">active</span>() -&gt; <span class="tk-ty">Set</span>&lt;<span class="tk-ty">String</span>&gt; { <span class="tk-ty">Set</span>(refs.keys) }   <span class="tk-com">// send again after a reconnect</span>
 }</code></pre>
 <h2 id="10-more-practice-prompts">10. More practice prompts</h2>
 <ol><li>How do you test this? (A fake socket that sends ordered, duplicate, late and gapped sequences; a fake clock for stale changes.)</li><li>How would you add a home screen widget? (Widgets do not hold a socket; use snapshot timelines. Check the platform refresh limits before you promise a frequency.)</li><li>What would make you add a news feed to the same screen? (See the <a href="/mobile-system-design/news-feed/">news feed case study</a> for the cache-first contrast with an always-online screen.)</li></ol>

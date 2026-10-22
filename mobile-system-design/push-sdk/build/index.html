@@ -18,32 +18,32 @@
 <hr>
 <h2 id="1-public-api-and-data-model">1. Public API and data model</h2>
 <p>The public surface fits on one screen. The calls <code>login</code> and <code>logout</code> are <code>suspend</code> functions, because each is a one-time write. The calls <code>onAddress</code> and <code>handleMessage</code> are plain functions, because <a class="gl" href="/glossary/#fcm" title="Firebase Cloud Messaging, the push service from Google.">FCM</a> callbacks must return fast.</p>
-<pre tabindex="0"><code>// Sketch: the public surface fits on one screen. login and logout are suspend (one-shot writes);
-// onAddress and handleMessage stay plain because FCM callbacks must return quickly.
-object PushSdk {
-    fun configure(app: Application, config: PushConfig)
-    fun onAddress(address: String, kind: AddressKind)   // host service forwards the FCM registration token (kind TOKEN)
-    fun handleMessage(message: RemoteMessage): Boolean  // true if the SDK consumed it
-    suspend fun login(userId: String)
-    suspend fun logout()                                // unbind first; platform-side deletion is covered in section 4
-    fun setOptIn(topic: String, enabled: Boolean)
-    suspend fun requestPermission(activity: Activity): PermissionState  // the host picks the moment
-    val permissionState: StateFlow&lt;PermissionState&gt;     // GRANTED, DENIED, NOT_ASKED; refreshed on every foreground
-    fun setListener(listener: PushListener)             // taps and foreground messages
+<pre tabindex="0"><code><span class="tk-com">// Sketch: the public surface fits on one screen. login and logout are suspend (one-shot writes);</span>
+<span class="tk-com">// onAddress and handleMessage stay plain because FCM callbacks must return quickly.</span>
+<span class="tk-kw">object</span> <span class="tk-ty">PushSdk</span> {
+    <span class="tk-kw">fun</span> <span class="tk-fn">configure</span>(app: <span class="tk-ty">Application</span>, config: <span class="tk-ty">PushConfig</span>)
+    <span class="tk-kw">fun</span> <span class="tk-fn">onAddress</span>(address: <span class="tk-ty">String</span>, kind: <span class="tk-ty">AddressKind</span>)   <span class="tk-com">// host service forwards the FCM registration token (kind TOKEN)</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">handleMessage</span>(message: <span class="tk-ty">RemoteMessage</span>): <span class="tk-ty">Boolean</span>  <span class="tk-com">// true if the SDK consumed it</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">login</span>(userId: <span class="tk-ty">String</span>)
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">logout</span>()                                <span class="tk-com">// unbind first; platform-side deletion is covered in section 4</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">setOptIn</span>(topic: <span class="tk-ty">String</span>, enabled: <span class="tk-ty">Boolean</span>)
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">requestPermission</span>(activity: <span class="tk-ty">Activity</span>): <span class="tk-ty">PermissionState</span>  <span class="tk-com">// the host picks the moment</span>
+    <span class="tk-kw">val</span> permissionState: <span class="tk-ty">StateFlow</span>&lt;<span class="tk-ty">PermissionState</span>&gt;     <span class="tk-com">// GRANTED, DENIED, NOT_ASKED; refreshed on every foreground</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">setListener</span>(listener: <span class="tk-ty">PushListener</span>)             <span class="tk-com">// taps and foreground messages</span>
 }
 
-// Sketch: one immutable row per install, kept in the local DB (source of truth).
-data class DeviceRegistration(
-    val installId: String,       // SDK-generated UUID, stable across address changes. Not a push address.
-    val pushAddress: String?,        // FCM registration token on Android, APNs token on iOS
-    val addressKind: AddressKind,    // TOKEN, APNS or a future kind; the backend routes by kind
-    val uploadedAt: Long?,           // epoch ms of the last successful upload; null before the first one
-    val environment: String?,        // iOS only: &quot;sandbox&quot; or &quot;production&quot;; null on Android
-    val userId: String?,         // null when logged out
-    val notificationsEnabled: Boolean,
-    val topics: Set&lt;String&gt;,     // opt-ins, mirrored from setOptIn
-    val localVersion: Long,      // bumped on every local change
-    val uploadedVersion: Long,   // equals localVersion when the backend is current
+<span class="tk-com">// Sketch: one immutable row per install, kept in the local DB (source of truth).</span>
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">DeviceRegistration</span>(
+    <span class="tk-kw">val</span> installId: <span class="tk-ty">String</span>,       <span class="tk-com">// SDK-generated UUID, stable across address changes. Not a push address.</span>
+    <span class="tk-kw">val</span> pushAddress: <span class="tk-ty">String</span>?,        <span class="tk-com">// FCM registration token on Android, APNs token on iOS</span>
+    <span class="tk-kw">val</span> addressKind: <span class="tk-ty">AddressKind</span>,    <span class="tk-com">// TOKEN, APNS or a future kind; the backend routes by kind</span>
+    <span class="tk-kw">val</span> uploadedAt: <span class="tk-ty">Long</span>?,           <span class="tk-com">// epoch ms of the last successful upload; null before the first one</span>
+    <span class="tk-kw">val</span> environment: <span class="tk-ty">String</span>?,        <span class="tk-com">// iOS only: "sandbox" or "production"; null on Android</span>
+    <span class="tk-kw">val</span> userId: <span class="tk-ty">String</span>?,         <span class="tk-com">// null when logged out</span>
+    <span class="tk-kw">val</span> notificationsEnabled: <span class="tk-ty">Boolean</span>,
+    <span class="tk-kw">val</span> topics: <span class="tk-ty">Set</span>&lt;<span class="tk-ty">String</span>&gt;,     <span class="tk-com">// opt-ins, mirrored from setOptIn</span>
+    <span class="tk-kw">val</span> localVersion: <span class="tk-ty">Long</span>,      <span class="tk-com">// bumped on every local change</span>
+    <span class="tk-kw">val</span> uploadedVersion: <span class="tk-ty">Long</span>,   <span class="tk-com">// equals localVersion when the backend is current</span>
 )</code></pre>
 <p>In the code comment, "unbind" means unlink: remove the user from the device row. The row keeps only what the <a class="gl" href="/glossary/#sdk" title="Software development kit.">SDK</a> must remember between launches. The SDK reads <code>sdkVersion</code>, <code>locale</code> and <code>tz</code> when it uploads, so it does not store them.</p>
 <p>The push address is the ID that names the phone for the push service. It is an FCM registration token on Android, and an <a class="gl" href="/glossary/#apns" title="Apple Push Notification service, the push service from Apple.">APNs</a> token on iOS.</p>
@@ -51,10 +51,10 @@ data class DeviceRegistration(
 <p>The SDK makes <code>installId</code> itself. It is never a push address. Store it where backups do not copy it: on Android in <code>noBackupFilesDir</code> or with a backup rule that excludes it, and on iOS in a file marked as excluded from backup. A restore on a new phone then makes a new <code>installId</code>. If a backup copied it, two phones would share one row and overwrite each other.</p>
 <p>The SDK uses <a class="gl" href="/glossary/#workmanager" title="Android&#x27;s tool for background work that must run later.">WorkManager</a> (the Android tool for work that must run reliably, even after a restart) for the upload. It must not start WorkManager itself or demand a custom worker factory. The <a class="gl" href="/glossary/#host-app" title="The app that contains an SDK.">host app</a> may already set up WorkManager, and on-demand start-up removes the default starter. So workers take what they need from the SDK's own internal objects, not from <code>@HiltWorker</code>.</p>
 <h2 id="2-server-calls">2. Server calls</h2>
-<pre tabindex="0"><code>PUT    /v1/devices/{installId}   { platform, pushAddress, addressKind, environment, userId, enabled, topics, sdkVersion, locale, tz }
-DELETE /v1/devices/{installId}
-POST   /v1/events                [ { messageId, type: delivered|opened, ts } ]
-GET    /v1/inbox?since=&lt;cursor&gt;  (the sync path; the cursor is an opaque string the server returns)</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">PUT</span>    /v1/devices/{installId}   { platform, pushAddress, addressKind, environment, userId, enabled, topics, sdkVersion, locale, tz }
+<span class="tk-ty">DELETE</span> /v1/devices/{installId}
+<span class="tk-ty">POST</span>   /v1/events                [ { messageId, type: delivered|opened, ts } ]
+<span class="tk-ty">GET</span>    /v1/inbox?since=&lt;cursor&gt;  (the sync path; the cursor <span class="tk-kw">is</span> an opaque string the server returns)</code></pre>
 <p>The retry rule is the same one the <a href="/mobile-system-design/chat-app/">chat app</a> uses:</p>
 <ul><li>Network errors, 408, 429 and 5xx are temporary. The SDK retries them and follows <code>Retry-After</code> when it is present.</li><li>Any other 4xx code is permanent. The SDK stops and reports it.</li></ul>
 <h2 id="3-the-push-address-lifecycle">3. The push address lifecycle</h2>
@@ -99,36 +99,36 @@ GET    /v1/inbox?since=&lt;cursor&gt;  (the sync path; the cursor is an opaque s
 <p>The word <code>delivered</code> means "reached our handler", not "seen". On iOS the handler is <code>willPresent</code>, and it runs only when the app is in the foreground. So the proxy below counts too few alerts: it misses those shown while the app was in the background. Counting those needs the extension from section 6.</p>
 <p><strong>Several SDKs in one app.</strong> Libraries each want a <code>FirebaseMessagingService</code>. Which one Android calls when they share an intent filter is not something to depend on. So the SDK ships no service. The host declares one and calls <code>PushSdk.onAddress</code> and <code>PushSdk.handleMessage</code>. When the SDK returns <code>false</code>, the host passes the message to the next library. The SDK decides by a payload key with its own name prefix.</p>
 <p>Some vendors choose the opposite: their SDK declares a service, and the host forwards only if it has its own. That needs less setup, but it can collide. On iOS, the shared resource is the one notification delegate. So the SDK gives a proxy that forwards to the host's delegate. The <a href="/mobile-system-design/analytics-sdk/">analytics SDK</a> page has the same single-owner problem and the kill switch side of sharing.</p>
-<pre tabindex="0"><code>// Sketch: delegate proxy. `next` is the host&#x27;s delegate. Call install() before launch finishes.
-// The center holds its delegate weakly, so the SDK must retain the proxy: hence the singleton.
-// @unchecked Sendable: `next` is written once at setup, on the main thread, before any callback.
-final class PushDelegateProxy: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
-    static let shared = PushDelegateProxy()
-    var next: UNUserNotificationCenterDelegate?
+<pre tabindex="0"><code><span class="tk-com">// Sketch: delegate proxy. `next` is the host's delegate. Call install() before launch finishes.</span>
+<span class="tk-com">// The center holds its delegate weakly, so the SDK must retain the proxy: hence the singleton.</span>
+<span class="tk-com">// @unchecked Sendable: `next` is written once at setup, on the main thread, before any callback.</span>
+<span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">PushDelegateProxy</span>: <span class="tk-ty">NSObject</span>, <span class="tk-ty">UNUserNotificationCenterDelegate</span>, <span class="tk-ann">@unchecked</span> <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">static</span> <span class="tk-kw">let</span> shared = <span class="tk-ty">PushDelegateProxy</span>()
+    <span class="tk-kw">var</span> next: <span class="tk-ty">UNUserNotificationCenterDelegate</span>?
 
-    func install(on center: UNUserNotificationCenter = .current()) {
-        if center.delegate !== self { next = center.delegate }  // keep a delegate the host set first
-        center.delegate = self
+    <span class="tk-kw">func</span> <span class="tk-fn">install</span>(on center: <span class="tk-ty">UNUserNotificationCenter</span> = .<span class="tk-fn">current</span>()) {
+        <span class="tk-kw">if</span> center.delegate !== <span class="tk-kw">self</span> { next = center.delegate }  <span class="tk-com">// keep a delegate the host set first</span>
+        center.delegate = <span class="tk-kw">self</span>
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification,
+    <span class="tk-kw">func</span> <span class="tk-fn">userNotificationCenter</span>(_ center: <span class="tk-ty">UNUserNotificationCenter</span>,
+                                willPresent notification: <span class="tk-ty">UNNotification</span>,
                                 withCompletionHandler completionHandler:
-                                    @escaping @Sendable (UNNotificationPresentationOptions) -&gt; Void) {
-        PushSdk.shared.recordDelivered(notification.request.content.userInfo)
-        if next?.userNotificationCenter?(center, willPresent: notification,
-                                         withCompletionHandler: completionHandler) == nil {
-            completionHandler([])  // what the system does when a delegate has no willPresent
+                                    <span class="tk-ann">@escaping</span> <span class="tk-ann">@Sendable</span> (<span class="tk-ty">UNNotificationPresentationOptions</span>) -&gt; <span class="tk-ty">Void</span>) {
+        <span class="tk-ty">PushSdk</span>.shared.<span class="tk-fn">recordDelivered</span>(notification.request.content.userInfo)
+        <span class="tk-kw">if</span> next?.userNotificationCenter?(center, willPresent: notification,
+                                         withCompletionHandler: completionHandler) == <span class="tk-kw">nil</span> {
+            <span class="tk-fn">completionHandler</span>([])  <span class="tk-com">// what the system does when a delegate has no willPresent</span>
         }
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                didReceive response: UNNotificationResponse,
-                                withCompletionHandler completionHandler: @escaping @Sendable () -&gt; Void) {
-        PushSdk.shared.recordOpened(response.notification.request.content.userInfo)
-        if next?.userNotificationCenter?(center, didReceive: response,
-                                         withCompletionHandler: completionHandler) == nil {
-            completionHandler()
+    <span class="tk-kw">func</span> <span class="tk-fn">userNotificationCenter</span>(_ center: <span class="tk-ty">UNUserNotificationCenter</span>,
+                                didReceive response: <span class="tk-ty">UNNotificationResponse</span>,
+                                withCompletionHandler completionHandler: <span class="tk-ann">@escaping</span> <span class="tk-ann">@Sendable</span> () -&gt; <span class="tk-ty">Void</span>) {
+        <span class="tk-ty">PushSdk</span>.shared.<span class="tk-fn">recordOpened</span>(response.notification.request.content.userInfo)
+        <span class="tk-kw">if</span> next?.userNotificationCenter?(center, didReceive: response,
+                                         withCompletionHandler: completionHandler) == <span class="tk-kw">nil</span> {
+            <span class="tk-fn">completionHandler</span>()
         }
     }
 }</code></pre>
