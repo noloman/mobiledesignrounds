@@ -430,31 +430,10 @@ details.quiz p{margin:.8em 0 0;color:var(--ink2)}
 @media print{.viewbar,.sec-more{display:none!important}.prose>[hidden=until-found]{content-visibility:visible!important}}
 /* Notifications screen mockup */
 .diagram.mock{padding:16px}
-.mock-in{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
-.diagram.mock svg.phone{flex:0 0 auto;width:100%;max-width:280px;min-width:0;height:auto}
+.mock-in{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.diagram.mock svg.phone{flex:0 0 auto;width:100%;max-width:320px;min-width:0;height:auto}
 .mock-k{flex:1 1 260px;margin:0;padding-left:1.3em;font-size:.92rem;line-height:1.55}
 .mock-k li{margin:0 0 .8em}
 .phone .pf{fill:var(--panel);stroke:var(--ink2);stroke-width:2}
-.phone .ps{fill:var(--paper)}
-.phone .pc{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
-.phone .sm{font:600 11px var(--body);fill:var(--ink2)}
-.phone .pb{fill:var(--ink2)}
-.phone .pt{font:400 12px var(--body);fill:var(--ink)}
-.phone .ph{font:700 14px var(--body);fill:var(--ink)}
-.phone .pa{font:400 10.5px var(--body);fill:var(--ink2)}
-.phone .cd{font:600 12px var(--body);fill:var(--ink);font-feature-settings:"tnum"}
-.phone .av{fill:var(--tint);stroke:var(--panel);stroke-width:2.5}
-.phone .av.more{fill:var(--line)}
-.phone .ai{font:700 11px var(--body);fill:var(--ink);text-anchor:middle}
-.phone .img{fill:var(--tint)}
-.phone .hill{fill:var(--blue);opacity:.35}
-.phone .sun{fill:var(--amber);opacity:.8}
-.phone .trk{fill:var(--line)}
-.phone .fil{fill:var(--blue)}
-.phone .btn{fill:var(--blue)}
-.phone .bt{font:600 13px var(--body);fill:var(--on-blue);text-anchor:middle}
-.phone .btn2{fill:none;stroke:var(--ink2);stroke-width:1.5}
-.phone .bt2{font:600 13px var(--body);fill:var(--ink);text-anchor:middle}
-.phone .mk circle{fill:var(--amber);stroke:var(--paper);stroke-width:2}
-.phone .mk text{font:700 12px var(--body);fill:var(--amber-bg);text-anchor:middle}
-@media(prefers-color-scheme:dark){.phone .mk circle{fill:var(--amber)}.phone .mk text{fill:var(--amber-bg)}}
+.phone .mk circle{fill:#1F2328;stroke:#fff;stroke-width:2}
+.phone .mk text{font:700 13px var(--body);fill:#fff;text-anchor:middle}
