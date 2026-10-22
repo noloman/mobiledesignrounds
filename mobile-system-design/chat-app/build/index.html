@@ -16,48 +16,48 @@
 <ul><li>schema, REST and events</li><li>the send worker and the receive path</li><li>history, receipts, platform limits and the iOS version</li></ul>
 <p>None of it belongs in the 45 minutes. I draw it only if asked. The snippets use <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> 2.x (<code>androidx.room</code>), Android's local database library. The official <a href="https://developer.android.com/training/data-storage/room">Room guide</a> may show a newer major version with different APIs. The architecture is the same either way.</p>
 <h2 id="1-local-schema-room">1. Local schema (Room)</h2>
-<pre tabindex="0"><code>@Entity(
-    tableName = &quot;messages&quot;,
+<pre tabindex="0"><code><span class="tk-ann">@Entity</span>(
+    tableName = <span class="tk-str">"messages"</span>,
     indices = [
-        Index(value = [&quot;clientId&quot;], unique = true),
-        Index(value = [&quot;conversationId&quot;, &quot;seq&quot;]),
+        <span class="tk-ty">Index</span>(<span class="tk-kw">value</span> = [<span class="tk-str">"clientId"</span>], unique = <span class="tk-kw">true</span>),
+        <span class="tk-ty">Index</span>(<span class="tk-kw">value</span> = [<span class="tk-str">"conversationId"</span>, <span class="tk-str">"seq"</span>]),
     ],
 )
-data class MessageEntity(
-    @PrimaryKey(autoGenerate = true) val localId: Long = 0,
-    val clientId: String,          // UUID generated on device; the idempotency key
-    val serverId: String? = null,  // null until acked
-    val conversationId: String,
-    val senderId: String,
-    val body: String,
-    val seq: Long? = null,         // per-conversation sequence assigned by server; gaps are allowed
-    val createdAt: Long,           // device clock; used only for ordering pending messages
-    val status: Status,
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">MessageEntity</span>(
+    <span class="tk-ann">@PrimaryKey</span>(autoGenerate = <span class="tk-kw">true</span>) <span class="tk-kw">val</span> localId: <span class="tk-ty">Long</span> = <span class="tk-num">0</span>,
+    <span class="tk-kw">val</span> clientId: <span class="tk-ty">String</span>,          <span class="tk-com">// UUID generated on device; the idempotency key</span>
+    <span class="tk-kw">val</span> serverId: <span class="tk-ty">String</span>? = <span class="tk-kw">null</span>,  <span class="tk-com">// null until acked</span>
+    <span class="tk-kw">val</span> conversationId: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> senderId: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> body: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> seq: <span class="tk-ty">Long</span>? = <span class="tk-kw">null</span>,         <span class="tk-com">// per-conversation sequence assigned by server; gaps are allowed</span>
+    <span class="tk-kw">val</span> createdAt: <span class="tk-ty">Long</span>,           <span class="tk-com">// device clock; used only for ordering pending messages</span>
+    <span class="tk-kw">val</span> status: <span class="tk-ty">Status</span>,
 ) {
-    enum class Status { PENDING, SENT, DELIVERED, READ, FAILED }
+    <span class="tk-kw">enum</span> <span class="tk-kw">class</span> <span class="tk-ty">Status</span> { <span class="tk-ty">PENDING</span>, <span class="tk-ty">SENT</span>, <span class="tk-ty">DELIVERED</span>, <span class="tk-ty">READ</span>, <span class="tk-ty">FAILED</span> }
 }</code></pre>
 <ul><li><code>clientId</code> is how the app removes duplicates. The same message may arrive by <a class="gl" href="/glossary/#websocket" title="A two-way connection that stays open.">WebSocket</a>, by an FCM-triggered sync, and in the REST response to our own send. The <a class="gl" href="/glossary/#unique-index" title="A database rule that refuses a repeated value.">unique index</a> stops a second row from being inserted. The <a class="gl" href="/glossary/#dao" title="A class that holds the database queries.">DAO</a> (the class that holds the database queries) below turns the collision into an update of the first row. All three copies become one row.</li><li><code>seq</code> comes from the server and gives one fixed order inside a conversation. It does not have to be contiguous (without gaps). A <a class="gl" href="/glossary/#cursor" title="A saved place in a list.">cursor</a> sync repairs a gap, so a gap is not an error (the <a href="/mobile-system-design/live-ticker/">live ticker</a> uses a stricter <code>seq</code> that detects gaps). Never order by device timestamps alone, because device clocks are not exact.</li><li>I do not use Room's <code>@Upsert</code> (insert, or update if the row exists) for this. It falls back to an update only when the primary key (<code>localId</code>) matches. An incoming copy has no <code>localId</code>. So a <code>clientId</code> collision would update nothing, and the <a class="gl" href="/glossary/#acknowledgement" title="A short reply that says the server got a message.">ack</a> data would be lost. Instead I insert with <code>IGNORE</code>. If the insert was ignored, I update by <code>clientId</code>:</li></ul>
-<pre tabindex="0"><code>@Dao interface MsgDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE) suspend fun insertIgnore(m: MessageEntity): Long
-    // the server copy fills in serverId and seq; a PENDING row becomes the server&#x27;s status, any later status stays
-    @Query(&quot;&quot;&quot;UPDATE messages SET serverId = :serverId, seq = :seq,
-        status = CASE WHEN status = &#x27;PENDING&#x27; THEN :status ELSE status END
-        WHERE clientId = :clientId&quot;&quot;&quot;)
-    suspend fun applyServerCopy(clientId: String, serverId: String, seq: Long, status: String)
+<pre tabindex="0"><code><span class="tk-ann">@Dao</span> <span class="tk-kw">interface</span> <span class="tk-ty">MsgDao</span> {
+    <span class="tk-ann">@Insert</span>(onConflict = <span class="tk-ty">OnConflictStrategy</span>.<span class="tk-ty">IGNORE</span>) <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">insertIgnore</span>(m: <span class="tk-ty">MessageEntity</span>): <span class="tk-ty">Long</span>
+    <span class="tk-com">// the server copy fills in serverId and seq; a PENDING row becomes the server's status, any later status stays</span>
+    <span class="tk-ann">@Query</span>(<span class="tk-str">"""UPDATE messages SET serverId = :serverId, seq = :seq,
+        status = CASE WHEN status = 'PENDING' THEN :status ELSE status END
+        WHERE clientId = :clientId"""</span>)
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">applyServerCopy</span>(clientId: <span class="tk-ty">String</span>, serverId: <span class="tk-ty">String</span>, seq: <span class="tk-ty">Long</span>, status: <span class="tk-ty">String</span>)
 
-    @Transaction suspend fun upsertByClientId(m: MessageEntity) {
-        if (insertIgnore(m) == -1L) applyServerCopy(m.clientId, m.serverId!!, m.seq!!, m.status.name)
+    <span class="tk-ann">@Transaction</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">upsertByClientId</span>(m: <span class="tk-ty">MessageEntity</span>) {
+        <span class="tk-kw">if</span> (<span class="tk-fn">insertIgnore</span>(m) == -<span class="tk-num">1L</span>) <span class="tk-fn">applyServerCopy</span>(m.clientId, m.serverId!!, m.seq!!, m.status.name)
     }
 }</code></pre>
 <ul><li>In this design, the sync cursor is simply the last <code>seq</code> the device has seen. I call it <code>after_seq</code> here. Other cases use an opaque cursor (a value the app does not read) for the same idea.</li></ul>
 <h2 id="2-rest">2. REST</h2>
-<pre tabindex="0"><code>POST /v1/conversations/{id}/messages      body: { clientId, body }
-     → 200 { serverId, seq, createdAt }   (idempotent on clientId)
-GET  /v1/conversations/{id}/messages?after_seq=123&amp;limit=50
-GET  /v1/sync?since=&lt;cursor&gt;              (conversation list changes; used on cold start)</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">POST</span> /v1/conversations/{id}/messages      body: { clientId, body }
+     → <span class="tk-num">200</span> { serverId, seq, createdAt }   (idempotent on clientId)
+<span class="tk-ty">GET</span>  /v1/conversations/{id}/messages?after_seq=<span class="tk-num">123</span>&amp;limit=<span class="tk-num">50</span>
+<span class="tk-ty">GET</span>  /v1/sync?since=&lt;cursor&gt;              (conversation list changes; used on cold start)</code></pre>
 <h2 id="3-websocket-events">3. WebSocket events</h2>
 <pre tabindex="0"><code>server → client:  message.new, message.status, conversation.updated
-client → server:  ack(seq), typing   (send itself goes via REST/Worker for retry guarantees)</code></pre>
+client → server:  <span class="tk-fn">ack</span>(seq), typing   (send itself goes via <span class="tk-ty">REST</span>/<span class="tk-ty">Worker</span> <span class="tk-kw">for</span> retry guarantees)</code></pre>
 <p><code>ack(seq)</code> tells the server how far this device has received events, so it can stop holding older ones for it. It is not a read receipt.</p>
 <p>I send through REST plus <a class="gl" href="/glossary/#workmanager" title="Android&#x27;s tool for background work that must run later.">WorkManager</a>, not the socket, on purpose. The worker (the class that WorkManager runs) gives retries, constraints (rules such as needing a network) and survival across <a class="gl" href="/glossary/#process-death" title="The system ends the process of your app to free memory.">process death</a> without extra work.</p>
 <h2 id="4-the-send-worker">4. The send worker</h2>
@@ -67,36 +67,36 @@ client → server:  ack(seq), typing   (send itself goes via REST/Worker for ret
 <p>With the 10 s base, the delays double (10, 20, 40 ... 1,280 s). The worker below checks <code>runAttemptCount &gt;= 8</code> at the start of a run. This gives, as my worked example:</p>
 <ul><li>Eight sends over about 21 minutes.</li><li>A ninth run, which marks the row <code>FAILED</code>, about 42 minutes after the first failure.</li><li>No effect from the cap. The androidx source caps backoff at 5 hours (the define-work page does not state a cap).</li></ul>
 <p>This is my arithmetic from the library's documented defaults and its source. It is not a measurement. Real delays differ by several seconds.</p>
-<pre tabindex="0"><code>@HiltWorker
-class SendMessageWorker @AssistedInject constructor(
-    @Assisted ctx: Context, @Assisted params: WorkerParameters,
-    private val repository: ChatRepository,   // workers go through the repository, never the DAO or API
-): CoroutineWorker(ctx, params) {
+<pre tabindex="0"><code><span class="tk-ann">@HiltWorker</span>
+<span class="tk-kw">class</span> <span class="tk-ty">SendMessageWorker</span> <span class="tk-ann">@AssistedInject</span> <span class="tk-kw">constructor</span>(
+    <span class="tk-ann">@Assisted</span> ctx: <span class="tk-ty">Context</span>, <span class="tk-ann">@Assisted</span> params: <span class="tk-ty">WorkerParameters</span>,
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> repository: <span class="tk-ty">ChatRepository</span>,   <span class="tk-com">// workers go through the repository, never the DAO or API</span>
+): <span class="tk-ty">CoroutineWorker</span>(ctx, params) {
 
-    override suspend fun doWork(): Result {
-        val id = inputData.getString(&quot;clientId&quot;) ?: return Result.failure()
-        if (runAttemptCount &gt;= 8) { repository.markFailed(id); return Result.success() }   // stop retrying; the row shows &quot;Tap to retry&quot;
-        return when (repository.sendPending(id)) {
-            SendOutcome.Done, SendOutcome.NothingToSend -&gt; Result.success()
-            SendOutcome.Retry -&gt; Result.retry()   // IOException, 5xx, 429
-            // permanent 4xx: the row is already FAILED in Room, so end this work as success().
-            // (With APPEND a failed parent would cancel later sends; APPEND_OR_REPLACE avoids that, and success() keeps WorkInfo clean.)
-            SendOutcome.PermanentFailure -&gt; Result.success()
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">doWork</span>(): <span class="tk-ty">Result</span> {
+        <span class="tk-kw">val</span> id = inputData.<span class="tk-fn">getString</span>(<span class="tk-str">"clientId"</span>) ?: <span class="tk-kw">return</span> <span class="tk-ty">Result</span>.<span class="tk-fn">failure</span>()
+        <span class="tk-kw">if</span> (runAttemptCount &gt;= <span class="tk-num">8</span>) { repository.<span class="tk-fn">markFailed</span>(id); <span class="tk-kw">return</span> <span class="tk-ty">Result</span>.<span class="tk-fn">success</span>() }   <span class="tk-com">// stop retrying; the row shows "Tap to retry"</span>
+        <span class="tk-kw">return</span> <span class="tk-kw">when</span> (repository.<span class="tk-fn">sendPending</span>(id)) {
+            <span class="tk-ty">SendOutcome</span>.<span class="tk-ty">Done</span>, <span class="tk-ty">SendOutcome</span>.<span class="tk-ty">NothingToSend</span> -&gt; <span class="tk-ty">Result</span>.<span class="tk-fn">success</span>()
+            <span class="tk-ty">SendOutcome</span>.<span class="tk-ty">Retry</span> -&gt; <span class="tk-ty">Result</span>.<span class="tk-fn">retry</span>()   <span class="tk-com">// IOException, 5xx, 429</span>
+            <span class="tk-com">// permanent 4xx: the row is already FAILED in Room, so end this work as success().</span>
+            <span class="tk-com">// (With APPEND a failed parent would cancel later sends; APPEND_OR_REPLACE avoids that, and success() keeps WorkInfo clean.)</span>
+            <span class="tk-ty">SendOutcome</span>.<span class="tk-ty">PermanentFailure</span> -&gt; <span class="tk-ty">Result</span>.<span class="tk-fn">success</span>()
         }
     }
 }
 
-// enqueue
-WorkManager.getInstance(ctx).enqueueUniqueWork(
-    &quot;send-${conversationId}&quot;,            // one chain per conversation keeps order
-    ExistingWorkPolicy.APPEND_OR_REPLACE,
-    OneTimeWorkRequestBuilder&lt;SendMessageWorker&gt;()
-        .setInputData(workDataOf(&quot;clientId&quot; to clientId))
-        .setConstraints(
-            Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+<span class="tk-com">// enqueue</span>
+<span class="tk-ty">WorkManager</span>.<span class="tk-fn">getInstance</span>(ctx).<span class="tk-fn">enqueueUniqueWork</span>(
+    <span class="tk-str">"send-${conversationId}"</span>,            <span class="tk-com">// one chain per conversation keeps order</span>
+    <span class="tk-ty">ExistingWorkPolicy</span>.<span class="tk-ty">APPEND_OR_REPLACE</span>,
+    <span class="tk-ty">OneTimeWorkRequestBuilder</span>&lt;<span class="tk-ty">SendMessageWorker</span>&gt;()
+        .<span class="tk-fn">setInputData</span>(<span class="tk-fn">workDataOf</span>(<span class="tk-str">"clientId"</span> to clientId))
+        .<span class="tk-fn">setConstraints</span>(
+            <span class="tk-ty">Constraints</span>.<span class="tk-ty">Builder</span>().<span class="tk-fn">setRequiredNetworkType</span>(<span class="tk-ty">NetworkType</span>.<span class="tk-ty">CONNECTED</span>).<span class="tk-fn">build</span>()
         )
-        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)   // 10 s is the minimum; the default is 30 s
-        .build(),
+        .<span class="tk-fn">setBackoffCriteria</span>(<span class="tk-ty">BackoffPolicy</span>.<span class="tk-ty">EXPONENTIAL</span>, <span class="tk-num">10</span>, <span class="tk-ty">TimeUnit</span>.<span class="tk-ty">SECONDS</span>)   <span class="tk-com">// 10 s is the minimum; the default is 30 s</span>
+        .<span class="tk-fn">build</span>(),
 )</code></pre>
 <p><strong>Why this is safe against duplicates:</strong> if the request reaches the server but the response is lost, the retry sends the same <code>clientId</code>. The server returns the original <code>serverId</code> and <code>seq</code>. It does not create a second message.</p>
 <p>This is idempotency (doing it twice has the same result as doing it once) in practice. The <a href="/mobile-system-design/booking-app/">booking app</a> uses the same pattern for the payment. The <a href="/guides/staff-mobile-loop-guide/">staff guide</a> walks through this exact lost-acknowledgement case at staff depth.</p>
@@ -115,8 +115,8 @@ WorkManager.getInstance(ctx).enqueueUniqueWork(
 <h2 id="6-reading-history-efficiently">6. Reading history efficiently</h2>
 <p>Use <strong>Paging 3</strong> (Android's library for loading lists in pages) with a Room <code>PagingSource</code>. Add a <code>RemoteMediator</code> that fetches older pages from the API when the user scrolls past the cached range. The conversation list is also a Room query. It shows at once from cache on cold start and refreshes in the background.</p>
 <p>The snippet exposes the Room entity to keep it short. In a larger app, map it to a UI model in the repository.</p>
-<pre tabindex="0"><code>@Query(&quot;SELECT * FROM messages WHERE conversationId = :id ORDER BY COALESCE(seq, 9223372036854775807), createdAt&quot;)
-fun pagingSource(id: String): PagingSource&lt;Int, MessageEntity&gt;</code></pre>
+<pre tabindex="0"><code><span class="tk-ann">@Query</span>(<span class="tk-str">"SELECT * FROM messages WHERE conversationId = :id ORDER BY COALESCE(seq, 9223372036854775807), createdAt"</span>)
+<span class="tk-kw">fun</span> <span class="tk-fn">pagingSource</span>(id: <span class="tk-ty">String</span>): <span class="tk-ty">PagingSource</span>&lt;<span class="tk-ty">Int</span>, <span class="tk-ty">MessageEntity</span>&gt;</code></pre>
 <h2 id="7-delivery-and-read-receipts">7. Delivery and read receipts</h2>
 <ul><li>Server to sender: <code>message.status</code> events (<code>DELIVERED</code>, <code>READ</code>) update the row's <code>status</code>. Statuses only move forward. Ignore a late event that would move a status back.</li><li>Receiver to server: batch read receipts (for example, send the highest <code>seq</code> read, not one call per message) and debounce them (wait a short time, then send once). If <code>READ</code> arrives before <code>DELIVERED</code>, keep <code>READ</code>. The forward-only rule makes the late <code>DELIVERED</code> change nothing.</li><li>Groups: store counts or a per-user map on the server. The client mostly needs "delivered to all" or "read by N".</li></ul>
 <h2 id="8-battery-data-and-platform-limits">8. Battery, data and platform limits</h2>
@@ -133,27 +133,27 @@ fun pagingSource(id: String): PagingSource&lt;Int, MessageEntity&gt;</code></pre
 <p>  - For chat, send a visible alert push with <code>mutable-content: 1</code>. Let a Notification Service Extension (code iOS runs to change a push before it shows) fetch or decrypt the message. It must finish within its time limit, and fall back to generic text.   - Apple's guide says the limit is about 30 seconds. When time is nearly up, the expiry callback must hand back whatever it has. The system shows the original content only if the handler is never called.   - The rule "the push is a hint, and sync fills the gap" still applies.</p>
 <ul><li><strong>No socket in the background.</strong> Close the WebSocket when the app leaves the foreground. Use <code>beginBackgroundTask</code> to finish a send in progress.</li><li><strong>Dedupe is the same.</strong> A unique <code>clientId</code> constraint turns duplicate inserts into one row.</li><li><strong>Retries need a count.</strong> Android has WorkManager backoff. On iOS, keep an <code>attemptCount</code> on the row. After 8 failed tries, mark it <code>FAILED</code> so it cannot block the queue.</li><li><strong>Send from a file when you can.</strong> A background URLSession upload task must read its body from a file. The system can finish it while the app is suspended. A force-quit cancels it, so the next launch drains the outbox again.</li><li><strong>Push headers.</strong> An alert push uses <code>apns-push-type: alert</code> and <code>apns-priority: 10</code>. A silent push uses <code>apns-push-type: background</code>, <code>content-available: 1</code> and <code>apns-priority: 5</code>.</li></ul>
 <p>  - In SwiftData, <code>@Attribute(.unique)</code> upserts on save for primitive-typed properties, per <a href="https://developer.apple.com/videos/play/wwdc2023/10195/">WWDC23 session 10195</a>.   - Adding it to an existing store needs a custom migration stage that removes duplicates first.   - I would check CloudKit support before relying on it. Test on your target OS.</p>
-<pre tabindex="0"><code>// Sketch: outbox drain on iOS (trigger it from send, foreground, reachability, push)
-actor Outbox {
-    private var draining = false, rerun = false     // reentrancy guard: triggers overlap
-    // `store` is a @ModelActor (or a GRDB/Core Data actor); do not share a ModelContext across isolation domains.
-    func drain() async {
-        if draining { rerun = true; return }        // a trigger during a drain asks for one more pass
-        draining = true
-        defer { draining = false }
+<pre tabindex="0"><code><span class="tk-com">// Sketch: outbox drain on iOS (trigger it from send, foreground, reachability, push)</span>
+<span class="tk-kw">actor</span> <span class="tk-ty">Outbox</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> draining = <span class="tk-kw">false</span>, rerun = <span class="tk-kw">false</span>     <span class="tk-com">// reentrancy guard: triggers overlap</span>
+    <span class="tk-com">// `store` is a @ModelActor (or a GRDB/Core Data actor); do not share a ModelContext across isolation domains.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">drain</span>() <span class="tk-kw">async</span> {
+        <span class="tk-kw">if</span> draining { rerun = <span class="tk-kw">true</span>; <span class="tk-kw">return</span> }        <span class="tk-com">// a trigger during a drain asks for one more pass</span>
+        draining = <span class="tk-kw">true</span>
+        <span class="tk-kw">defer</span> { draining = <span class="tk-kw">false</span> }
         repeat {
-            rerun = false
-            for msg in await store.pending() {      // ordered by createdAt
-                do {
-                    let ack = try await api.send(msg.conversationId, clientId: msg.clientId, body: msg.body)
-                    await store.markSent(msg.clientId, serverId: ack.serverId, seq: ack.seq)
-                } catch where error.isTransient {
-                    return                          // keep order; retry on the next trigger
-                } catch {
-                    await store.markFailed(msg.clientId)
+            rerun = <span class="tk-kw">false</span>
+            <span class="tk-kw">for</span> msg <span class="tk-kw">in</span> <span class="tk-kw">await</span> store.<span class="tk-fn">pending</span>() {      <span class="tk-com">// ordered by createdAt</span>
+                <span class="tk-kw">do</span> {
+                    <span class="tk-kw">let</span> ack = <span class="tk-kw">try</span> <span class="tk-kw">await</span> api.<span class="tk-fn">send</span>(msg.conversationId, clientId: msg.clientId, body: msg.body)
+                    <span class="tk-kw">await</span> store.<span class="tk-fn">markSent</span>(msg.clientId, serverId: ack.serverId, seq: ack.seq)
+                } <span class="tk-kw">catch</span> <span class="tk-kw">where</span> error.isTransient {
+                    <span class="tk-kw">return</span>                          <span class="tk-com">// keep order; retry on the next trigger</span>
+                } <span class="tk-kw">catch</span> {
+                    <span class="tk-kw">await</span> store.<span class="tk-fn">markFailed</span>(msg.clientId)
                 }
             }
-        } while rerun
+        } <span class="tk-kw">while</span> rerun
     }
 }</code></pre>
 <h2 id="10-more-practice-prompts">10. More practice prompts</h2>

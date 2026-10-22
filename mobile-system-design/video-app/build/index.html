@@ -23,27 +23,27 @@
 <div class="tw" tabindex="0" role="region" aria-label="Table 3, scrollable"><table><thead><tr><th>Assumption</th><th>Arithmetic</th><th>What it decides</th></tr></thead><tbody><tr><td>Cellular default rung 730 kbit/s, Wi-Fi default 2,000 kbit/s</td><td>730 / 8 = 91 KB/s, about 5.5 MB a minute, 330 MB an hour. 2,000 / 8 = 250 KB/s, 15 MB a minute, 900 MB an hour</td><td>The quality picker shows the size before a download. Cellular downloads ask for a confirmation</td></tr><tr><td>Preload 3 seconds of each neighbour (the next and previous video) at 2,000 kbit/s</td><td>3 s x 250 KB/s = 750 KB each. Two neighbours: 1.5 MB. Ten skipped positions: 15 MB</td><td>Preload only on unmetered links. On cellular, choose the tracks (audio and video streams) and stop there</td></tr><tr><td>Save progress on the phone every 30 s, in a two-hour film</td><td>7,200 s / 30 s = 240 saves, each tiny</td><td>Save often on the device. Upload on pause, on leaving, and about once a minute</td></tr></tbody></table></div>
 <p>The code uses <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> 2.x (<code>androidx.room</code>), the Android library for the database on the phone. The official <a href="https://developer.android.com/training/data-storage/room">Room guide</a> now shows Room 3 (<code>androidx.room3</code>, KSP only). I checked the code for Media3 (the Android media library) against Media3 1.9.0. The newest stable release is 1.11.1. Versions 1.10 and 1.11 changed <code>MediaSessionService</code> and <code>MediaSession</code> threading. Build the code again (recompile) before you copy it.</p>
 <h2 id="1-local-schema-room">1. Local schema (Room)</h2>
-<pre tabindex="0"><code>@Entity(tableName = &quot;videos&quot;)
-data class VideoEntity(
-    @PrimaryKey val id: String,
-    val title: String,
-    val thumbnailUrl: String,
-    val durationMs: Long,
-    val manifestUrl: String?,          // fetched lazily
+<pre tabindex="0"><code><span class="tk-ann">@Entity</span>(tableName = <span class="tk-str">"videos"</span>)
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">VideoEntity</span>(
+    <span class="tk-ann">@PrimaryKey</span> <span class="tk-kw">val</span> id: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> title: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> thumbnailUrl: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> durationMs: <span class="tk-ty">Long</span>,
+    <span class="tk-kw">val</span> manifestUrl: <span class="tk-ty">String</span>?,          <span class="tk-com">// fetched lazily</span>
 )
 
-@Entity(tableName = &quot;playback_progress&quot;)
-data class ProgressEntity(
-    @PrimaryKey val videoId: String,
-    val positionMs: Long,
-    val updatedAt: Long,               // server-stamped on every successful PUT
-    val dirty: Boolean,                // changed locally, not yet uploaded
+<span class="tk-ann">@Entity</span>(tableName = <span class="tk-str">"playback_progress"</span>)
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">ProgressEntity</span>(
+    <span class="tk-ann">@PrimaryKey</span> <span class="tk-kw">val</span> videoId: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> positionMs: <span class="tk-ty">Long</span>,
+    <span class="tk-kw">val</span> updatedAt: <span class="tk-ty">Long</span>,               <span class="tk-com">// server-stamped on every successful PUT</span>
+    <span class="tk-kw">val</span> dirty: <span class="tk-ty">Boolean</span>,                <span class="tk-com">// changed locally, not yet uploaded</span>
 )</code></pre>
 <p>The app tracks downloads in a separate place (state, bytes, license expiry). The <a class="gl" href="/glossary/#repository" title="The class that reads and writes data for the rest of the app.">repository</a> (the code that gets data) turns the database rows into models that never change. It uses <code>Flow</code> (a stream of updates) to watch data.</p>
 <h2 id="2-rest">2. REST</h2>
-<pre tabindex="0"><code>GET /v1/feed?cursor=&lt;opaque&gt;&amp;limit=10&amp;fields=id,title,channel.name,thumb,durationMs
-GET /v1/videos/{id}/playback   → { manifestUrl, drm: {type, licenseUrl}?, resumeMs }
-PUT /v1/videos/{id}/progress   → { positionMs, deviceId }   // server stamps updatedAt</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">GET</span> /v1/feed?cursor=&lt;opaque&gt;&amp;limit=<span class="tk-num">10</span>&amp;fields=id,title,channel.name,thumb,durationMs
+<span class="tk-ty">GET</span> /v1/videos/{id}/playback   → { manifestUrl, drm: {type, licenseUrl}?, resumeMs }
+<span class="tk-ty">PUT</span> /v1/videos/{id}/progress   → { positionMs, deviceId }   <span class="tk-com">// server stamps updatedAt</span></code></pre>
 <p>Three details matter:</p>
 <ul><li><strong>Field selection on the feed.</strong> A feed row needs a thumbnail, title, channel and duration. It does not need descriptions, caption lists or manifest URLs. Let the app name the fields (<code>fields=</code>, or a GraphQL selection), so a list of ten items stays small. The feed uses a cursor (a saved position in the list), and <a class="gl" href="/glossary/#paging" title="Loading a long list in small parts.">paging</a> works like the <a href="/mobile-system-design/news-feed/">news feed case</a>.</li><li><strong>Manifest on demand.</strong> Call <code>/playback</code> when a video is about to play or preload, not for every row. Signed URLs (links with a time limit) expire, so a late call avoids old links.</li><li><strong>Progress as a PUT of an absolute position.</strong> It is <a class="gl" href="/glossary/#idempotent" title="Doing it twice has the same result as doing it once.">idempotent</a> (doing it twice has the same result as doing it once), so a retry (sending the request again after a failure) is safe. The server adds <code>updatedAt</code>. I do not send a time from the phone, because phone clocks are not exact. Section 10 has the rule for conflicts.</li></ul>
 <h2 id="3-hls-dash-and-what-packaging-must-give-the-client">3. HLS, DASH and what packaging must give the client</h2>
@@ -59,35 +59,35 @@ PUT /v1/videos/{id}/progress   → { positionMs, deviceId }   // server stamps u
 <p>The <code>AndroidManifest.xml</code> file needs two permissions: <code>FOREGROUND_SERVICE</code> and <code>FOREGROUND_SERVICE_MEDIA_PLAYBACK</code>. The service declares <code>foregroundServiceType="mediaPlayback"</code>. It also declares the <code>androidx.media3.session.MediaSessionService</code> intent filter (<a href="https://developer.android.com/media/media3/session/background-playback">background playback guide</a>). A <a class="gl" href="/glossary/#foreground-service" title="An Android service that shows a notification while it works.">foreground service</a> is a service that the user can see through a notification. If any part is missing, the service fails when it tries to start in the foreground.</p>
 <p>Android 17 adds stricter rules. The <a href="https://developer.android.com/about/versions/17/behavior-changes-all">Android 17 behavior changes</a> say audio playback and volume APIs fail with no error when the app is not in a valid lifecycle. Audio focus (the system rule for which app plays sound) requests return <code>AUDIOFOCUS_REQUEST_FAILED</code>.</p>
 <p>For apps that target API 37, the foreground service must also have while-in-use capabilities. So I start playback from a user action, and I test on an Android 17 device. I only read the documents for this.</p>
-<pre tabindex="0"><code>// Sketch: player owned by a service, backed by a size-capped cache
-// Pattern from the Media3 background playback guide (Apache 2.0), with a cache factory added
-class PlaybackService : MediaSessionService() {
-    private var session: MediaSession? = null
+<pre tabindex="0"><code><span class="tk-com">// Sketch: player owned by a service, backed by a size-capped cache</span>
+<span class="tk-com">// Pattern from the Media3 background playback guide (Apache 2.0), with a cache factory added</span>
+<span class="tk-kw">class</span> <span class="tk-ty">PlaybackService</span> : <span class="tk-ty">MediaSessionService</span>() {
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> session: <span class="tk-ty">MediaSession</span>? = <span class="tk-kw">null</span>
 
-    override fun onCreate() {
-        super.onCreate()
-        val cacheFactory = CacheDataSource.Factory()
-            .setCache(VideoCache.get(this))                       // app-defined singleton SimpleCache
-            .setUpstreamDataSourceFactory(DefaultHttpDataSource.Factory())
-        val player = ExoPlayer.Builder(this)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(this).setDataSourceFactory(cacheFactory))
-            .build()
-        player.setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                .build(),
-            /* handleAudioFocus= */ true,
+    <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">onCreate</span>() {
+        <span class="tk-kw">super</span>.<span class="tk-fn">onCreate</span>()
+        <span class="tk-kw">val</span> cacheFactory = <span class="tk-ty">CacheDataSource</span>.<span class="tk-ty">Factory</span>()
+            .<span class="tk-fn">setCache</span>(<span class="tk-ty">VideoCache</span>.<span class="tk-kw">get</span>(<span class="tk-kw">this</span>))                       <span class="tk-com">// app-defined singleton SimpleCache</span>
+            .<span class="tk-fn">setUpstreamDataSourceFactory</span>(<span class="tk-ty">DefaultHttpDataSource</span>.<span class="tk-ty">Factory</span>())
+        <span class="tk-kw">val</span> player = <span class="tk-ty">ExoPlayer</span>.<span class="tk-ty">Builder</span>(<span class="tk-kw">this</span>)
+            .<span class="tk-fn">setMediaSourceFactory</span>(<span class="tk-ty">DefaultMediaSourceFactory</span>(<span class="tk-kw">this</span>).<span class="tk-fn">setDataSourceFactory</span>(cacheFactory))
+            .<span class="tk-fn">build</span>()
+        player.<span class="tk-fn">setAudioAttributes</span>(
+            <span class="tk-ty">AudioAttributes</span>.<span class="tk-ty">Builder</span>()
+                .<span class="tk-fn">setUsage</span>(<span class="tk-ty">C</span>.<span class="tk-ty">USAGE_MEDIA</span>)
+                .<span class="tk-fn">setContentType</span>(<span class="tk-ty">C</span>.<span class="tk-ty">AUDIO_CONTENT_TYPE_MOVIE</span>)
+                .<span class="tk-fn">build</span>(),
+            <span class="tk-com">/* handleAudioFocus= */</span> <span class="tk-kw">true</span>,
         )
-        session = MediaSession.Builder(this, player).build()
+        session = <span class="tk-ty">MediaSession</span>.<span class="tk-ty">Builder</span>(<span class="tk-kw">this</span>, player).<span class="tk-fn">build</span>()
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = session
+    <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">onGetSession</span>(controllerInfo: <span class="tk-ty">MediaSession</span>.<span class="tk-ty">ControllerInfo</span>): <span class="tk-ty">MediaSession</span>? = session
 
-    override fun onDestroy() {
-        session?.run { player.release(); release() }
-        session = null
-        super.onDestroy()
+    <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">onDestroy</span>() {
+        session?.run { player.<span class="tk-fn">release</span>(); <span class="tk-fn">release</span>() }
+        session = <span class="tk-kw">null</span>
+        <span class="tk-kw">super</span>.<span class="tk-fn">onDestroy</span>()
     }
 }</code></pre>
 <p>By default the service keeps running when playback is on and the user swipes the app away. The documents show how to override <code>onTaskRemoved</code> with <code>pauseAllPlayersAndStopSelf()</code> if you want it to stop. The sketch above does not do this.</p>
@@ -99,16 +99,16 @@ class PlaybackService : MediaSessionService() {
 <h2 id="6-preloading-the-next-video">6. Preloading the next video</h2>
 <p>To preload means to load part of a video before the user needs it. Media3's <code>DefaultPreloadManager</code> preloads videos by their distance from the playing video. Your app decides how much of each.</p>
 <p>In the Media3 sample, the next and previous videos get 3 seconds loaded. The video two away only gets its tracks selected (audio and video streams chosen). Videos three and four away only have their source prepared. Use these numbers as a first guess.</p>
-<pre tabindex="0"><code>// Sketch, adapted from the Media3 preloading docs sample (Apache 2.0). The app must keep currentPlayingIndex current.
-class FeedPreloadControl(var currentPlayingIndex: Int = 0):
-    TargetPreloadStatusControl&lt;Int, DefaultPreloadManager.PreloadStatus&gt; {
+<pre tabindex="0"><code><span class="tk-com">// Sketch, adapted from the Media3 preloading docs sample (Apache 2.0). The app must keep currentPlayingIndex current.</span>
+<span class="tk-kw">class</span> <span class="tk-ty">FeedPreloadControl</span>(<span class="tk-kw">var</span> currentPlayingIndex: <span class="tk-ty">Int</span> = <span class="tk-num">0</span>):
+    <span class="tk-ty">TargetPreloadStatusControl</span>&lt;<span class="tk-ty">Int</span>, <span class="tk-ty">DefaultPreloadManager</span>.<span class="tk-ty">PreloadStatus</span>&gt; {
 
-    override fun getTargetPreloadStatus(index: Int): DefaultPreloadManager.PreloadStatus =
-        when (abs(index - currentPlayingIndex)) {
-            1 -&gt; DefaultPreloadManager.PreloadStatus.specifiedRangeLoaded(3000L)
-            2 -&gt; DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_TRACKS_SELECTED
-            3, 4 -&gt; DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_SOURCE_PREPARED
-            else -&gt; DefaultPreloadManager.PreloadStatus.PRELOAD_STATUS_NOT_PRELOADED
+    <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">getTargetPreloadStatus</span>(index: <span class="tk-ty">Int</span>): <span class="tk-ty">DefaultPreloadManager</span>.<span class="tk-ty">PreloadStatus</span> =
+        <span class="tk-kw">when</span> (<span class="tk-fn">abs</span>(index - currentPlayingIndex)) {
+            <span class="tk-num">1</span> -&gt; <span class="tk-ty">DefaultPreloadManager</span>.<span class="tk-ty">PreloadStatus</span>.<span class="tk-fn">specifiedRangeLoaded</span>(<span class="tk-num">3000L</span>)
+            <span class="tk-num">2</span> -&gt; <span class="tk-ty">DefaultPreloadManager</span>.<span class="tk-ty">PreloadStatus</span>.<span class="tk-ty">PRELOAD_STATUS_TRACKS_SELECTED</span>
+            <span class="tk-num">3</span>, <span class="tk-num">4</span> -&gt; <span class="tk-ty">DefaultPreloadManager</span>.<span class="tk-ty">PreloadStatus</span>.<span class="tk-ty">PRELOAD_STATUS_SOURCE_PREPARED</span>
+            <span class="tk-kw">else</span> -&gt; <span class="tk-ty">DefaultPreloadManager</span>.<span class="tk-ty">PreloadStatus</span>.<span class="tk-ty">PRELOAD_STATUS_NOT_PRELOADED</span>
         }
 }</code></pre>
 <p>Build the player with <code>buildExoPlayer()</code> on the same <code>DefaultPreloadManager.Builder</code>. The service sketch above uses a plain builder to keep the code short. Limit the total memory that preloading can use through the load control of the preload manager. The Media3 preloading page shows the exact setting. On cellular, or in data saver mode (a phone setting that reduces data use), return a lighter status from this control. You can also return not preloaded.</p>
@@ -130,29 +130,29 @@ class FeedPreloadControl(var currentPlayingIndex: Int = 0):
 <ul><li>Media3 supports Widevine with the two Common Encryption types (schemes): <code>cenc</code> from API 19 and <code>cbcs</code> from API 25, with DASH and with HLS in fragmented MP4. FairPlay is the iOS equivalent. It works through <code>AVContentKeySession</code>.</li><li>For offline play, the app stores a persistent license (a license saved on the device). On Android the key set ID goes on the download request and on the <code>MediaItem.DrmConfiguration</code>. On iOS, <code>AVContentKeySession</code> supports persistable keys (keys that can be saved). It also has APIs to get an expiration date and to invalidate keys (make them stop working). A FairPlay key request sends a request blob from the device to your license server and gets a response blob back. You need your own FairPlay app certificate. Test on a real device.</li><li>Only one offline key set works for each playback (a known Media3 issue). Content with several keys works offline only if the server returns all keys in one response.</li><li>Licenses expire. Store the expiry, show it in the downloads list, and renew the license while online. Show a clear message for "license expired, no network", not a generic player error.</li></ul>
 <h2 id="8-buffering-policy-network-switching-and-data-limits">8. Buffering policy, network switching and data limits</h2>
 <ul><li><strong>Bandwidth caps.</strong> On Android, <code>TrackSelectionParameters</code> accepts limits. It applies them to every video in a playlist. <code>setMaxVideoSizeSd()</code> is the documented example. By default ExoPlayer limits video resolution (picture size) to the display size.</li><li><strong>iOS caps.</strong> <code>AVPlayerItem</code> has <code>preferredPeakBitRate</code>. It also has a separate <code>preferredPeakBitRateForExpensiveNetworks</code>, and matching settings for resolution. You can cap expensive networks (cellular, and Wi-Fi hotspots) without your own network code. That property reacts only to expensive paths.</li><li><strong>Data saver signals.</strong> Android's Data Saver depends on metered links (links that cost the user data or money): check <code>isActiveNetworkMetered()</code> first, then the three restrict-background states (<a href="https://developer.android.com/training/basics/network-ops/data-saver">Data Saver</a>). On iOS, <code>NWPath.isConstrained</code> is documented as the signal for Low Data Mode. Send whichever signal you use into the <code>dataSaver</code> flag (an on-off setting) below.</li><li><strong>Data saver policy.</strong> Lower the cap, stop preloading, and stop feed autoplay.</li><li><strong>Buffer size.</strong> A bigger buffer (video data loaded ahead) protects against stalls but wastes data if the user leaves. ExoPlayer has a <code>LoadControl</code> for the buffering policy.</li><li><strong>iOS buffer.</strong> <code>preferredForwardBufferDuration</code> sets how far ahead the player loads. <code>automaticallyWaitsToMinimizeStalling</code> is on by default. It delays playback when a stall looks likely.</li><li><strong>Network switches.</strong> Let the player retry and change bitrate by itself. Show a spinner only after a short delay. Never create the player again when the connection changes.</li></ul>
-<pre tabindex="0"><code>// Sketch: one long-lived player; per-item limits for data saver
-@MainActor final class PlaybackController {
-    let player = AVPlayer()
+<pre tabindex="0"><code><span class="tk-com">// Sketch: one long-lived player; per-item limits for data saver</span>
+<span class="tk-ann">@MainActor</span> <span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">PlaybackController</span> {
+    <span class="tk-kw">let</span> player = <span class="tk-ty">AVPlayer</span>()
 
-    func configureSession() {
-        // Playback category; background audio also needs the Audio, AirPlay, and Picture in Picture background mode.
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+    <span class="tk-kw">func</span> <span class="tk-fn">configureSession</span>() {
+        <span class="tk-com">// Playback category; background audio also needs the Audio, AirPlay, and Picture in Picture background mode.</span>
+        <span class="tk-kw">try</span>? <span class="tk-ty">AVAudioSession</span>.<span class="tk-fn">sharedInstance</span>().<span class="tk-fn">setCategory</span>(.playback, mode: .moviePlayback)
     }
 
-    func play(_ url: URL, dataSaver: Bool) {
-        let item = AVPlayerItem(url: url)
-        if dataSaver {
-            item.preferredPeakBitRateForExpensiveNetworks = 1_500_000   // iOS 15+, example value
-            item.preferredForwardBufferDuration = 5                     // seconds, example value
+    <span class="tk-kw">func</span> <span class="tk-fn">play</span>(_ url: <span class="tk-ty">URL</span>, dataSaver: <span class="tk-ty">Bool</span>) {
+        <span class="tk-kw">let</span> item = <span class="tk-ty">AVPlayerItem</span>(url: url)
+        <span class="tk-kw">if</span> dataSaver {
+            item.preferredPeakBitRateForExpensiveNetworks = <span class="tk-num">1_500_000</span>   <span class="tk-com">// iOS 15+, example value</span>
+            item.preferredForwardBufferDuration = <span class="tk-num">5</span>                     <span class="tk-com">// seconds, example value</span>
         }
-        player.replaceCurrentItem(with: item)
-        try? AVAudioSession.sharedInstance().setActive(true)
-        player.play()
+        player.<span class="tk-fn">replaceCurrentItem</span>(with: item)
+        <span class="tk-kw">try</span>? <span class="tk-ty">AVAudioSession</span>.<span class="tk-fn">sharedInstance</span>().<span class="tk-fn">setActive</span>(<span class="tk-kw">true</span>)
+        player.<span class="tk-fn">play</span>()
     }
 
-    func startupSeconds() -&gt; Double? {
-        // Apple: startupTime is negative when unknown
-        player.currentItem?.accessLog()?.events.last.flatMap { $0.startupTime &gt;= 0 ? $0.startupTime : nil }
+    <span class="tk-kw">func</span> <span class="tk-fn">startupSeconds</span>() -&gt; <span class="tk-ty">Double</span>? {
+        <span class="tk-com">// Apple: startupTime is negative when unknown</span>
+        player.currentItem?.<span class="tk-fn">accessLog</span>()?.events.last.flatMap { $<span class="tk-num">0</span>.startupTime &gt;= <span class="tk-num">0</span> ? $<span class="tk-num">0</span>.startupTime : <span class="tk-kw">nil</span> }
     }
 }</code></pre>
 <p>Background audio for a video app: <code>AVPlayerViewController</code> handles it. If you draw with a bare <code>AVPlayerLayer</code>, set the layer's player to <code>nil</code> when the app goes to the background and restore it when the app returns. Then audio keeps playing. Lock screen controls come from <code>MPNowPlayingInfoCenter</code> and <code>MPRemoteCommandCenter</code>.</p>

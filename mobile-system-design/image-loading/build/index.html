@@ -18,24 +18,24 @@
 <h2 id="1-public-api">1. Public API</h2>
 <p>Design the API first, because it forces the lifecycle questions (how long each thing lives). The shape I would use is a request value object plus a target. A value object never changes after it is made. A target is the view or Compose image that shows the picture. Coil's <code>ImageRequest</code> follows the same shape.</p>
 <p>The block below is an illustrative API, not Coil's exact names. For example, Coil's rounded-corners transformation takes a pixel radius, not <code>dp</code>:</p>
-<pre tabindex="0"><code>// Sketch of the public surface
-val request = ImageRequest.Builder(context)
-    .data(&quot;https://cdn.example.com/a.jpg&quot;)
-    .size(ViewSizeResolver(imageView))        // resolve from the view; fall back to display size
-    .transformations(RoundedCorners(8.dp))
-    .placeholder(R.drawable.ph)
-    .error(R.drawable.err)
-    .crossfade(true)
-    .target(imageView)                        // binding + lifecycle live here
-    .build()
+<pre tabindex="0"><code><span class="tk-com">// Sketch of the public surface</span>
+<span class="tk-kw">val</span> request = <span class="tk-ty">ImageRequest</span>.<span class="tk-ty">Builder</span>(context)
+    .<span class="tk-kw">data</span>(<span class="tk-str">"https://cdn.example.com/a.jpg"</span>)
+    .<span class="tk-fn">size</span>(<span class="tk-ty">ViewSizeResolver</span>(imageView))        <span class="tk-com">// resolve from the view; fall back to display size</span>
+    .<span class="tk-fn">transformations</span>(<span class="tk-ty">RoundedCorners</span>(<span class="tk-num">8</span>.dp))
+    .<span class="tk-fn">placeholder</span>(<span class="tk-ty">R</span>.drawable.ph)
+    .<span class="tk-fn">error</span>(<span class="tk-ty">R</span>.drawable.err)
+    .<span class="tk-fn">crossfade</span>(<span class="tk-kw">true</span>)
+    .<span class="tk-fn">target</span>(imageView)                        <span class="tk-com">// binding + lifecycle live here</span>
+    .<span class="tk-fn">build</span>()
 
-val handle: Disposable = imageLoader.enqueue(request)   // cancel() on recycle
+<span class="tk-kw">val</span> handle: <span class="tk-ty">Disposable</span> = imageLoader.<span class="tk-fn">enqueue</span>(request)   <span class="tk-com">// cancel() on recycle</span>
 
-interface ImageLoader {
-    fun enqueue(request: ImageRequest): Disposable                // views: cancel() on recycle
-    suspend fun execute(request: ImageRequest): ImageResult       // non-view callers and tests
-    fun prefetch(request: ImageRequest)                           // no target: warm the caches (used by the feed follow-up)
-    fun trimMemory(level: Int)                                    // host forwards system signals
+<span class="tk-kw">interface</span> <span class="tk-ty">ImageLoader</span> {
+    <span class="tk-kw">fun</span> <span class="tk-fn">enqueue</span>(request: <span class="tk-ty">ImageRequest</span>): <span class="tk-ty">Disposable</span>                <span class="tk-com">// views: cancel() on recycle</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">execute</span>(request: <span class="tk-ty">ImageRequest</span>): <span class="tk-ty">ImageResult</span>       <span class="tk-com">// non-view callers and tests</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">prefetch</span>(request: <span class="tk-ty">ImageRequest</span>)                           <span class="tk-com">// no target: warm the caches (used by the feed follow-up)</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">trimMemory</span>(level: <span class="tk-ty">Int</span>)                                    <span class="tk-com">// host forwards system signals</span>
 }</code></pre>
 <p>Points to say out loud:</p>
 <ul><li><strong>A request is a value object.</strong> It never changes, you can compare it, and it is cheap to build. So a list adapter can create one for each bind.</li><li><strong>The target owns binding.</strong> The loader writes to the target only if the request is still the current request of that target. This fixes the recycled-row bug (section 4).</li><li><strong>The host owns the lifecycle and the memory budget.</strong> The host is the app that uses the library. The library takes a lifecycle and a memory limit. It does not guess either.</li><li><strong>Inject the loader.</strong> Callers depend on an interface, so tests and the app can swap the implementation. Use constructor injection (the app passes the loader in) with a Hilt-provided singleton. Call <code>enqueue</code> from the UI layer. <code>prefetch</code> also comes from the UI, or from a data-layer class, never from a <a class="gl" href="/glossary/#viewmodel" title="A class that holds the state of one screen.">ViewModel</a> that holds a <code>Context</code>.</li></ul>
@@ -52,41 +52,41 @@ interface ImageLoader {
 <ul><li><strong>Include size.</strong> For example, a 100px thumbnail and a 1080px hero (example sizes) from the same URL are different bitmaps. Without size in the key, you show a blurry hero or waste memory on a huge thumbnail.</li><li><strong>Include transforms.</strong> A rounded version and a plain version are different results.</li><li><strong>A disk cache can use a looser key.</strong> You can store the original encoded bytes under the URL key and decode again for each size. Or you can store each processed result. The first costs CPU for every decode. The second costs disk space. Glide's default for remote images is to store the unmodified original.</li><li><strong>Use a version in the URL or a signature. Do not guess.</strong> If the server replaces an avatar at the same URL, the cache serves old pixels until it evicts them (removes them to make room). You need a <a class="gl" href="/glossary/#hash" title="A short code made from the bytes of a file.">content hash</a> in the URL or an explicit signature.</li></ul>
 <h3 id="memory-lru-and-request-coalescing-sketch">Memory LRU and request coalescing (sketch)</h3>
 <p>The trim thresholds below are my example values. The <code>LruCache</code> use follows the sizing idea in the Android <a href="https://developer.android.com/topic/performance/graphics/cache-bitmap">cache bitmaps</a> guide. The key object, <code>allocationByteCount</code> and the trim logic are mine.</p>
-<pre tabindex="0"><code>data class CacheKey(val source: String, val width: Int, val height: Int, val transforms: List&lt;String&gt;)
+<pre tabindex="0"><code><span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">CacheKey</span>(<span class="tk-kw">val</span> source: <span class="tk-ty">String</span>, <span class="tk-kw">val</span> width: <span class="tk-ty">Int</span>, <span class="tk-kw">val</span> height: <span class="tk-ty">Int</span>, <span class="tk-kw">val</span> transforms: <span class="tk-ty">List</span>&lt;<span class="tk-ty">String</span>&gt;)
 
-class MemoryCache(maxBytes: Int) {
-    private val lru = object : LruCache&lt;CacheKey, Bitmap&gt;(maxBytes) {
-        override fun sizeOf(key: CacheKey, value: Bitmap) = value.allocationByteCount  // bytes, not entry count
+<span class="tk-kw">class</span> <span class="tk-ty">MemoryCache</span>(maxBytes: <span class="tk-ty">Int</span>) {
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> lru = <span class="tk-kw">object</span> : <span class="tk-ty">LruCache</span>&lt;<span class="tk-ty">CacheKey</span>, <span class="tk-ty">Bitmap</span>&gt;(maxBytes) {
+        <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">sizeOf</span>(key: <span class="tk-ty">CacheKey</span>, <span class="tk-kw">value</span>: <span class="tk-ty">Bitmap</span>) = <span class="tk-kw">value</span>.allocationByteCount  <span class="tk-com">// bytes, not entry count</span>
     }
-    fun get(k: CacheKey) = lru.get(k)
-    fun put(k: CacheKey, b: Bitmap) { lru.put(k, b) }
-    fun trim(level: Int) {
-        if (level &gt;= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND) lru.evictAll()
-        else if (level &gt;= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) lru.trimToSize(lru.size() / 2)
+    <span class="tk-kw">fun</span> <span class="tk-kw">get</span>(k: <span class="tk-ty">CacheKey</span>) = lru.<span class="tk-kw">get</span>(k)
+    <span class="tk-kw">fun</span> <span class="tk-fn">put</span>(k: <span class="tk-ty">CacheKey</span>, b: <span class="tk-ty">Bitmap</span>) { lru.<span class="tk-fn">put</span>(k, b) }
+    <span class="tk-kw">fun</span> <span class="tk-fn">trim</span>(level: <span class="tk-ty">Int</span>) {
+        <span class="tk-kw">if</span> (level &gt;= <span class="tk-ty">ComponentCallbacks2</span>.<span class="tk-ty">TRIM_MEMORY_BACKGROUND</span>) lru.<span class="tk-fn">evictAll</span>()
+        <span class="tk-kw">else</span> <span class="tk-kw">if</span> (level &gt;= <span class="tk-ty">ComponentCallbacks2</span>.<span class="tk-ty">TRIM_MEMORY_UI_HIDDEN</span>) lru.<span class="tk-fn">trimToSize</span>(lru.<span class="tk-fn">size</span>() / <span class="tk-num">2</span>)
     }
 }
 
-class Coalescer(external: CoroutineScope) {
-    // Same context as the injected scope, but a SupervisorJob: one failed fetch must not cancel the others.
-    private val scope = CoroutineScope(external.coroutineContext + SupervisorJob(external.coroutineContext[Job]))
-    private val inFlight = HashMap&lt;CacheKey, Deferred&lt;Bitmap&gt;&gt;()   // guard with a lock or a single-thread dispatcher
-    private val waiters = HashMap&lt;CacheKey, Int&gt;()
+<span class="tk-kw">class</span> <span class="tk-ty">Coalescer</span>(<span class="tk-kw">external</span>: <span class="tk-ty">CoroutineScope</span>) {
+    <span class="tk-com">// Same context as the injected scope, but a SupervisorJob: one failed fetch must not cancel the others.</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> scope = <span class="tk-ty">CoroutineScope</span>(<span class="tk-kw">external</span>.coroutineContext + <span class="tk-ty">SupervisorJob</span>(<span class="tk-kw">external</span>.coroutineContext[<span class="tk-ty">Job</span>]))
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> inFlight = <span class="tk-ty">HashMap</span>&lt;<span class="tk-ty">CacheKey</span>, <span class="tk-ty">Deferred</span>&lt;<span class="tk-ty">Bitmap</span>&gt;&gt;()   <span class="tk-com">// guard with a lock or a single-thread dispatcher</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> waiters = <span class="tk-ty">HashMap</span>&lt;<span class="tk-ty">CacheKey</span>, <span class="tk-ty">Int</span>&gt;()
 
-    suspend fun load(key: CacheKey, work: suspend () -&gt; Bitmap): Bitmap {
-        val job = synchronized(this) {
-            waiters.merge(key, 1, Int::plus)
-            inFlight.getOrPut(key) {
-                scope.async {
-                    val me = coroutineContext[Job]
-                    try { work() } finally { synchronized(this@Coalescer) { inFlight.remove(key, me) } }   // only our own entry, never a newer one
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">load</span>(key: <span class="tk-ty">CacheKey</span>, work: <span class="tk-kw">suspend</span> () -&gt; <span class="tk-ty">Bitmap</span>): <span class="tk-ty">Bitmap</span> {
+        <span class="tk-kw">val</span> job = <span class="tk-fn">synchronized</span>(<span class="tk-kw">this</span>) {
+            waiters.<span class="tk-fn">merge</span>(key, <span class="tk-num">1</span>, <span class="tk-ty">Int</span>::plus)
+            inFlight.<span class="tk-fn">getOrPut</span>(key) {
+                scope.<span class="tk-kw">async</span> {
+                    <span class="tk-kw">val</span> me = coroutineContext[<span class="tk-ty">Job</span>]
+                    <span class="tk-kw">try</span> { <span class="tk-fn">work</span>() } <span class="tk-kw">finally</span> { <span class="tk-fn">synchronized</span>(<span class="tk-kw">this</span><span class="tk-ann">@Coalescer</span>) { inFlight.<span class="tk-fn">remove</span>(key, me) } }   <span class="tk-com">// only our own entry, never a newer one</span>
                 }
-            }                                                      // first caller starts the work
+            }                                                      <span class="tk-com">// first caller starts the work</span>
         }
-        try { return job.await() }
-        finally {
-            synchronized(this) {
-                if (waiters.merge(key, -1, Int::plus) == 0) {      // last waiter left: cancel the work
-                    waiters.remove(key); inFlight.remove(key)?.cancel()
+        <span class="tk-kw">try</span> { <span class="tk-kw">return</span> job.<span class="tk-kw">await</span>() }
+        <span class="tk-kw">finally</span> {
+            <span class="tk-fn">synchronized</span>(<span class="tk-kw">this</span>) {
+                <span class="tk-kw">if</span> (waiters.<span class="tk-fn">merge</span>(key, -<span class="tk-num">1</span>, <span class="tk-ty">Int</span>::plus) == <span class="tk-num">0</span>) {      <span class="tk-com">// last waiter left: cancel the work</span>
+                    waiters.<span class="tk-fn">remove</span>(key); inFlight.<span class="tk-fn">remove</span>(key)?.<span class="tk-fn">cancel</span>()
                 }
             }
         }
@@ -118,57 +118,57 @@ class Coalescer(external: CoroutineScope) {
 <div class="tw" tabindex="0" role="region" aria-label="Table 2, scrollable"><table><thead><tr><th>Concern</th><th>Android</th><th>iOS</th></tr></thead><tbody><tr><td>Memory cache</td><td><code>LruCache</code> (byte-sized)</td><td><code>NSCache</code> with <code>totalCostLimit</code></td></tr><tr><td>Disk / HTTP cache</td><td>Own LRU or OkHttp cache</td><td><code>URLCache</code>, or your own file cache</td></tr><tr><td>Downsample</td><td><code>inSampleSize</code> / <code>ImageDecoder</code></td><td>ImageIO <code>CGImageSourceCreateThumbnailAtIndex</code></td></tr><tr><td>Memory signal</td><td><code>onTrimMemory</code></td><td><code>didReceiveMemoryWarningNotification</code></td></tr><tr><td>Cancellation</td><td><code>Disposable</code> / coroutine <code>Job</code></td><td><code>Task</code> cancellation, <code>prepareForReuse</code></td></tr><tr><td>Pool</td><td><code>BitmapPool</code> / <code>inBitmap</code></td><td>None; rely on ImageIO and system decoding</td></tr><tr><td>Libraries</td><td>Coil, Glide</td><td>Nuke, Kingfisher</td></tr></tbody></table></div>
 <p><strong>What is really different:</strong></p>
 <ul><li><strong>Downsample with ImageIO (Apple's image decoding framework), not <code>UIImage</code>.</strong> <code>CGImageSourceCreateThumbnailAtIndex</code> with <code>kCGImageSourceThumbnailMaxPixelSize</code> makes a reduced image without first building the full-size bitmap. Without a max pixel size, the thumbnail can be as big as the image. Use the size in pixels, not points: multiply by the screen scale.</li><li><strong>Set the thumbnail flags.</strong> Set <code>kCGImageSourceCreateThumbnailFromImageAlways</code> to true. Add <code>kCGImageSourceShouldCacheImmediately</code>, so the decode happens on your background queue and not at the first draw. Apple documents that flag for other calls, so this part is common practice, not a promise. Add <code>kCGImageSourceCreateThumbnailWithTransform</code> to apply the EXIF (photo metadata) orientation.</li><li><strong>Memory signals are coarser.</strong> UIKit posts <code>didReceiveMemoryWarningNotification</code> and calls <code>didReceiveMemoryWarning()</code>. Apple's page for the notification says it has no <code>userInfo</code> dictionary, so it carries no level. I treat it as one signal: drop most of the cache on the warning and when the app enters the background. A Dispatch memory-pressure source (<code>DispatchSource.makeMemoryPressureSource</code>) can warn earlier. I have not tested how it behaves on iOS, so measure before you rely on it.</li><li><strong><code>NSCache</code> evicts for you</strong>, but Apple says the cost limit is not strict. An object may be evicted at once, later or never. The default limit is 0 (no limit), so set one, and still clear on a memory warning.</li><li><strong><code>URLCache</code> gives you HTTP caching</strong> (including conditional requests) with a memory and disk capacity that you set. Default sessions use the shared cache. Background sessions default to <code>nil</code>. So a simple iOS loader can rely on it for the encoded bytes, and cache only the decoded images itself.</li><li><strong>Reuse.</strong> In <code>UICollectionView</code> cells, cancel in <code>prepareForReuse</code> and check the request token before assigning.</li></ul>
-<pre tabindex="0"><code>// Sketch: memory cache + coalescing in one actor. Not production code.
-// Swift 6 needs an SDK where UIImage is Sendable; otherwise wrap it in a Sendable box.
-struct CacheKey: Hashable {
-    let url: URL; let pixelSize: Int; let transforms: [String]
-    var nsKey: NSString { &quot;\(url.absoluteString)|\(pixelSize)|\(transforms.joined(separator: &quot;,&quot;))&quot; as NSString }  // stable, unlike hashValue
+<pre tabindex="0"><code><span class="tk-com">// Sketch: memory cache + coalescing in one actor. Not production code.</span>
+<span class="tk-com">// Swift 6 needs an SDK where UIImage is Sendable; otherwise wrap it in a Sendable box.</span>
+<span class="tk-kw">struct</span> <span class="tk-ty">CacheKey</span>: <span class="tk-ty">Hashable</span> {
+    <span class="tk-kw">let</span> url: <span class="tk-ty">URL</span>; <span class="tk-kw">let</span> pixelSize: <span class="tk-ty">Int</span>; <span class="tk-kw">let</span> transforms: [<span class="tk-ty">String</span>]
+    <span class="tk-kw">var</span> nsKey: <span class="tk-ty">NSString</span> { <span class="tk-str">"\(url.absoluteString)|\(pixelSize)|\(transforms.joined(separator: "</span>,<span class="tk-str">"))"</span> <span class="tk-kw">as</span> <span class="tk-ty">NSString</span> }  <span class="tk-com">// stable, unlike hashValue</span>
 }
 
-actor ImagePipeline {
-    private let memory = NSCache&lt;NSString, UIImage&gt;()
-    private var inFlight: [CacheKey: Task&lt;UIImage, Error&gt;] = [:]
-    private var waiters: [CacheKey: Set&lt;UUID&gt;] = [:]       // one id per caller, so leaving twice is harmless
+<span class="tk-kw">actor</span> <span class="tk-ty">ImagePipeline</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> memory = <span class="tk-ty">NSCache</span>&lt;<span class="tk-ty">NSString</span>, <span class="tk-ty">UIImage</span>&gt;()
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> inFlight: [<span class="tk-ty">CacheKey</span>: <span class="tk-ty">Task</span>&lt;<span class="tk-ty">UIImage</span>, <span class="tk-ty">Error</span>&gt;] = [:]
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> waiters: [<span class="tk-ty">CacheKey</span>: <span class="tk-ty">Set</span>&lt;<span class="tk-ty">UUID</span>&gt;] = [:]       <span class="tk-com">// one id per caller, so leaving twice is harmless</span>
 
-    func image(for key: CacheKey) async throws -&gt; UIImage {
-        if let hit = memory.object(forKey: key.nsKey) { return hit }
-        let me = UUID()
-        let task = inFlight[key] ?? Task.detached { try await Self.fetchAndDownsample(key) }
+    <span class="tk-kw">func</span> <span class="tk-fn">image</span>(<span class="tk-kw">for</span> key: <span class="tk-ty">CacheKey</span>) <span class="tk-kw">async</span> <span class="tk-kw">throws</span> -&gt; <span class="tk-ty">UIImage</span> {
+        <span class="tk-kw">if</span> <span class="tk-kw">let</span> hit = memory.<span class="tk-kw">object</span>(forKey: key.nsKey) { <span class="tk-kw">return</span> hit }
+        <span class="tk-kw">let</span> me = <span class="tk-ty">UUID</span>()
+        <span class="tk-kw">let</span> task = inFlight[key] ?? <span class="tk-ty">Task</span>.detached { <span class="tk-kw">try</span> <span class="tk-kw">await</span> <span class="tk-ty">Self</span>.<span class="tk-fn">fetchAndDownsample</span>(key) }
         inFlight[key] = task
-        waiters[key, default: []].insert(me)
-        defer { leave(key, me) }                           // normal return or error
-        let image = try await withTaskCancellationHandler {
-            try await task.value
+        waiters[key, default: []].<span class="tk-fn">insert</span>(me)
+        <span class="tk-kw">defer</span> { <span class="tk-fn">leave</span>(key, me) }                           <span class="tk-com">// normal return or error</span>
+        <span class="tk-kw">let</span> image = <span class="tk-kw">try</span> <span class="tk-kw">await</span> withTaskCancellationHandler {
+            <span class="tk-kw">try</span> <span class="tk-kw">await</span> task.<span class="tk-kw">value</span>
         } onCancel: {
-            Task { await self.leave(key, me) }             // caller cancelled: release now, not when the fetch ends
+            <span class="tk-ty">Task</span> { <span class="tk-kw">await</span> <span class="tk-kw">self</span>.<span class="tk-fn">leave</span>(key, me) }             <span class="tk-com">// caller cancelled: release now, not when the fetch ends</span>
         }
-        memory.setObject(image, forKey: key.nsKey, cost: image.cgImage.map { $0.bytesPerRow * $0.height } ?? 0)
-        return image
+        memory.<span class="tk-fn">setObject</span>(image, forKey: key.nsKey, cost: image.cgImage.map { $<span class="tk-num">0</span>.bytesPerRow * $<span class="tk-num">0</span>.height } ?? <span class="tk-num">0</span>)
+        <span class="tk-kw">return</span> image
     }
 
-    private func leave(_ key: CacheKey, _ id: UUID) {
-        guard waiters[key]?.remove(id) != nil else { return }
-        if waiters[key]?.isEmpty == true {                 // last waiter left: cancel the shared fetch
-            waiters[key] = nil
-            inFlight.removeValue(forKey: key)?.cancel()
+    <span class="tk-kw">private</span> <span class="tk-kw">func</span> <span class="tk-fn">leave</span>(_ key: <span class="tk-ty">CacheKey</span>, _ id: <span class="tk-ty">UUID</span>) {
+        <span class="tk-kw">guard</span> waiters[key]?.<span class="tk-fn">remove</span>(id) != <span class="tk-kw">nil</span> <span class="tk-kw">else</span> { <span class="tk-kw">return</span> }
+        <span class="tk-kw">if</span> waiters[key]?.isEmpty == <span class="tk-kw">true</span> {                 <span class="tk-com">// last waiter left: cancel the shared fetch</span>
+            waiters[key] = <span class="tk-kw">nil</span>
+            inFlight.<span class="tk-fn">removeValue</span>(forKey: key)?.<span class="tk-fn">cancel</span>()
         }
     }
 }</code></pre>
 <p>The actor replaces the lock from the Kotlin version. Its isolation (only one call runs inside it at a time) serializes access to <code>inFlight</code> and <code>waiters</code>. Actors are reentrant (other calls can run while one call waits). So the code never assumes that <code>inFlight</code> or <code>waiters</code> stay the same across the <code>await</code>.</p>
 <p>Awaiting <code>task.value</code> alone would not release a canceled caller until the fetch ended. So the <code>await</code> sits inside <code>withTaskCancellationHandler</code>. It removes the id of that caller at once. It cancels the fetch only when the last id is gone.</p>
 <p>Here is the SwiftUI side. It is a sketch I did not compile. The pipeline is passed in by the app. <code>.task(id:)</code> cancels the load when the URL changes or the row leaves the screen. That is the SwiftUI version of <code>prepareForReuse</code>.</p>
-<pre tabindex="0"><code>// Sketch: a SwiftUI row (not compiled)
-struct RemoteImage: View {
-    let url: URL
-    let pixelSize: Int
-    let pipeline: ImagePipeline
-    @State private var image: UIImage?
-    var body: some View {
-        Group {
-            if let image { Image(uiImage: image) } else { Color.gray.opacity(0.2) }
+<pre tabindex="0"><code><span class="tk-com">// Sketch: a SwiftUI row (not compiled)</span>
+<span class="tk-kw">struct</span> <span class="tk-ty">RemoteImage</span>: <span class="tk-ty">View</span> {
+    <span class="tk-kw">let</span> url: <span class="tk-ty">URL</span>
+    <span class="tk-kw">let</span> pixelSize: <span class="tk-ty">Int</span>
+    <span class="tk-kw">let</span> pipeline: <span class="tk-ty">ImagePipeline</span>
+    <span class="tk-ann">@State</span> <span class="tk-kw">private</span> <span class="tk-kw">var</span> image: <span class="tk-ty">UIImage</span>?
+    <span class="tk-kw">var</span> body: <span class="tk-kw">some</span> <span class="tk-ty">View</span> {
+        <span class="tk-ty">Group</span> {
+            <span class="tk-kw">if</span> <span class="tk-kw">let</span> image { <span class="tk-ty">Image</span>(uiImage: image) } <span class="tk-kw">else</span> { <span class="tk-ty">Color</span>.gray.<span class="tk-fn">opacity</span>(<span class="tk-num">0.2</span>) }
         }
-        .task(id: url) {
-            image = try? await pipeline.image(for: CacheKey(url: url, pixelSize: pixelSize, transforms: []))
+        .<span class="tk-fn">task</span>(id: url) {
+            image = <span class="tk-kw">try</span>? <span class="tk-kw">await</span> pipeline.<span class="tk-fn">image</span>(<span class="tk-kw">for</span>: <span class="tk-ty">CacheKey</span>(url: url, pixelSize: pixelSize, transforms: []))
         }
     }
 }</code></pre>

@@ -18,62 +18,62 @@
 <h2 id="1-the-flag-list">1. The flag list</h2>
 <p>Every flag is declared in code. It has a key, a default, an owner and an expiry date. A kill switch has no date. The default is the behavior that already shipped and worked.</p>
 <p><code>expired()</code> is for CI. A flag past its date fails the build until someone removes it.</p>
-<pre tabindex="0"><code>package flags
+<pre tabindex="0"><code><span class="tk-kw">package</span> flags
 
-import java.time.LocalDate
+<span class="tk-kw">import</span> java.time.<span class="tk-ty">LocalDate</span>
 
-/**
+<span class="tk-com">/**
  * A flag, declared in code. `default` is the behavior that already shipped and worked.
  * A kill switch has no expiry date. Every other flag must have one.
- */
-class Flag(
-    val key: String,
-    val default: Boolean,
-    val owner: String,
-    val expires: LocalDate? = null,
-    val killSwitch: Boolean = false,
+ */</span>
+<span class="tk-kw">class</span> <span class="tk-ty">Flag</span>(
+    <span class="tk-kw">val</span> key: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> default: <span class="tk-ty">Boolean</span>,
+    <span class="tk-kw">val</span> owner: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> expires: <span class="tk-ty">LocalDate</span>? = <span class="tk-kw">null</span>,
+    <span class="tk-kw">val</span> killSwitch: <span class="tk-ty">Boolean</span> = <span class="tk-kw">false</span>,
 ) {
-    init { require(killSwitch || expires != null) { &quot;$key needs an expiry date&quot; } }
+    <span class="tk-kw">init</span> { <span class="tk-fn">require</span>(killSwitch || expires != <span class="tk-kw">null</span>) { <span class="tk-str">"$key needs an expiry date"</span> } }
 }
 
-object Flags {
-    val NewCheckout = Flag(&quot;new_checkout&quot;, default = false, owner = &quot;payments&quot;, expires = LocalDate.of(2027, 3, 1))
-    val ChatMedia = Flag(&quot;chat_media_enabled&quot;, default = true, owner = &quot;chat&quot;, killSwitch = true)
+<span class="tk-kw">object</span> <span class="tk-ty">Flags</span> {
+    <span class="tk-kw">val</span> <span class="tk-ty">NewCheckout</span> = <span class="tk-ty">Flag</span>(<span class="tk-str">"new_checkout"</span>, default = <span class="tk-kw">false</span>, owner = <span class="tk-str">"payments"</span>, expires = <span class="tk-ty">LocalDate</span>.<span class="tk-fn">of</span>(<span class="tk-num">2027</span>, <span class="tk-num">3</span>, <span class="tk-num">1</span>))
+    <span class="tk-kw">val</span> <span class="tk-ty">ChatMedia</span> = <span class="tk-ty">Flag</span>(<span class="tk-str">"chat_media_enabled"</span>, default = <span class="tk-kw">true</span>, owner = <span class="tk-str">"chat"</span>, killSwitch = <span class="tk-kw">true</span>)
 
-    val all = listOf(NewCheckout, ChatMedia)
+    <span class="tk-kw">val</span> all = <span class="tk-fn">listOf</span>(<span class="tk-ty">NewCheckout</span>, <span class="tk-ty">ChatMedia</span>)
 
-    /** Run this in CI. A flag past its date fails the build until someone removes it. */
-    fun expired(today: LocalDate): List&lt;Flag&gt; = all.filter { it.expires?.isBefore(today) == true }
+    <span class="tk-com">/** Run this in CI. A flag past its date fails the build until someone removes it. */</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">expired</span>(today: <span class="tk-ty">LocalDate</span>): <span class="tk-ty">List</span>&lt;<span class="tk-ty">Flag</span>&gt; = all.filter { <span class="tk-kw">it</span>.expires?.<span class="tk-fn">isBefore</span>(today) == <span class="tk-kw">true</span> }
 }</code></pre>
 <h2 id="2-the-contract">2. The contract</h2>
 <p>This is my design, not a vendor API. The phone sends the least it can. The server evaluates the rules and returns only answers.</p>
-<pre tabindex="0"><code>POST /v1/flags/evaluate
-     body: { platform, appVersion, accountId | null, installId }
-     → 200 { version, flags: { &quot;new_checkout&quot;: true, &quot;chat_media_enabled&quot;: true } }
-     → 304 when the client sends If-None-Match with the last version</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">POST</span> /v1/flags/evaluate
+     body: { platform, appVersion, accountId | <span class="tk-kw">null</span>, installId }
+     → <span class="tk-num">200</span> { version, flags: { <span class="tk-str">"new_checkout"</span>: <span class="tk-kw">true</span>, <span class="tk-str">"chat_media_enabled"</span>: <span class="tk-kw">true</span> } }
+     → <span class="tk-num">304</span> <span class="tk-kw">when</span> the client sends <span class="tk-ty">If</span>-<span class="tk-ty">None</span>-<span class="tk-ty">Match</span> with the last version</code></pre>
 <ul><li>Unknown keys are ignored by the app. A missing key means "use the default in the code".</li><li>Rules stay on the server. Unleash advises against evaluation on the client, because it exposes flag configuration and context. It suggests sending the context to an evaluation server and caching the results (<a href="https://docs.getunleash.io/guides/feature-flag-best-practices">Unleash best practices</a>).</li><li>LaunchDarkly mobile <a class="gl" href="/glossary/#sdk" title="Software development kit.">SDKs</a> use the same shape. The SDK gets values for one context (<a href="https://launchdarkly.com/docs/sdk/concepts/client-side-server-side">LaunchDarkly SDK types</a>).</li><li>Do not put secrets in flag values. Firebase says users can read any default or fetched value (<a href="https://firebase.google.com/docs/remote-config/android/get-started">Firebase get started</a>).</li></ul>
 <h2 id="3-rollout-buckets">3. Rollout buckets</h2>
 <p>The bucket is a number from 0 to 9,999. It comes from a <a class="gl" href="/glossary/#hash" title="A short code made from the bytes of a file.">hash</a> of the flag key and a stable ID. The same account and flag always give the same bucket. A bigger percentage only adds buckets, so the first group stays in.</p>
 <p>LaunchDarkly describes the same idea with 100,000 buckets from the context key and kind. It says each flag assigns people on its own (<a href="https://launchdarkly.com/docs/home/releases/percentage-rollouts">LaunchDarkly percentage rollouts</a>). Unleash hashes a context field with the flag name, and it says stickiness is not guaranteed when no user or session field exists (<a href="https://docs.getunleash.io/concepts/stickiness">Unleash stickiness</a>).</p>
 <p>This code runs on the server. I show it here so you can test the property. The Android and iOS versions give the same number for the same input (1500 for <code>acct-42</code> and <code>new_checkout</code>).</p>
-<pre tabindex="0"><code>package flags
+<pre tabindex="0"><code><span class="tk-kw">package</span> flags
 
-import java.security.MessageDigest
+<span class="tk-kw">import</span> java.security.<span class="tk-ty">MessageDigest</span>
 
-/**
+<span class="tk-com">/**
  * Rollout bucket, 0 to 9,999. Runs on the server. It is shown here so the property can be tested:
  * the same account and flag always give the same bucket, and a larger percentage only adds buckets.
- */
-object Bucket {
-    fun of(stableId: String, flagKey: String): Int {
-        val d = MessageDigest.getInstance(&quot;SHA-256&quot;).digest(&quot;$flagKey:$stableId&quot;.toByteArray())
-        val n = (d[0].toLong() and 0xff shl 24) or (d[1].toLong() and 0xff shl 16) or
-            (d[2].toLong() and 0xff shl 8) or (d[3].toLong() and 0xff)
-        return (n % 10_000).toInt()
+ */</span>
+<span class="tk-kw">object</span> <span class="tk-ty">Bucket</span> {
+    <span class="tk-kw">fun</span> <span class="tk-fn">of</span>(stableId: <span class="tk-ty">String</span>, flagKey: <span class="tk-ty">String</span>): <span class="tk-ty">Int</span> {
+        <span class="tk-kw">val</span> d = <span class="tk-ty">MessageDigest</span>.<span class="tk-fn">getInstance</span>(<span class="tk-str">"SHA-256"</span>).<span class="tk-fn">digest</span>(<span class="tk-str">"$flagKey:$stableId"</span>.<span class="tk-fn">toByteArray</span>())
+        <span class="tk-kw">val</span> n = (d[<span class="tk-num">0</span>].<span class="tk-fn">toLong</span>() and <span class="tk-num">0xff</span> shl <span class="tk-num">24</span>) or (d[<span class="tk-num">1</span>].<span class="tk-fn">toLong</span>() and <span class="tk-num">0xff</span> shl <span class="tk-num">16</span>) or
+            (d[<span class="tk-num">2</span>].<span class="tk-fn">toLong</span>() and <span class="tk-num">0xff</span> shl <span class="tk-num">8</span>) or (d[<span class="tk-num">3</span>].<span class="tk-fn">toLong</span>() and <span class="tk-num">0xff</span>)
+        <span class="tk-kw">return</span> (n % <span class="tk-num">10_000</span>).<span class="tk-fn">toInt</span>()
     }
 
-    /** `basisPoints` 1,000 means 10 percent. */
-    fun isIn(stableId: String, flagKey: String, basisPoints: Int): Boolean = of(stableId, flagKey) &lt; basisPoints
+    <span class="tk-com">/** `basisPoints` 1,000 means 10 percent. */</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">isIn</span>(stableId: <span class="tk-ty">String</span>, flagKey: <span class="tk-ty">String</span>, basisPoints: <span class="tk-ty">Int</span>): <span class="tk-ty">Boolean</span> = <span class="tk-fn">of</span>(stableId, flagKey) &lt; basisPoints
 }</code></pre>
 <p>Which ID to hash:</p>
 <ul><li>Signed in: the account ID. The group then follows the person to a new phone.</li><li>Signed out: the install ID. The group changes after a reinstall.</li><li>Firebase's own random percent rule maps each app instance to a number, and keeps it (<a href="https://firebase.google.com/docs/remote-config/parameters/client">Firebase client templates</a>). That follows the install, not the account.</li></ul>
@@ -82,201 +82,201 @@ object Bucket {
 <p>The store is the center of the design. It reads local disk at start and never waits for the network. A screen takes a view once. The answers in that view stay the same. A kill switch is the one value read live.</p>
 <p>Three details:</p>
 <ul><li><code>start()</code> counts starts that never finish. After two, it deletes the saved copy and uses the defaults.</li><li><code>refreshIfStale()</code> treats a negative age as <a class="gl" href="/glossary/#stale-data" title="Saved data that may be out of date.">stale</a>. If the device clock moved back, it fetches.</li><li><code>switchUser()</code> only loads a copy saved for that user. One user's values never reach another user.</li><li>If the config fetch returns <code>401</code> or <code>403</code>, the store keeps the saved copy and the code defaults. It retries later and counts the error. An auth error never clears flags.</li><li>If two fetches for the same user finish out of order, keep the one with the higher <code>version</code>, if the server only ever raises it.</li><li><code>rollSession()</code> takes the newest saved copy for screens that open later. Call it when the app returns after a long time away (say 30 minutes), because an Android process can live for days.</li><li>The crash counter is a guard, not proof. <code>startFinished()</code> runs after 5 seconds. A force-quit in the first 5 seconds counts as a failed start, and a crash after 5 seconds is not caught.</li></ul>
-<pre tabindex="0"><code>package flags
+<pre tabindex="0"><code><span class="tk-kw">package</span> flags
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+<span class="tk-kw">import</span> kotlinx.coroutines.flow.<span class="tk-ty">MutableStateFlow</span>
+<span class="tk-kw">import</span> kotlinx.coroutines.sync.<span class="tk-ty">Mutex</span>
+<span class="tk-kw">import</span> kotlinx.coroutines.sync.withLock
 
-data class FlagSnapshot(
-    val userKey: String?,            // null means signed out
-    val fetchedAtMillis: Long,       // 0 means never fetched
-    val values: Map&lt;String, Boolean&gt;,
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">FlagSnapshot</span>(
+    <span class="tk-kw">val</span> userKey: <span class="tk-ty">String</span>?,            <span class="tk-com">// null means signed out</span>
+    <span class="tk-kw">val</span> fetchedAtMillis: <span class="tk-ty">Long</span>,       <span class="tk-com">// 0 means never fetched</span>
+    <span class="tk-kw">val</span> values: <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Boolean</span>&gt;,
 )
 
-interface FlagSource {
-    /** Returns the values for this user, or null when the fetch failed. */
-    suspend fun fetch(userKey: String?): Map&lt;String, Boolean&gt;?
+<span class="tk-kw">interface</span> <span class="tk-ty">FlagSource</span> {
+    <span class="tk-com">/** Returns the values for this user, or null when the fetch failed. */</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">fetch</span>(userKey: <span class="tk-ty">String</span>?): <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Boolean</span>&gt;?
 }
 
-interface FlagDisk {
-    suspend fun read(): FlagSnapshot?
-    suspend fun write(snapshot: FlagSnapshot)
-    suspend fun clear()
-    suspend fun unfinishedStarts(): Int
-    suspend fun setUnfinishedStarts(n: Int)
+<span class="tk-kw">interface</span> <span class="tk-ty">FlagDisk</span> {
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">read</span>(): <span class="tk-ty">FlagSnapshot</span>?
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">write</span>(snapshot: <span class="tk-ty">FlagSnapshot</span>)
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">clear</span>()
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">unfinishedStarts</span>(): <span class="tk-ty">Int</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">setUnfinishedStarts</span>(n: <span class="tk-ty">Int</span>)
 }
 
-class FlagStore(
-    private val source: FlagSource,
-    private val disk: FlagDisk,
-    private val now: () -&gt; Long,
-    private val flags: List&lt;Flag&gt; = Flags.all,
-    private val maxAgeMillis: Long = 15 * 60_000L,
+<span class="tk-kw">class</span> <span class="tk-ty">FlagStore</span>(
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> source: <span class="tk-ty">FlagSource</span>,
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> disk: <span class="tk-ty">FlagDisk</span>,
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> now: () -&gt; <span class="tk-ty">Long</span>,
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> flags: <span class="tk-ty">List</span>&lt;<span class="tk-ty">Flag</span>&gt; = <span class="tk-ty">Flags</span>.all,
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> maxAgeMillis: <span class="tk-ty">Long</span> = <span class="tk-num">15</span> * <span class="tk-num">60_000L</span>,
 ) {
-    private val killKeys = flags.filter { it.killSwitch }.map { it.key }.toSet()
-    private val lock = Mutex()
-    private var userKey: String? = null
-    private var session = FlagSnapshot(null, 0, emptyMap())     // fixed for the whole session
-    private var lastFetchAt = 0L
-    private val live = MutableStateFlow&lt;Map&lt;String, Boolean&gt;&gt;(emptyMap())   // kill switches only
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> killKeys = flags.filter { <span class="tk-kw">it</span>.killSwitch }.map { <span class="tk-kw">it</span>.key }.<span class="tk-fn">toSet</span>()
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> lock = <span class="tk-ty">Mutex</span>()
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> userKey: <span class="tk-ty">String</span>? = <span class="tk-kw">null</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> session = <span class="tk-ty">FlagSnapshot</span>(<span class="tk-kw">null</span>, <span class="tk-num">0</span>, <span class="tk-fn">emptyMap</span>())     <span class="tk-com">// fixed for the whole session</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> lastFetchAt = <span class="tk-num">0L</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> live = <span class="tk-ty">MutableStateFlow</span>&lt;<span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Boolean</span>&gt;&gt;(<span class="tk-fn">emptyMap</span>())   <span class="tk-com">// kill switches only</span>
 
-    /** Call once, before the first frame. It reads local disk only. It never waits for the network. */
-    suspend fun start(userKey: String?) = lock.withLock {
-        this.userKey = userKey
-        val unfinished = disk.unfinishedStarts()
-        disk.setUnfinishedStarts(unfinished + 1)
-        val saved = disk.read()
-        session = when {
-            unfinished &gt;= 2 -&gt; { disk.clear(); empty(userKey) }          // two starts never finished: safe mode
-            saved != null &amp;&amp; saved.userKey == userKey -&gt; saved
-            else -&gt; empty(userKey)
+    <span class="tk-com">/** Call once, before the first frame. It reads local disk only. It never waits for the network. */</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">start</span>(userKey: <span class="tk-ty">String</span>?) = lock.withLock {
+        <span class="tk-kw">this</span>.userKey = userKey
+        <span class="tk-kw">val</span> unfinished = disk.<span class="tk-fn">unfinishedStarts</span>()
+        disk.<span class="tk-fn">setUnfinishedStarts</span>(unfinished + <span class="tk-num">1</span>)
+        <span class="tk-kw">val</span> saved = disk.<span class="tk-fn">read</span>()
+        session = <span class="tk-kw">when</span> {
+            unfinished &gt;= <span class="tk-num">2</span> -&gt; { disk.<span class="tk-fn">clear</span>(); <span class="tk-fn">empty</span>(userKey) }          <span class="tk-com">// two starts never finished: safe mode</span>
+            saved != <span class="tk-kw">null</span> &amp;&amp; saved.userKey == userKey -&gt; saved
+            <span class="tk-kw">else</span> -&gt; <span class="tk-fn">empty</span>(userKey)
         }
         lastFetchAt = session.fetchedAtMillis
-        live.value = session.values.filterKeys { it in killKeys }
+        live.<span class="tk-kw">value</span> = session.values.filterKeys { <span class="tk-kw">it</span> <span class="tk-kw">in</span> killKeys }
     }
 
-    /** Call a few seconds after the first frame. It resets the crash counter. */
-    suspend fun startFinished() = disk.setUnfinishedStarts(0)
+    <span class="tk-com">/** Call a few seconds after the first frame. It resets the crash counter. */</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">startFinished</span>() = disk.<span class="tk-fn">setUnfinishedStarts</span>(<span class="tk-num">0</span>)
 
-    /** A screen takes one view when it opens. The answers stay the same until the screen closes. */
-    fun view(): FlagView = FlagView(session.values, this)
+    <span class="tk-com">/** A screen takes one view when it opens. The answers stay the same until the screen closes. */</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">view</span>(): <span class="tk-ty">FlagView</span> = <span class="tk-ty">FlagView</span>(session.values, <span class="tk-kw">this</span>)
 
-    internal fun liveValue(flag: Flag): Boolean = live.value[flag.key] ?: flag.default
+    <span class="tk-kw">internal</span> <span class="tk-kw">fun</span> <span class="tk-fn">liveValue</span>(flag: <span class="tk-ty">Flag</span>): <span class="tk-ty">Boolean</span> = live.<span class="tk-kw">value</span>[flag.key] ?: flag.default
 
-    suspend fun refreshIfStale() {
-        val age = now() - lastFetchAt
-        if (age in 0 until maxAgeMillis) return       // a negative age means the clock moved back: fetch
-        refresh()
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">refreshIfStale</span>() {
+        <span class="tk-kw">val</span> age = <span class="tk-fn">now</span>() - lastFetchAt
+        <span class="tk-kw">if</span> (age <span class="tk-kw">in</span> <span class="tk-num">0</span> until maxAgeMillis) <span class="tk-kw">return</span>       <span class="tk-com">// a negative age means the clock moved back: fetch</span>
+        <span class="tk-fn">refresh</span>()
     }
 
-    /** Call when the app returns after a long time away. Screens opened later see the newest saved values. */
-    suspend fun rollSession() = lock.withLock {
-        val saved = disk.read()
-        if (saved != null &amp;&amp; saved.userKey == userKey) session = saved
+    <span class="tk-com">/** Call when the app returns after a long time away. Screens opened later see the newest saved values. */</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">rollSession</span>() = lock.withLock {
+        <span class="tk-kw">val</span> saved = disk.<span class="tk-fn">read</span>()
+        <span class="tk-kw">if</span> (saved != <span class="tk-kw">null</span> &amp;&amp; saved.userKey == userKey) session = saved
     }
 
-    suspend fun refresh() = lock.withLock {
-        val fresh = source.fetch(userKey) ?: return@withLock          // failed: keep what we have
-        lastFetchAt = now()
-        disk.write(FlagSnapshot(userKey, lastFetchAt, fresh))         // the next session reads this
-        live.value = fresh.filterKeys { it in killKeys }              // kill switches change now
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">refresh</span>() = lock.withLock {
+        <span class="tk-kw">val</span> fresh = source.<span class="tk-fn">fetch</span>(userKey) ?: <span class="tk-kw">return</span><span class="tk-ann">@withLock</span>          <span class="tk-com">// failed: keep what we have</span>
+        lastFetchAt = <span class="tk-fn">now</span>()
+        disk.<span class="tk-fn">write</span>(<span class="tk-ty">FlagSnapshot</span>(userKey, lastFetchAt, fresh))         <span class="tk-com">// the next session reads this</span>
+        live.<span class="tk-kw">value</span> = fresh.filterKeys { <span class="tk-kw">it</span> <span class="tk-kw">in</span> killKeys }              <span class="tk-com">// kill switches change now</span>
     }
 
-    /** Sign in or out. The old user&#x27;s values must not reach the new user. */
-    suspend fun switchUser(newKey: String?) {
+    <span class="tk-com">/** Sign in or out. The old user's values must not reach the new user. */</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">switchUser</span>(newKey: <span class="tk-ty">String</span>?) {
         lock.withLock {
             userKey = newKey
-            val saved = disk.read()
-            session = if (saved != null &amp;&amp; saved.userKey == newKey) saved else empty(newKey)
+            <span class="tk-kw">val</span> saved = disk.<span class="tk-fn">read</span>()
+            session = <span class="tk-kw">if</span> (saved != <span class="tk-kw">null</span> &amp;&amp; saved.userKey == newKey) saved <span class="tk-kw">else</span> <span class="tk-fn">empty</span>(newKey)
             lastFetchAt = session.fetchedAtMillis
-            live.value = session.values.filterKeys { it in killKeys }
+            live.<span class="tk-kw">value</span> = session.values.filterKeys { <span class="tk-kw">it</span> <span class="tk-kw">in</span> killKeys }
         }
-        refresh()
+        <span class="tk-fn">refresh</span>()
     }
 
-    private fun empty(userKey: String?) = FlagSnapshot(userKey, 0, emptyMap())
+    <span class="tk-kw">private</span> <span class="tk-kw">fun</span> <span class="tk-fn">empty</span>(userKey: <span class="tk-ty">String</span>?) = <span class="tk-ty">FlagSnapshot</span>(userKey, <span class="tk-num">0</span>, <span class="tk-fn">emptyMap</span>())
 }
 
-class FlagView internal constructor(private val values: Map&lt;String, Boolean&gt;, private val store: FlagStore) {
-    fun isOn(flag: Flag): Boolean =
-        if (flag.killSwitch) store.liveValue(flag) else values[flag.key] ?: flag.default
+<span class="tk-kw">class</span> <span class="tk-ty">FlagView</span> <span class="tk-kw">internal</span> <span class="tk-kw">constructor</span>(<span class="tk-kw">private</span> <span class="tk-kw">val</span> values: <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Boolean</span>&gt;, <span class="tk-kw">private</span> <span class="tk-kw">val</span> store: <span class="tk-ty">FlagStore</span>) {
+    <span class="tk-kw">fun</span> <span class="tk-fn">isOn</span>(flag: <span class="tk-ty">Flag</span>): <span class="tk-ty">Boolean</span> =
+        <span class="tk-kw">if</span> (flag.killSwitch) store.<span class="tk-fn">liveValue</span>(flag) <span class="tk-kw">else</span> values[flag.key] ?: flag.default
 }</code></pre>
 <h2 id="5-the-saved-copy-datastore">5. The saved copy (DataStore)</h2>
 <p>DataStore is a Jetpack library for small saved settings. Android says it stores data asynchronously, consistently and transactionally (<a href="https://developer.android.com/topic/libraries/architecture/datastore">Android DataStore</a>). One <code>edit</code> call is one write, so a crash cannot leave half a <a class="gl" href="/glossary/#snapshot" title="A copy of the data as it was at one moment.">snapshot</a>. I rely on that sentence, and I did not test a crash.</p>
-<pre tabindex="0"><code>package flags
+<pre tabindex="0"><code><span class="tk-kw">package</span> flags
 
-import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
-import kotlinx.coroutines.flow.first
+<span class="tk-kw">import</span> android.content.<span class="tk-ty">Context</span>
+<span class="tk-kw">import</span> androidx.datastore.preferences.core.booleanPreferencesKey
+<span class="tk-kw">import</span> androidx.datastore.preferences.core.edit
+<span class="tk-kw">import</span> androidx.datastore.preferences.core.intPreferencesKey
+<span class="tk-kw">import</span> androidx.datastore.preferences.core.longPreferencesKey
+<span class="tk-kw">import</span> androidx.datastore.preferences.core.stringPreferencesKey
+<span class="tk-kw">import</span> androidx.datastore.preferences.preferencesDataStore
+<span class="tk-kw">import</span> kotlinx.coroutines.flow.first
 
-private val Context.flagStore by preferencesDataStore(name = &quot;flags&quot;)
+<span class="tk-kw">private</span> <span class="tk-kw">val</span> <span class="tk-ty">Context</span>.flagStore <span class="tk-kw">by</span> <span class="tk-fn">preferencesDataStore</span>(name = <span class="tk-str">"flags"</span>)
 
-class DataStoreFlagDisk(private val context: Context, private val flags: List&lt;Flag&gt; = Flags.all): FlagDisk {
-    private val userKey = stringPreferencesKey(&quot;_user&quot;)
-    private val fetchedAt = longPreferencesKey(&quot;_fetched_at&quot;)
-    private val written = booleanPreferencesKey(&quot;_written&quot;)
-    private val unfinished = intPreferencesKey(&quot;_unfinished_starts&quot;)
+<span class="tk-kw">class</span> <span class="tk-ty">DataStoreFlagDisk</span>(<span class="tk-kw">private</span> <span class="tk-kw">val</span> context: <span class="tk-ty">Context</span>, <span class="tk-kw">private</span> <span class="tk-kw">val</span> flags: <span class="tk-ty">List</span>&lt;<span class="tk-ty">Flag</span>&gt; = <span class="tk-ty">Flags</span>.all): <span class="tk-ty">FlagDisk</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> userKey = <span class="tk-fn">stringPreferencesKey</span>(<span class="tk-str">"_user"</span>)
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> fetchedAt = <span class="tk-fn">longPreferencesKey</span>(<span class="tk-str">"_fetched_at"</span>)
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> written = <span class="tk-fn">booleanPreferencesKey</span>(<span class="tk-str">"_written"</span>)
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> unfinished = <span class="tk-fn">intPreferencesKey</span>(<span class="tk-str">"_unfinished_starts"</span>)
 
-    override suspend fun read(): FlagSnapshot? {
-        val p = context.flagStore.data.first()
-        if (p[written] != true) return null
-        val values = flags.mapNotNull { f -&gt; p[booleanPreferencesKey(f.key)]?.let { f.key to it } }.toMap()
-        return FlagSnapshot(p[userKey], p[fetchedAt] ?: 0L, values)
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">read</span>(): <span class="tk-ty">FlagSnapshot</span>? {
+        <span class="tk-kw">val</span> p = context.flagStore.<span class="tk-kw">data</span>.<span class="tk-fn">first</span>()
+        <span class="tk-kw">if</span> (p[written] != <span class="tk-kw">true</span>) <span class="tk-kw">return</span> <span class="tk-kw">null</span>
+        <span class="tk-kw">val</span> values = flags.mapNotNull { f -&gt; p[<span class="tk-fn">booleanPreferencesKey</span>(f.key)]?.<span class="tk-kw">let</span> { f.key to <span class="tk-kw">it</span> } }.<span class="tk-fn">toMap</span>()
+        <span class="tk-kw">return</span> <span class="tk-ty">FlagSnapshot</span>(p[userKey], p[fetchedAt] ?: <span class="tk-num">0L</span>, values)
     }
 
-    // One edit is one transaction, so a crash cannot leave half a snapshot.
-    override suspend fun write(snapshot: FlagSnapshot) {
+    <span class="tk-com">// One edit is one transaction, so a crash cannot leave half a snapshot.</span>
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">write</span>(snapshot: <span class="tk-ty">FlagSnapshot</span>) {
         context.flagStore.edit { p -&gt;
-            flags.forEach { p.remove(booleanPreferencesKey(it.key)) }
-            snapshot.values.forEach { (k, v) -&gt; p[booleanPreferencesKey(k)] = v }
-            val user = snapshot.userKey
-            if (user == null) p.remove(userKey) else p[userKey] = user
+            flags.forEach { p.<span class="tk-fn">remove</span>(<span class="tk-fn">booleanPreferencesKey</span>(<span class="tk-kw">it</span>.key)) }
+            snapshot.values.forEach { (k, v) -&gt; p[<span class="tk-fn">booleanPreferencesKey</span>(k)] = v }
+            <span class="tk-kw">val</span> user = snapshot.userKey
+            <span class="tk-kw">if</span> (user == <span class="tk-kw">null</span>) p.<span class="tk-fn">remove</span>(userKey) <span class="tk-kw">else</span> p[userKey] = user
             p[fetchedAt] = snapshot.fetchedAtMillis
-            p[written] = true
+            p[written] = <span class="tk-kw">true</span>
         }
     }
 
-    override suspend fun clear() {
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">clear</span>() {
         context.flagStore.edit { p -&gt;
-            flags.forEach { p.remove(booleanPreferencesKey(it.key)) }
-            p.remove(userKey); p.remove(fetchedAt); p.remove(written)
+            flags.forEach { p.<span class="tk-fn">remove</span>(<span class="tk-fn">booleanPreferencesKey</span>(<span class="tk-kw">it</span>.key)) }
+            p.<span class="tk-fn">remove</span>(userKey); p.<span class="tk-fn">remove</span>(fetchedAt); p.<span class="tk-fn">remove</span>(written)
         }
     }
 
-    override suspend fun unfinishedStarts(): Int = context.flagStore.data.first()[unfinished] ?: 0
-    override suspend fun setUnfinishedStarts(n: Int) { context.flagStore.edit { it[unfinished] = n } }
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">unfinishedStarts</span>(): <span class="tk-ty">Int</span> = context.flagStore.<span class="tk-kw">data</span>.<span class="tk-fn">first</span>()[unfinished] ?: <span class="tk-num">0</span>
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">setUnfinishedStarts</span>(n: <span class="tk-ty">Int</span>) { context.flagStore.edit { <span class="tk-kw">it</span>[unfinished] = n } }
 }</code></pre>
 <h2 id="6-the-vendor-adapter-firebase">6. The vendor adapter (Firebase)</h2>
 <p>The adapter has three jobs.</p>
 <ul><li><code>fetch()</code> asks Firebase for new values. It also calls <code>activate()</code>, which moves Firebase's own copy forward. Screens read the store, not Firebase.</li><li>It keeps only values that came from the server. For the rest, the default in the code applies. The Android reference has <code>getSource()</code> and <code>VALUE_SOURCE_REMOTE</code> for this (<a href="https://firebase.google.com/docs/reference/android/com/google/firebase/remoteconfig/FirebaseRemoteConfigValue">FirebaseRemoteConfigValue</a>).</li><li><code>onKillSwitchChanged()</code> listens for live updates. They run only in the foreground (<a href="https://firebase.google.com/docs/remote-config/android/real-time">Firebase real-time</a>).</li></ul>
 <p>Fetch obeys the minimum fetch interval. The default is 12 hours (<a href="https://firebase.google.com/docs/remote-config/android/get-started">Firebase get started</a>). A call inside that window does not reach the network. Real-time updates skip the interval. That is why the kill switch uses them.</p>
-<pre tabindex="0"><code>package flags
+<pre tabindex="0"><code><span class="tk-kw">package</span> flags
 
-import com.google.firebase.remoteconfig.ConfigUpdate
-import com.google.firebase.remoteconfig.ConfigUpdateListener
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.google.firebase.remoteconfig.FirebaseRemoteConfigException
-import com.google.firebase.remoteconfig.customSignals
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.tasks.await
+<span class="tk-kw">import</span> com.google.firebase.remoteconfig.<span class="tk-ty">ConfigUpdate</span>
+<span class="tk-kw">import</span> com.google.firebase.remoteconfig.<span class="tk-ty">ConfigUpdateListener</span>
+<span class="tk-kw">import</span> com.google.firebase.remoteconfig.<span class="tk-ty">FirebaseRemoteConfig</span>
+<span class="tk-kw">import</span> com.google.firebase.remoteconfig.<span class="tk-ty">FirebaseRemoteConfigException</span>
+<span class="tk-kw">import</span> com.google.firebase.remoteconfig.customSignals
+<span class="tk-kw">import</span> kotlinx.coroutines.<span class="tk-ty">CancellationException</span>
+<span class="tk-kw">import</span> kotlinx.coroutines.tasks.<span class="tk-kw">await</span>
 
-class FirebaseFlagSource(private val rc: FirebaseRemoteConfig): FlagSource {
+<span class="tk-kw">class</span> <span class="tk-ty">FirebaseFlagSource</span>(<span class="tk-kw">private</span> <span class="tk-kw">val</span> rc: <span class="tk-ty">FirebaseRemoteConfig</span>): <span class="tk-ty">FlagSource</span> {
 
-    /** Fetch respects the minimum fetch interval (12 hours by default), so a call can be a no-op. */
-    override suspend fun fetch(userKey: String?): Map&lt;String, Boolean&gt;? = try {
-        rc.fetch().await()
-        rc.activate().await()      // this moves Firebase&#x27;s own copy forward. Screens read FlagStore, not Firebase.
-        // Keep only values that came from the server. For the rest, the Flag default in code applies.
-        Flags.all
-            .filter { rc.getValue(it.key).source == FirebaseRemoteConfig.VALUE_SOURCE_REMOTE }
-            .associate { it.key to rc.getBoolean(it.key) }
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {      // throttled, offline, timeout
-        null
+    <span class="tk-com">/** Fetch respects the minimum fetch interval (12 hours by default), so a call can be a no-op. */</span>
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">fetch</span>(userKey: <span class="tk-ty">String</span>?): <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Boolean</span>&gt;? = <span class="tk-kw">try</span> {
+        rc.<span class="tk-fn">fetch</span>().<span class="tk-kw">await</span>()
+        rc.<span class="tk-fn">activate</span>().<span class="tk-kw">await</span>()      <span class="tk-com">// this moves Firebase's own copy forward. Screens read FlagStore, not Firebase.</span>
+        <span class="tk-com">// Keep only values that came from the server. For the rest, the Flag default in code applies.</span>
+        <span class="tk-ty">Flags</span>.all
+            .filter { rc.<span class="tk-fn">getValue</span>(<span class="tk-kw">it</span>.key).source == <span class="tk-ty">FirebaseRemoteConfig</span>.<span class="tk-ty">VALUE_SOURCE_REMOTE</span> }
+            .associate { <span class="tk-kw">it</span>.key to rc.<span class="tk-fn">getBoolean</span>(<span class="tk-kw">it</span>.key) }
+    } <span class="tk-kw">catch</span> (e: <span class="tk-ty">CancellationException</span>) {
+        <span class="tk-kw">throw</span> e
+    } <span class="tk-kw">catch</span> (e: <span class="tk-ty">Exception</span>) {      <span class="tk-com">// throttled, offline, timeout</span>
+        <span class="tk-kw">null</span>
     }
 
-    /** Send a rollout bucket that follows the account, not the install. A console rule can say bucket &lt; 1000. */
-    fun setBucket(accountId: String?) {
-        rc.setCustomSignals(customSignals {
-            put(&quot;rollout_bucket&quot;, if (accountId == null) -1L else Bucket.of(accountId, &quot;all&quot;).toLong())
+    <span class="tk-com">/** Send a rollout bucket that follows the account, not the install. A console rule can say bucket &lt; 1000. */</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">setBucket</span>(accountId: <span class="tk-ty">String</span>?) {
+        rc.<span class="tk-fn">setCustomSignals</span>(customSignals {
+            <span class="tk-fn">put</span>(<span class="tk-str">"rollout_bucket"</span>, <span class="tk-kw">if</span> (accountId == <span class="tk-kw">null</span>) -<span class="tk-num">1L</span> <span class="tk-kw">else</span> <span class="tk-ty">Bucket</span>.<span class="tk-fn">of</span>(accountId, <span class="tk-str">"all"</span>).<span class="tk-fn">toLong</span>())
         })
     }
 
-    /** Real-time updates run only while the app is in the foreground. Use them for kill switches. */
-    fun onKillSwitchChanged(action: () -&gt; Unit) {
-        val killKeys = Flags.all.filter { it.killSwitch }.map { it.key }.toSet()
-        rc.addOnConfigUpdateListener(object : ConfigUpdateListener {
-            override fun onUpdate(configUpdate: ConfigUpdate) {
-                if (configUpdate.updatedKeys.any { it in killKeys }) action()
+    <span class="tk-com">/** Real-time updates run only while the app is in the foreground. Use them for kill switches. */</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">onKillSwitchChanged</span>(action: () -&gt; <span class="tk-ty">Unit</span>) {
+        <span class="tk-kw">val</span> killKeys = <span class="tk-ty">Flags</span>.all.filter { <span class="tk-kw">it</span>.killSwitch }.map { <span class="tk-kw">it</span>.key }.<span class="tk-fn">toSet</span>()
+        rc.<span class="tk-fn">addOnConfigUpdateListener</span>(<span class="tk-kw">object</span> : <span class="tk-ty">ConfigUpdateListener</span> {
+            <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">onUpdate</span>(configUpdate: <span class="tk-ty">ConfigUpdate</span>) {
+                <span class="tk-kw">if</span> (configUpdate.updatedKeys.<span class="tk-kw">any</span> { <span class="tk-kw">it</span> <span class="tk-kw">in</span> killKeys }) <span class="tk-fn">action</span>()
             }
-            override fun onError(error: FirebaseRemoteConfigException) { /* the next foreground fetch repairs it */ }
+            <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">onError</span>(error: <span class="tk-ty">FirebaseRemoteConfigException</span>) { <span class="tk-com">/* the next foreground fetch repairs it */</span> }
         })
     }
 }</code></pre>
@@ -284,76 +284,76 @@ class FirebaseFlagSource(private val rc: FirebaseRemoteConfig): FlagSource {
 <p>The <code>Application</code> class builds the store and starts it. <code>ProcessLifecycleOwner</code> reports the foreground. Its stop events come with a delay, so a screen turn does not look like a background trip (<a href="https://developer.android.com/reference/androidx/lifecycle/ProcessLifecycleOwner">ProcessLifecycleOwner</a>).</p>
 <p>The first activity holds the splash screen until the local read is done. Android's own sample holds the first frame for small local data, such as settings from disk (<a href="https://developer.android.com/develop/ui/views/launch/splash-screen">Android splash screen</a>). The compat library has <code>setKeepOnScreenCondition</code> for the same job (<a href="https://developer.android.com/reference/androidx/core/splashscreen/SplashScreen">SplashScreen reference</a>). Do not hold it for the network.</p>
 <p><code>startFinished()</code> runs after five seconds. That number is my choice. It only needs to be longer than the time a bad flag takes to crash the app.</p>
-<pre tabindex="0"><code>package flags
+<pre tabindex="0"><code><span class="tk-kw">package</span> flags
 
-import android.app.Activity
-import android.app.Application
-import android.os.Bundle
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
-import com.google.firebase.Firebase
-import com.google.firebase.remoteconfig.remoteConfig
-import com.google.firebase.remoteconfig.remoteConfigSettings
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+<span class="tk-kw">import</span> android.app.<span class="tk-ty">Activity</span>
+<span class="tk-kw">import</span> android.app.<span class="tk-ty">Application</span>
+<span class="tk-kw">import</span> android.os.<span class="tk-ty">Bundle</span>
+<span class="tk-kw">import</span> androidx.core.splashscreen.<span class="tk-ty">SplashScreen</span>.<span class="tk-ty">Companion</span>.installSplashScreen
+<span class="tk-kw">import</span> androidx.lifecycle.<span class="tk-ty">DefaultLifecycleObserver</span>
+<span class="tk-kw">import</span> androidx.lifecycle.<span class="tk-ty">LifecycleOwner</span>
+<span class="tk-kw">import</span> androidx.lifecycle.<span class="tk-ty">ProcessLifecycleOwner</span>
+<span class="tk-kw">import</span> com.google.firebase.<span class="tk-ty">Firebase</span>
+<span class="tk-kw">import</span> com.google.firebase.remoteconfig.remoteConfig
+<span class="tk-kw">import</span> com.google.firebase.remoteconfig.remoteConfigSettings
+<span class="tk-kw">import</span> java.util.concurrent.atomic.<span class="tk-ty">AtomicBoolean</span>
+<span class="tk-kw">import</span> kotlinx.coroutines.<span class="tk-ty">CoroutineScope</span>
+<span class="tk-kw">import</span> kotlinx.coroutines.<span class="tk-ty">Dispatchers</span>
+<span class="tk-kw">import</span> kotlinx.coroutines.<span class="tk-ty">SupervisorJob</span>
+<span class="tk-kw">import</span> kotlinx.coroutines.delay
+<span class="tk-kw">import</span> kotlinx.coroutines.launch
 
-class FlagsApp : Application() {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    val ready = AtomicBoolean(false)
-    lateinit var flagStore: FlagStore
-        private set
+<span class="tk-kw">class</span> <span class="tk-ty">FlagsApp</span> : <span class="tk-ty">Application</span>() {
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> scope = <span class="tk-ty">CoroutineScope</span>(<span class="tk-ty">SupervisorJob</span>() + <span class="tk-ty">Dispatchers</span>.<span class="tk-ty">Default</span>)
+    <span class="tk-kw">val</span> ready = <span class="tk-ty">AtomicBoolean</span>(<span class="tk-kw">false</span>)
+    <span class="tk-kw">lateinit</span> <span class="tk-kw">var</span> flagStore: <span class="tk-ty">FlagStore</span>
+        <span class="tk-kw">private</span> <span class="tk-kw">set</span>
 
-    override fun onCreate() {
-        super.onCreate()
-        val rc = Firebase.remoteConfig
-        rc.setConfigSettingsAsync(remoteConfigSettings { minimumFetchIntervalInSeconds = 12 * 3600 })
-        val source = FirebaseFlagSource(rc)
-        flagStore = FlagStore(source, DataStoreFlagDisk(this), now = System::currentTimeMillis)
+    <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">onCreate</span>() {
+        <span class="tk-kw">super</span>.<span class="tk-fn">onCreate</span>()
+        <span class="tk-kw">val</span> rc = <span class="tk-ty">Firebase</span>.remoteConfig
+        rc.<span class="tk-fn">setConfigSettingsAsync</span>(remoteConfigSettings { minimumFetchIntervalInSeconds = <span class="tk-num">12</span> * <span class="tk-num">3600</span> })
+        <span class="tk-kw">val</span> source = <span class="tk-ty">FirebaseFlagSource</span>(rc)
+        flagStore = <span class="tk-ty">FlagStore</span>(source, <span class="tk-ty">DataStoreFlagDisk</span>(<span class="tk-kw">this</span>), now = <span class="tk-ty">System</span>::currentTimeMillis)
 
         scope.launch {
-            flagStore.start(userKey = null)            // local disk only
-            ready.set(true)
-            delay(5_000)
-            flagStore.startFinished()                  // the app lived 5 seconds, so it did not crash at start
+            flagStore.<span class="tk-fn">start</span>(userKey = <span class="tk-kw">null</span>)            <span class="tk-com">// local disk only</span>
+            ready.<span class="tk-kw">set</span>(<span class="tk-kw">true</span>)
+            <span class="tk-fn">delay</span>(<span class="tk-num">5_000</span>)
+            flagStore.<span class="tk-fn">startFinished</span>()                  <span class="tk-com">// the app lived 5 seconds, so it did not crash at start</span>
         }
 
-        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) {          // the app came to the foreground
-                // If the app was away more than about 30 minutes (track the time in onStop), call flagStore.rollSession() first.
-                scope.launch { flagStore.refreshIfStale() }
+        <span class="tk-ty">ProcessLifecycleOwner</span>.<span class="tk-kw">get</span>().lifecycle.<span class="tk-fn">addObserver</span>(<span class="tk-kw">object</span> : <span class="tk-ty">DefaultLifecycleObserver</span> {
+            <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">onStart</span>(owner: <span class="tk-ty">LifecycleOwner</span>) {          <span class="tk-com">// the app came to the foreground</span>
+                <span class="tk-com">// If the app was away more than about 30 minutes (track the time in onStop), call flagStore.rollSession() first.</span>
+                scope.launch { flagStore.<span class="tk-fn">refreshIfStale</span>() }
             }
         })
-        source.onKillSwitchChanged { scope.launch { flagStore.refresh() } }
+        source.onKillSwitchChanged { scope.launch { flagStore.<span class="tk-fn">refresh</span>() } }
     }
 }
 
-/** The first activity holds the splash screen until the local read is done. It never waits for the network. */
-class MainActivity : Activity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        val app = application as FlagsApp
-        installSplashScreen().setKeepOnScreenCondition { !app.ready.get() }
-        super.onCreate(savedInstanceState)
+<span class="tk-com">/** The first activity holds the splash screen until the local read is done. It never waits for the network. */</span>
+<span class="tk-kw">class</span> <span class="tk-ty">MainActivity</span> : <span class="tk-ty">Activity</span>() {
+    <span class="tk-kw">override</span> <span class="tk-kw">fun</span> <span class="tk-fn">onCreate</span>(savedInstanceState: <span class="tk-ty">Bundle</span>?) {
+        <span class="tk-kw">val</span> app = application <span class="tk-kw">as</span> <span class="tk-ty">FlagsApp</span>
+        <span class="tk-fn">installSplashScreen</span>().setKeepOnScreenCondition { !app.ready.<span class="tk-kw">get</span>() }
+        <span class="tk-kw">super</span>.<span class="tk-fn">onCreate</span>(savedInstanceState)
     }
 }</code></pre>
 <p>The screens take one view each. <code>CheckoutViewModel</code> keeps its answer until it is cleared. <code>ChatViewModel</code> reads a kill switch each time.</p>
-<pre tabindex="0"><code>package flags
+<pre tabindex="0"><code><span class="tk-kw">package</span> flags
 
-import androidx.lifecycle.ViewModel
+<span class="tk-kw">import</span> androidx.lifecycle.<span class="tk-ty">ViewModel</span>
 
-class CheckoutViewModel(store: FlagStore): ViewModel() {
-    private val flags = store.view()                          // one view, taken when the screen opens
-    val useNewCheckout: Boolean = flags.isOn(Flags.NewCheckout)   // the same answer until the screen closes
+<span class="tk-kw">class</span> <span class="tk-ty">CheckoutViewModel</span>(store: <span class="tk-ty">FlagStore</span>): <span class="tk-ty">ViewModel</span>() {
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> flags = store.<span class="tk-fn">view</span>()                          <span class="tk-com">// one view, taken when the screen opens</span>
+    <span class="tk-kw">val</span> useNewCheckout: <span class="tk-ty">Boolean</span> = flags.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>)   <span class="tk-com">// the same answer until the screen closes</span>
 }
 
-class ChatViewModel(store: FlagStore): ViewModel() {
-    private val flags = store.view()
-    fun canSendMedia(): Boolean = flags.isOn(Flags.ChatMedia)     // a kill switch is read each time
+<span class="tk-kw">class</span> <span class="tk-ty">ChatViewModel</span>(store: <span class="tk-ty">FlagStore</span>): <span class="tk-ty">ViewModel</span>() {
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> flags = store.<span class="tk-fn">view</span>()
+    <span class="tk-kw">fun</span> <span class="tk-fn">canSendMedia</span>(): <span class="tk-ty">Boolean</span> = flags.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">ChatMedia</span>)     <span class="tk-com">// a kill switch is read each time</span>
 }</code></pre>
 <h2 id="8-privacy-of-targeting-data">8. Privacy of targeting data</h2>
 <p>Targeting needs facts about the user. Each fact is a decision. My default is to send the least.</p>
@@ -364,134 +364,134 @@ class ChatViewModel(store: FlagStore): ViewModel() {
 <p>The tests below cover the cases that hurt in production:</p>
 <ul><li>no network, no saved copy and a failed fetch</li><li>a changed user, a crash loop and a clock set back</li><li>an expired flag and the bucket rules</li></ul>
 <p>They ran on the JVM.</p>
-<pre tabindex="0"><code>package flags
+<pre tabindex="0"><code><span class="tk-kw">package</span> flags
 
-import java.time.LocalDate
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
-import kotlinx.coroutines.test.runTest
+<span class="tk-kw">import</span> java.time.<span class="tk-ty">LocalDate</span>
+<span class="tk-kw">import</span> kotlin.test.<span class="tk-ty">Test</span>
+<span class="tk-kw">import</span> kotlin.test.assertEquals
+<span class="tk-kw">import</span> kotlin.test.assertFalse
+<span class="tk-kw">import</span> kotlin.test.assertTrue
+<span class="tk-kw">import</span> kotlinx.coroutines.test.runTest
 
-class FakeSource(var result: Map&lt;String, Boolean&gt;? = null): FlagSource {
-    var calls = 0
-    override suspend fun fetch(userKey: String?): Map&lt;String, Boolean&gt;? { calls++; return result }
+<span class="tk-kw">class</span> <span class="tk-ty">FakeSource</span>(<span class="tk-kw">var</span> result: <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Boolean</span>&gt;? = <span class="tk-kw">null</span>): <span class="tk-ty">FlagSource</span> {
+    <span class="tk-kw">var</span> calls = <span class="tk-num">0</span>
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">fetch</span>(userKey: <span class="tk-ty">String</span>?): <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Boolean</span>&gt;? { calls++; <span class="tk-kw">return</span> result }
 }
 
-class FakeDisk(var snapshot: FlagSnapshot? = null, var unfinished: Int = 0): FlagDisk {
-    override suspend fun read() = snapshot
-    override suspend fun write(snapshot: FlagSnapshot) { this.snapshot = snapshot }
-    override suspend fun clear() { snapshot = null }
-    override suspend fun unfinishedStarts() = unfinished
-    override suspend fun setUnfinishedStarts(n: Int) { unfinished = n }
+<span class="tk-kw">class</span> <span class="tk-ty">FakeDisk</span>(<span class="tk-kw">var</span> snapshot: <span class="tk-ty">FlagSnapshot</span>? = <span class="tk-kw">null</span>, <span class="tk-kw">var</span> unfinished: <span class="tk-ty">Int</span> = <span class="tk-num">0</span>): <span class="tk-ty">FlagDisk</span> {
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">read</span>() = snapshot
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">write</span>(snapshot: <span class="tk-ty">FlagSnapshot</span>) { <span class="tk-kw">this</span>.snapshot = snapshot }
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">clear</span>() { snapshot = <span class="tk-kw">null</span> }
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">unfinishedStarts</span>() = unfinished
+    <span class="tk-kw">override</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">setUnfinishedStarts</span>(n: <span class="tk-ty">Int</span>) { unfinished = n }
 }
 
-class FlagStoreTest {
-    private var clock = 1_000_000L
-    private fun store(source: FlagSource, disk: FlagDisk) = FlagStore(source, disk, { clock })
-    private val saved = FlagSnapshot(&quot;u1&quot;, 500_000L, mapOf(&quot;new_checkout&quot; to true, &quot;chat_media_enabled&quot; to true))
+<span class="tk-kw">class</span> <span class="tk-ty">FlagStoreTest</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> clock = <span class="tk-num">1_000_000L</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">fun</span> <span class="tk-fn">store</span>(source: <span class="tk-ty">FlagSource</span>, disk: <span class="tk-ty">FlagDisk</span>) = <span class="tk-ty">FlagStore</span>(source, disk, { clock })
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> saved = <span class="tk-ty">FlagSnapshot</span>(<span class="tk-str">"u1"</span>, <span class="tk-num">500_000L</span>, <span class="tk-fn">mapOf</span>(<span class="tk-str">"new_checkout"</span> to <span class="tk-kw">true</span>, <span class="tk-str">"chat_media_enabled"</span> to <span class="tk-kw">true</span>))
 
-    @Test fun firstLaunchOfflineUsesCodeDefaults() = runTest {
-        val s = store(FakeSource(null), FakeDisk())
-        s.start(&quot;u1&quot;)
-        val v = s.view()
-        assertFalse(v.isOn(Flags.NewCheckout))     // default false
-        assertTrue(v.isOn(Flags.ChatMedia))        // default true
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">firstLaunchOfflineUsesCodeDefaults</span>() = runTest {
+        <span class="tk-kw">val</span> s = <span class="tk-fn">store</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-kw">null</span>), <span class="tk-ty">FakeDisk</span>())
+        s.<span class="tk-fn">start</span>(<span class="tk-str">"u1"</span>)
+        <span class="tk-kw">val</span> v = s.<span class="tk-fn">view</span>()
+        <span class="tk-fn">assertFalse</span>(v.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))     <span class="tk-com">// default false</span>
+        <span class="tk-fn">assertTrue</span>(v.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">ChatMedia</span>))        <span class="tk-com">// default true</span>
     }
 
-    @Test fun savedValuesApplyAtStartAndNewOnesWaitForNextSession() = runTest {
-        val src = FakeSource(mapOf(&quot;new_checkout&quot; to false, &quot;chat_media_enabled&quot; to true))
-        val disk = FakeDisk(saved)
-        val s = store(src, disk)
-        s.start(&quot;u1&quot;)
-        val screen = s.view()
-        assertTrue(screen.isOn(Flags.NewCheckout))
-        s.refresh()
-        assertTrue(screen.isOn(Flags.NewCheckout))                 // this screen does not flicker
-        assertTrue(s.view().isOn(Flags.NewCheckout))               // same session, same answer
-        assertFalse(disk.snapshot!!.values.getValue(&quot;new_checkout&quot;))   // next start sees false
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">savedValuesApplyAtStartAndNewOnesWaitForNextSession</span>() = runTest {
+        <span class="tk-kw">val</span> src = <span class="tk-ty">FakeSource</span>(<span class="tk-fn">mapOf</span>(<span class="tk-str">"new_checkout"</span> to <span class="tk-kw">false</span>, <span class="tk-str">"chat_media_enabled"</span> to <span class="tk-kw">true</span>))
+        <span class="tk-kw">val</span> disk = <span class="tk-ty">FakeDisk</span>(saved)
+        <span class="tk-kw">val</span> s = <span class="tk-fn">store</span>(src, disk)
+        s.<span class="tk-fn">start</span>(<span class="tk-str">"u1"</span>)
+        <span class="tk-kw">val</span> screen = s.<span class="tk-fn">view</span>()
+        <span class="tk-fn">assertTrue</span>(screen.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))
+        s.<span class="tk-fn">refresh</span>()
+        <span class="tk-fn">assertTrue</span>(screen.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))                 <span class="tk-com">// this screen does not flicker</span>
+        <span class="tk-fn">assertTrue</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))               <span class="tk-com">// same session, same answer</span>
+        <span class="tk-fn">assertFalse</span>(disk.snapshot!!.values.<span class="tk-fn">getValue</span>(<span class="tk-str">"new_checkout"</span>))   <span class="tk-com">// next start sees false</span>
     }
 
-    @Test fun killSwitchChangesNow() = runTest {
-        val s = store(FakeSource(mapOf(&quot;chat_media_enabled&quot; to false)), FakeDisk(saved))
-        s.start(&quot;u1&quot;)
-        val screen = s.view()
-        assertTrue(screen.isOn(Flags.ChatMedia))
-        s.refresh()
-        assertFalse(screen.isOn(Flags.ChatMedia))
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">killSwitchChangesNow</span>() = runTest {
+        <span class="tk-kw">val</span> s = <span class="tk-fn">store</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-fn">mapOf</span>(<span class="tk-str">"chat_media_enabled"</span> to <span class="tk-kw">false</span>)), <span class="tk-ty">FakeDisk</span>(saved))
+        s.<span class="tk-fn">start</span>(<span class="tk-str">"u1"</span>)
+        <span class="tk-kw">val</span> screen = s.<span class="tk-fn">view</span>()
+        <span class="tk-fn">assertTrue</span>(screen.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">ChatMedia</span>))
+        s.<span class="tk-fn">refresh</span>()
+        <span class="tk-fn">assertFalse</span>(screen.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">ChatMedia</span>))
     }
 
-    @Test fun failedFetchKeepsLastValues() = runTest {
-        val disk = FakeDisk(saved)
-        val s = store(FakeSource(null), disk)
-        s.start(&quot;u1&quot;); s.refresh()
-        assertEquals(saved, disk.snapshot)
-        assertTrue(s.view().isOn(Flags.NewCheckout))
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">failedFetchKeepsLastValues</span>() = runTest {
+        <span class="tk-kw">val</span> disk = <span class="tk-ty">FakeDisk</span>(saved)
+        <span class="tk-kw">val</span> s = <span class="tk-fn">store</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-kw">null</span>), disk)
+        s.<span class="tk-fn">start</span>(<span class="tk-str">"u1"</span>); s.<span class="tk-fn">refresh</span>()
+        <span class="tk-fn">assertEquals</span>(saved, disk.snapshot)
+        <span class="tk-fn">assertTrue</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))
     }
 
-    @Test fun otherUsersValuesAreNeverShown() = runTest {
-        val s = store(FakeSource(null), FakeDisk(saved))
-        s.start(&quot;u2&quot;)
-        assertFalse(s.view().isOn(Flags.NewCheckout))
-        s.switchUser(&quot;u1&quot;)
-        assertTrue(s.view().isOn(Flags.NewCheckout))
-        s.switchUser(null)
-        assertFalse(s.view().isOn(Flags.NewCheckout))
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">otherUsersValuesAreNeverShown</span>() = runTest {
+        <span class="tk-kw">val</span> s = <span class="tk-fn">store</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-kw">null</span>), <span class="tk-ty">FakeDisk</span>(saved))
+        s.<span class="tk-fn">start</span>(<span class="tk-str">"u2"</span>)
+        <span class="tk-fn">assertFalse</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))
+        s.<span class="tk-fn">switchUser</span>(<span class="tk-str">"u1"</span>)
+        <span class="tk-fn">assertTrue</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))
+        s.<span class="tk-fn">switchUser</span>(<span class="tk-kw">null</span>)
+        <span class="tk-fn">assertFalse</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))
     }
 
-    @Test fun twoUnfinishedStartsMeanSafeMode() = runTest {
-        val disk = FakeDisk(saved, unfinished = 2)
-        val s = store(FakeSource(null), disk)
-        s.start(&quot;u1&quot;)
-        assertFalse(s.view().isOn(Flags.NewCheckout))
-        assertEquals(null, disk.snapshot)
-        s.startFinished()
-        assertEquals(0, disk.unfinished)
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">twoUnfinishedStartsMeanSafeMode</span>() = runTest {
+        <span class="tk-kw">val</span> disk = <span class="tk-ty">FakeDisk</span>(saved, unfinished = <span class="tk-num">2</span>)
+        <span class="tk-kw">val</span> s = <span class="tk-fn">store</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-kw">null</span>), disk)
+        s.<span class="tk-fn">start</span>(<span class="tk-str">"u1"</span>)
+        <span class="tk-fn">assertFalse</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>))
+        <span class="tk-fn">assertEquals</span>(<span class="tk-kw">null</span>, disk.snapshot)
+        s.<span class="tk-fn">startFinished</span>()
+        <span class="tk-fn">assertEquals</span>(<span class="tk-num">0</span>, disk.unfinished)
     }
 
-    @Test fun clockMovedBackStillFetches() = runTest {
-        val src = FakeSource(mapOf(&quot;new_checkout&quot; to true))
-        val s = store(src, FakeDisk(saved.copy(fetchedAtMillis = clock + 9_999_999L)))
-        s.start(&quot;u1&quot;)
-        s.refreshIfStale()
-        assertEquals(1, src.calls)
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">clockMovedBackStillFetches</span>() = runTest {
+        <span class="tk-kw">val</span> src = <span class="tk-ty">FakeSource</span>(<span class="tk-fn">mapOf</span>(<span class="tk-str">"new_checkout"</span> to <span class="tk-kw">true</span>))
+        <span class="tk-kw">val</span> s = <span class="tk-fn">store</span>(src, <span class="tk-ty">FakeDisk</span>(saved.<span class="tk-fn">copy</span>(fetchedAtMillis = clock + <span class="tk-num">9_999_999L</span>)))
+        s.<span class="tk-fn">start</span>(<span class="tk-str">"u1"</span>)
+        s.<span class="tk-fn">refreshIfStale</span>()
+        <span class="tk-fn">assertEquals</span>(<span class="tk-num">1</span>, src.calls)
     }
 
-    @Test fun freshSnapshotIsNotFetchedAgain() = runTest {
-        val src = FakeSource(mapOf(&quot;new_checkout&quot; to true))
-        val s = store(src, FakeDisk(saved.copy(fetchedAtMillis = clock - 60_000L)))
-        s.start(&quot;u1&quot;)
-        s.refreshIfStale()
-        assertEquals(0, src.calls)
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">freshSnapshotIsNotFetchedAgain</span>() = runTest {
+        <span class="tk-kw">val</span> src = <span class="tk-ty">FakeSource</span>(<span class="tk-fn">mapOf</span>(<span class="tk-str">"new_checkout"</span> to <span class="tk-kw">true</span>))
+        <span class="tk-kw">val</span> s = <span class="tk-fn">store</span>(src, <span class="tk-ty">FakeDisk</span>(saved.<span class="tk-fn">copy</span>(fetchedAtMillis = clock - <span class="tk-num">60_000L</span>)))
+        s.<span class="tk-fn">start</span>(<span class="tk-str">"u1"</span>)
+        s.<span class="tk-fn">refreshIfStale</span>()
+        <span class="tk-fn">assertEquals</span>(<span class="tk-num">0</span>, src.calls)
     }
 
-    @Test fun noFlagIsPastItsExpiry() {
-        // Use the real date in CI. A fixed date here keeps this example repeatable.
-        assertEquals(emptyList(), Flags.expired(LocalDate.of(2026, 10, 14)))
-        assertEquals(listOf(Flags.NewCheckout), Flags.expired(LocalDate.of(2027, 3, 2)))
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">noFlagIsPastItsExpiry</span>() {
+        <span class="tk-com">// Use the real date in CI. A fixed date here keeps this example repeatable.</span>
+        <span class="tk-fn">assertEquals</span>(<span class="tk-fn">emptyList</span>(), <span class="tk-ty">Flags</span>.<span class="tk-fn">expired</span>(<span class="tk-ty">LocalDate</span>.<span class="tk-fn">of</span>(<span class="tk-num">2026</span>, <span class="tk-num">10</span>, <span class="tk-num">14</span>)))
+        <span class="tk-fn">assertEquals</span>(<span class="tk-fn">listOf</span>(<span class="tk-ty">Flags</span>.<span class="tk-ty">NewCheckout</span>), <span class="tk-ty">Flags</span>.<span class="tk-fn">expired</span>(<span class="tk-ty">LocalDate</span>.<span class="tk-fn">of</span>(<span class="tk-num">2027</span>, <span class="tk-num">3</span>, <span class="tk-num">2</span>)))
     }
 
-    @Test fun sameAccountSameBucket() {
-        assertEquals(Bucket.of(&quot;acct-42&quot;, &quot;new_checkout&quot;), Bucket.of(&quot;acct-42&quot;, &quot;new_checkout&quot;))
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">sameAccountSameBucket</span>() {
+        <span class="tk-fn">assertEquals</span>(<span class="tk-ty">Bucket</span>.<span class="tk-fn">of</span>(<span class="tk-str">"acct-42"</span>, <span class="tk-str">"new_checkout"</span>), <span class="tk-ty">Bucket</span>.<span class="tk-fn">of</span>(<span class="tk-str">"acct-42"</span>, <span class="tk-str">"new_checkout"</span>))
     }
 
-    @Test fun androidAndIosAgree() {
-        assertEquals(1500, Bucket.of(&quot;acct-42&quot;, &quot;new_checkout&quot;))   // the Swift version prints the same number
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">androidAndIosAgree</span>() {
+        <span class="tk-fn">assertEquals</span>(<span class="tk-num">1500</span>, <span class="tk-ty">Bucket</span>.<span class="tk-fn">of</span>(<span class="tk-str">"acct-42"</span>, <span class="tk-str">"new_checkout"</span>))   <span class="tk-com">// the Swift version prints the same number</span>
     }
 
-    @Test fun biggerPercentageOnlyAddsPeople() {
-        val ids = (1..20_000).map { &quot;acct-$it&quot; }
-        val ten = ids.filter { Bucket.isIn(it, &quot;new_checkout&quot;, 1_000) }.toSet()
-        val twenty = ids.filter { Bucket.isIn(it, &quot;new_checkout&quot;, 2_000) }.toSet()
-        assertTrue(twenty.containsAll(ten))
-        assertTrue(ten.size in 1_800..2_200, &quot;ten percent of 20,000 was ${ten.size}&quot;)
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">biggerPercentageOnlyAddsPeople</span>() {
+        <span class="tk-kw">val</span> ids = (<span class="tk-num">1</span>..<span class="tk-num">20_000</span>).map { <span class="tk-str">"acct-$it"</span> }
+        <span class="tk-kw">val</span> ten = ids.filter { <span class="tk-ty">Bucket</span>.<span class="tk-fn">isIn</span>(<span class="tk-kw">it</span>, <span class="tk-str">"new_checkout"</span>, <span class="tk-num">1_000</span>) }.<span class="tk-fn">toSet</span>()
+        <span class="tk-kw">val</span> twenty = ids.filter { <span class="tk-ty">Bucket</span>.<span class="tk-fn">isIn</span>(<span class="tk-kw">it</span>, <span class="tk-str">"new_checkout"</span>, <span class="tk-num">2_000</span>) }.<span class="tk-fn">toSet</span>()
+        <span class="tk-fn">assertTrue</span>(twenty.<span class="tk-fn">containsAll</span>(ten))
+        <span class="tk-fn">assertTrue</span>(ten.size <span class="tk-kw">in</span> <span class="tk-num">1_800</span>..<span class="tk-num">2_200</span>, <span class="tk-str">"ten percent of 20,000 was ${ten.size}"</span>)
     }
 
-    @Test fun flagsPickTheirPeopleIndependently() {
-        val ids = (1..20_000).map { &quot;acct-$it&quot; }
-        val a = ids.filter { Bucket.isIn(it, &quot;flag_a&quot;, 1_000) }.toSet()
-        val b = ids.filter { Bucket.isIn(it, &quot;flag_b&quot;, 1_000) }.toSet()
-        assertTrue((a intersect b).size &lt; 400, &quot;overlap was ${(a intersect b).size}&quot;)
+    <span class="tk-ann">@Test</span> <span class="tk-kw">fun</span> <span class="tk-fn">flagsPickTheirPeopleIndependently</span>() {
+        <span class="tk-kw">val</span> ids = (<span class="tk-num">1</span>..<span class="tk-num">20_000</span>).map { <span class="tk-str">"acct-$it"</span> }
+        <span class="tk-kw">val</span> a = ids.filter { <span class="tk-ty">Bucket</span>.<span class="tk-fn">isIn</span>(<span class="tk-kw">it</span>, <span class="tk-str">"flag_a"</span>, <span class="tk-num">1_000</span>) }.<span class="tk-fn">toSet</span>()
+        <span class="tk-kw">val</span> b = ids.filter { <span class="tk-ty">Bucket</span>.<span class="tk-fn">isIn</span>(<span class="tk-kw">it</span>, <span class="tk-str">"flag_b"</span>, <span class="tk-num">1_000</span>) }.<span class="tk-fn">toSet</span>()
+        <span class="tk-fn">assertTrue</span>((a intersect b).size &lt; <span class="tk-num">400</span>, <span class="tk-str">"overlap was ${(a intersect b).size}"</span>)
     }
 }</code></pre>
 <p>More rules, all my opinion:</p>
@@ -510,348 +510,348 @@ class FlagStoreTest {
 <div class="tw" tabindex="0" role="region" aria-label="Table 4, scrollable"><table><thead><tr><th>Concern</th><th>Android</th><th>iOS</th></tr></thead><tbody><tr><td>Saved copy</td><td>DataStore</td><td>UserDefaults (one key, JSON)</td></tr><tr><td>Store</td><td>Class made in <code>Application</code></td><td><code>@MainActor</code> class</td></tr><tr><td>Foreground signal</td><td><code>ProcessLifecycleOwner</code></td><td><code>ScenePhase</code> in SwiftUI</td></tr><tr><td>Vendor SDK</td><td><code>firebase-config</code></td><td><code>FirebaseRemoteConfig</code></td></tr><tr><td>Bucket hash</td><td><code>MessageDigest</code></td><td>CryptoKit <code>SHA256</code></td></tr></tbody></table></div>
 <p>What really changes:</p>
 <ul><li><strong>The store runs on the main <a class="gl" href="/glossary/#actor" title="A Swift type that runs one task at a time.">actor</a>.</strong> A view can call <code>isOn</code> in its body without an <code>await</code>. The disk and the source are async protocols, so slow work does not block the main thread.</li><li><strong>A refresh can overlap a user switch.</strong> <code>refresh()</code> drops the answer if the user changed while it waited. A late write cannot leak either, because the saved copy carries a user key, and a mismatch is ignored at start.</li><li><strong>The live kill switch needs the real-time listener.</strong> Add <code>onKillSwitchChanged</code> at launch and keep the returned registration alive. Without it, a kill switch on iOS waits for the 12-hour fetch interval.</li><li><strong>Privacy manifest.</strong> UserDefaults is a required-reason API. Declare the reason in your app's privacy manifest.</li><li><strong>The foreground signal is the scene phase.</strong> <code>active</code> means the scene is in the foreground and interactive (<a href="https://developer.apple.com/documentation/swiftui/scenephase">Apple ScenePhase</a>).</li><li><strong>The first screen waits for the local read.</strong> <code>RootView</code> shows an empty view for a few milliseconds.</li></ul>
-<pre tabindex="0"><code>import CryptoKit
-import Foundation
+<pre tabindex="0"><code><span class="tk-kw">import</span> <span class="tk-ty">CryptoKit</span>
+<span class="tk-kw">import</span> <span class="tk-ty">Foundation</span>
 
-/// A flag, declared in code. `defaultValue` is the behavior that already shipped and worked.
-/// A kill switch has no expiry date. Every other flag must have one.
-struct Flag: Sendable {
-    let key: String
-    let defaultValue: Bool
-    let owner: String
-    let expires: Date?
-    let killSwitch: Bool
+<span class="tk-com">/// A flag, declared in code. `defaultValue` is the behavior that already shipped and worked.</span>
+<span class="tk-com">/// A kill switch has no expiry date. Every other flag must have one.</span>
+<span class="tk-kw">struct</span> <span class="tk-ty">Flag</span>: <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">let</span> key: <span class="tk-ty">String</span>
+    <span class="tk-kw">let</span> defaultValue: <span class="tk-ty">Bool</span>
+    <span class="tk-kw">let</span> owner: <span class="tk-ty">String</span>
+    <span class="tk-kw">let</span> expires: <span class="tk-ty">Date</span>?
+    <span class="tk-kw">let</span> killSwitch: <span class="tk-ty">Bool</span>
 
-    init(key: String, defaultValue: Bool, owner: String, expires: Date? = nil, killSwitch: Bool = false) {
-        precondition(killSwitch || expires != nil, &quot;\(key) needs an expiry date&quot;)
-        self.key = key; self.defaultValue = defaultValue; self.owner = owner
-        self.expires = expires; self.killSwitch = killSwitch
+    <span class="tk-kw">init</span>(key: <span class="tk-ty">String</span>, defaultValue: <span class="tk-ty">Bool</span>, owner: <span class="tk-ty">String</span>, expires: <span class="tk-ty">Date</span>? = <span class="tk-kw">nil</span>, killSwitch: <span class="tk-ty">Bool</span> = <span class="tk-kw">false</span>) {
+        <span class="tk-fn">precondition</span>(killSwitch || expires != <span class="tk-kw">nil</span>, <span class="tk-str">"\(key) needs an expiry date"</span>)
+        <span class="tk-kw">self</span>.key = key; <span class="tk-kw">self</span>.defaultValue = defaultValue; <span class="tk-kw">self</span>.owner = owner
+        <span class="tk-kw">self</span>.expires = expires; <span class="tk-kw">self</span>.killSwitch = killSwitch
     }
 }
 
-enum Flags {
-    static func day(_ y: Int, _ m: Int, _ d: Int) -&gt; Date {
-        var c = Calendar(identifier: .gregorian)
-        c.timeZone = TimeZone(identifier: &quot;UTC&quot;)!
-        return c.date(from: DateComponents(year: y, month: m, day: d))!
+<span class="tk-kw">enum</span> <span class="tk-ty">Flags</span> {
+    <span class="tk-kw">static</span> <span class="tk-kw">func</span> <span class="tk-fn">day</span>(_ y: <span class="tk-ty">Int</span>, _ m: <span class="tk-ty">Int</span>, _ d: <span class="tk-ty">Int</span>) -&gt; <span class="tk-ty">Date</span> {
+        <span class="tk-kw">var</span> c = <span class="tk-ty">Calendar</span>(identifier: .gregorian)
+        c.timeZone = <span class="tk-ty">TimeZone</span>(identifier: <span class="tk-str">"UTC"</span>)!
+        <span class="tk-kw">return</span> c.<span class="tk-fn">date</span>(from: <span class="tk-ty">DateComponents</span>(year: y, month: m, day: d))!
     }
 
-    static let newCheckout = Flag(key: &quot;new_checkout&quot;, defaultValue: false, owner: &quot;payments&quot;, expires: day(2027, 3, 1))
-    static let chatMedia = Flag(key: &quot;chat_media_enabled&quot;, defaultValue: true, owner: &quot;chat&quot;, killSwitch: true)
-    static let all = [newCheckout, chatMedia]
+    <span class="tk-kw">static</span> <span class="tk-kw">let</span> newCheckout = <span class="tk-ty">Flag</span>(key: <span class="tk-str">"new_checkout"</span>, defaultValue: <span class="tk-kw">false</span>, owner: <span class="tk-str">"payments"</span>, expires: <span class="tk-fn">day</span>(<span class="tk-num">2027</span>, <span class="tk-num">3</span>, <span class="tk-num">1</span>))
+    <span class="tk-kw">static</span> <span class="tk-kw">let</span> chatMedia = <span class="tk-ty">Flag</span>(key: <span class="tk-str">"chat_media_enabled"</span>, defaultValue: <span class="tk-kw">true</span>, owner: <span class="tk-str">"chat"</span>, killSwitch: <span class="tk-kw">true</span>)
+    <span class="tk-kw">static</span> <span class="tk-kw">let</span> all = [newCheckout, chatMedia]
 
-    /// Run this in CI. A flag past its date fails the build until someone removes it.
-    static func expired(on today: Date) -&gt; [Flag] {
-        all.filter { ($0.expires ?? .distantFuture) &lt; today }
+    <span class="tk-com">/// Run this in CI. A flag past its date fails the build until someone removes it.</span>
+    <span class="tk-kw">static</span> <span class="tk-kw">func</span> <span class="tk-fn">expired</span>(on today: <span class="tk-ty">Date</span>) -&gt; [<span class="tk-ty">Flag</span>] {
+        all.filter { ($<span class="tk-num">0</span>.expires ?? .distantFuture) &lt; today }
     }
 }
 
-/// Rollout bucket, 0 to 9,999. It runs on the server. It is shown here so the property can be tested:
-/// the same account and flag always give the same bucket, and a larger percentage only adds buckets.
-enum Bucket {
-    static func of(stableID: String, flagKey: String) -&gt; Int {
-        let digest = SHA256.hash(data: Data(&quot;\(flagKey):\(stableID)&quot;.utf8))
-        let first4 = digest.prefix(4).reduce(UInt32(0)) { ($0 &lt;&lt; 8) | UInt32($1) }
-        return Int(first4 % 10_000)
+<span class="tk-com">/// Rollout bucket, 0 to 9,999. It runs on the server. It is shown here so the property can be tested:</span>
+<span class="tk-com">/// the same account and flag always give the same bucket, and a larger percentage only adds buckets.</span>
+<span class="tk-kw">enum</span> <span class="tk-ty">Bucket</span> {
+    <span class="tk-kw">static</span> <span class="tk-kw">func</span> <span class="tk-fn">of</span>(stableID: <span class="tk-ty">String</span>, flagKey: <span class="tk-ty">String</span>) -&gt; <span class="tk-ty">Int</span> {
+        <span class="tk-kw">let</span> digest = <span class="tk-ty">SHA256</span>.<span class="tk-fn">hash</span>(<span class="tk-kw">data</span>: <span class="tk-ty">Data</span>(<span class="tk-str">"\(flagKey):\(stableID)"</span>.utf8))
+        <span class="tk-kw">let</span> first4 = digest.<span class="tk-fn">prefix</span>(<span class="tk-num">4</span>).<span class="tk-fn">reduce</span>(<span class="tk-ty">UInt32</span>(<span class="tk-num">0</span>)) { ($<span class="tk-num">0</span> &lt;&lt; <span class="tk-num">8</span>) | <span class="tk-ty">UInt32</span>($<span class="tk-num">1</span>) }
+        <span class="tk-kw">return</span> <span class="tk-ty">Int</span>(first4 % <span class="tk-num">10_000</span>)
     }
 
-    /// `basisPoints` 1,000 means 10 percent.
-    static func isIn(stableID: String, flagKey: String, basisPoints: Int) -&gt; Bool {
-        of(stableID: stableID, flagKey: flagKey) &lt; basisPoints
+    <span class="tk-com">/// `basisPoints` 1,000 means 10 percent.</span>
+    <span class="tk-kw">static</span> <span class="tk-kw">func</span> <span class="tk-fn">isIn</span>(stableID: <span class="tk-ty">String</span>, flagKey: <span class="tk-ty">String</span>, basisPoints: <span class="tk-ty">Int</span>) -&gt; <span class="tk-ty">Bool</span> {
+        <span class="tk-fn">of</span>(stableID: stableID, flagKey: flagKey) &lt; basisPoints
     }
 }</code></pre>
-<pre tabindex="0"><code>import Foundation
+<pre tabindex="0"><code><span class="tk-kw">import</span> <span class="tk-ty">Foundation</span>
 
-struct FlagSnapshot: Codable, Equatable, Sendable {
-    var userKey: String?             // nil means signed out
-    var fetchedAt: TimeInterval      // seconds since 1970. 0 means never fetched
-    var values: [String: Bool]
+<span class="tk-kw">struct</span> <span class="tk-ty">FlagSnapshot</span>: <span class="tk-ty">Codable</span>, <span class="tk-ty">Equatable</span>, <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">var</span> userKey: <span class="tk-ty">String</span>?             <span class="tk-com">// nil means signed out</span>
+    <span class="tk-kw">var</span> fetchedAt: <span class="tk-ty">TimeInterval</span>      <span class="tk-com">// seconds since 1970. 0 means never fetched</span>
+    <span class="tk-kw">var</span> values: [<span class="tk-ty">String</span>: <span class="tk-ty">Bool</span>]
 
-    static func empty(_ userKey: String?) -&gt; FlagSnapshot { .init(userKey: userKey, fetchedAt: 0, values: [:]) }
+    <span class="tk-kw">static</span> <span class="tk-kw">func</span> <span class="tk-fn">empty</span>(_ userKey: <span class="tk-ty">String</span>?) -&gt; <span class="tk-ty">FlagSnapshot</span> { .<span class="tk-kw">init</span>(userKey: userKey, fetchedAt: <span class="tk-num">0</span>, values: [:]) }
 }
 
-protocol FlagSource: Sendable {
-    /// Returns the values for this user, or nil when the fetch failed.
-    func fetch(userKey: String?) async -&gt; [String: Bool]?
+<span class="tk-kw">protocol</span> <span class="tk-ty">FlagSource</span>: <span class="tk-ty">Sendable</span> {
+    <span class="tk-com">/// Returns the values for this user, or nil when the fetch failed.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">fetch</span>(userKey: <span class="tk-ty">String</span>?) <span class="tk-kw">async</span> -&gt; [<span class="tk-ty">String</span>: <span class="tk-ty">Bool</span>]?
 }
 
-protocol FlagDisk: Sendable {
-    func read() async -&gt; FlagSnapshot?
-    func write(_ snapshot: FlagSnapshot) async
-    func clear() async
-    func unfinishedStarts() async -&gt; Int
-    func setUnfinishedStarts(_ n: Int) async
+<span class="tk-kw">protocol</span> <span class="tk-ty">FlagDisk</span>: <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">read</span>() <span class="tk-kw">async</span> -&gt; <span class="tk-ty">FlagSnapshot</span>?
+    <span class="tk-kw">func</span> <span class="tk-fn">write</span>(_ snapshot: <span class="tk-ty">FlagSnapshot</span>) <span class="tk-kw">async</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">clear</span>() <span class="tk-kw">async</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">unfinishedStarts</span>() <span class="tk-kw">async</span> -&gt; <span class="tk-ty">Int</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">setUnfinishedStarts</span>(_ n: <span class="tk-ty">Int</span>) <span class="tk-kw">async</span>
 }
 
-@MainActor
-final class FlagStore {
-    private let source: FlagSource
-    private let disk: FlagDisk
-    private let now: @Sendable () -&gt; TimeInterval
-    private let maxAge: TimeInterval
-    private let killKeys: Set&lt;String&gt;
+<span class="tk-ann">@MainActor</span>
+<span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">FlagStore</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> source: <span class="tk-ty">FlagSource</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> disk: <span class="tk-ty">FlagDisk</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> now: <span class="tk-ann">@Sendable</span> () -&gt; <span class="tk-ty">TimeInterval</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> maxAge: <span class="tk-ty">TimeInterval</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> killKeys: <span class="tk-ty">Set</span>&lt;<span class="tk-ty">String</span>&gt;
 
-    private var userKey: String?
-    private var session = FlagSnapshot.empty(nil)      // fixed for the whole session
-    private var live: [String: Bool] = [:]             // kill switches only
-    private var lastFetchAt: TimeInterval = 0
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> userKey: <span class="tk-ty">String</span>?
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> session = <span class="tk-ty">FlagSnapshot</span>.<span class="tk-fn">empty</span>(<span class="tk-kw">nil</span>)      <span class="tk-com">// fixed for the whole session</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> live: [<span class="tk-ty">String</span>: <span class="tk-ty">Bool</span>] = [:]             <span class="tk-com">// kill switches only</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">var</span> lastFetchAt: <span class="tk-ty">TimeInterval</span> = <span class="tk-num">0</span>
 
-    init(source: FlagSource, disk: FlagDisk, now: @escaping @Sendable () -&gt; TimeInterval,
-         flags: [Flag] = Flags.all, maxAge: TimeInterval = 15 * 60) {
-        self.source = source; self.disk = disk; self.now = now; self.maxAge = maxAge
-        self.killKeys = Set(flags.filter(\.killSwitch).map(\.key))
+    <span class="tk-kw">init</span>(source: <span class="tk-ty">FlagSource</span>, disk: <span class="tk-ty">FlagDisk</span>, now: <span class="tk-ann">@escaping</span> <span class="tk-ann">@Sendable</span> () -&gt; <span class="tk-ty">TimeInterval</span>,
+         flags: [<span class="tk-ty">Flag</span>] = <span class="tk-ty">Flags</span>.all, maxAge: <span class="tk-ty">TimeInterval</span> = <span class="tk-num">15</span> * <span class="tk-num">60</span>) {
+        <span class="tk-kw">self</span>.source = source; <span class="tk-kw">self</span>.disk = disk; <span class="tk-kw">self</span>.now = now; <span class="tk-kw">self</span>.maxAge = maxAge
+        <span class="tk-kw">self</span>.killKeys = <span class="tk-ty">Set</span>(flags.<span class="tk-fn">filter</span>(\.killSwitch).<span class="tk-fn">map</span>(\.key))
     }
 
-    /// Call once, before the first screen. It reads local disk only. It never waits for the network.
-    func start(userKey: String?) async {
-        self.userKey = userKey
-        let unfinished = await disk.unfinishedStarts()
-        await disk.setUnfinishedStarts(unfinished + 1)
-        let saved = await disk.read()
-        if unfinished &gt;= 2 {                                   // two starts never finished: safe mode
-            await disk.clear()
-            session = .empty(userKey)
-        } else if let saved, saved.userKey == userKey {
+    <span class="tk-com">/// Call once, before the first screen. It reads local disk only. It never waits for the network.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">start</span>(userKey: <span class="tk-ty">String</span>?) <span class="tk-kw">async</span> {
+        <span class="tk-kw">self</span>.userKey = userKey
+        <span class="tk-kw">let</span> unfinished = <span class="tk-kw">await</span> disk.<span class="tk-fn">unfinishedStarts</span>()
+        <span class="tk-kw">await</span> disk.<span class="tk-fn">setUnfinishedStarts</span>(unfinished + <span class="tk-num">1</span>)
+        <span class="tk-kw">let</span> saved = <span class="tk-kw">await</span> disk.<span class="tk-fn">read</span>()
+        <span class="tk-kw">if</span> unfinished &gt;= <span class="tk-num">2</span> {                                   <span class="tk-com">// two starts never finished: safe mode</span>
+            <span class="tk-kw">await</span> disk.<span class="tk-fn">clear</span>()
+            session = .<span class="tk-fn">empty</span>(userKey)
+        } <span class="tk-kw">else</span> <span class="tk-kw">if</span> <span class="tk-kw">let</span> saved, saved.userKey == userKey {
             session = saved
-        } else {
-            session = .empty(userKey)
+        } <span class="tk-kw">else</span> {
+            session = .<span class="tk-fn">empty</span>(userKey)
         }
         lastFetchAt = session.fetchedAt
-        live = session.values.filter { killKeys.contains($0.key) }
+        live = session.values.filter { killKeys.<span class="tk-fn">contains</span>($<span class="tk-num">0</span>.key) }
     }
 
-    /// Call a few seconds after the first screen. It resets the crash counter.
-    func startFinished() async { await disk.setUnfinishedStarts(0) }
+    <span class="tk-com">/// Call a few seconds after the first screen. It resets the crash counter.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">startFinished</span>() <span class="tk-kw">async</span> { <span class="tk-kw">await</span> disk.<span class="tk-fn">setUnfinishedStarts</span>(<span class="tk-num">0</span>) }
 
-    /// A screen takes one view when it opens. The answers stay the same until the screen closes.
-    func view() -&gt; FlagView { FlagView(values: session.values, store: self) }
+    <span class="tk-com">/// A screen takes one view when it opens. The answers stay the same until the screen closes.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">view</span>() -&gt; <span class="tk-ty">FlagView</span> { <span class="tk-ty">FlagView</span>(values: session.values, store: <span class="tk-kw">self</span>) }
 
-    fileprivate func liveValue(_ flag: Flag) -&gt; Bool { live[flag.key] ?? flag.defaultValue }
+    <span class="tk-kw">fileprivate</span> <span class="tk-kw">func</span> <span class="tk-fn">liveValue</span>(_ flag: <span class="tk-ty">Flag</span>) -&gt; <span class="tk-ty">Bool</span> { live[flag.key] ?? flag.defaultValue }
 
-    func refreshIfStale() async {
-        let age = now() - lastFetchAt
-        if age &gt;= 0 &amp;&amp; age &lt; maxAge { return }                 // a negative age means the clock moved back: fetch
-        await refresh()
+    <span class="tk-kw">func</span> <span class="tk-fn">refreshIfStale</span>() <span class="tk-kw">async</span> {
+        <span class="tk-kw">let</span> age = <span class="tk-fn">now</span>() - lastFetchAt
+        <span class="tk-kw">if</span> age &gt;= <span class="tk-num">0</span> &amp;&amp; age &lt; maxAge { <span class="tk-kw">return</span> }                 <span class="tk-com">// a negative age means the clock moved back: fetch</span>
+        <span class="tk-kw">await</span> <span class="tk-fn">refresh</span>()
     }
 
-    /// Call when the app returns after a long time away. Screens opened later see the newest saved values.
-    func rollSession() async {
-        if let saved = await disk.read(), saved.userKey == userKey { session = saved }
+    <span class="tk-com">/// Call when the app returns after a long time away. Screens opened later see the newest saved values.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">rollSession</span>() <span class="tk-kw">async</span> {
+        <span class="tk-kw">if</span> <span class="tk-kw">let</span> saved = <span class="tk-kw">await</span> disk.<span class="tk-fn">read</span>(), saved.userKey == userKey { session = saved }
     }
 
-    func refresh() async {
-        let key = userKey
-        guard let fresh = await source.fetch(userKey: key) else { return }   // failed: keep what we have
-        guard key == userKey else { return }                                  // the user changed while we waited
-        lastFetchAt = now()
-        await disk.write(FlagSnapshot(userKey: key, fetchedAt: lastFetchAt, values: fresh))   // the next session reads this
-        if key == userKey { live = fresh.filter { killKeys.contains($0.key) } }               // kill switches change now
+    <span class="tk-kw">func</span> <span class="tk-fn">refresh</span>() <span class="tk-kw">async</span> {
+        <span class="tk-kw">let</span> key = userKey
+        <span class="tk-kw">guard</span> <span class="tk-kw">let</span> fresh = <span class="tk-kw">await</span> source.<span class="tk-fn">fetch</span>(userKey: key) <span class="tk-kw">else</span> { <span class="tk-kw">return</span> }   <span class="tk-com">// failed: keep what we have</span>
+        <span class="tk-kw">guard</span> key == userKey <span class="tk-kw">else</span> { <span class="tk-kw">return</span> }                                  <span class="tk-com">// the user changed while we waited</span>
+        lastFetchAt = <span class="tk-fn">now</span>()
+        <span class="tk-kw">await</span> disk.<span class="tk-fn">write</span>(<span class="tk-ty">FlagSnapshot</span>(userKey: key, fetchedAt: lastFetchAt, values: fresh))   <span class="tk-com">// the next session reads this</span>
+        <span class="tk-kw">if</span> key == userKey { live = fresh.filter { killKeys.<span class="tk-fn">contains</span>($<span class="tk-num">0</span>.key) } }               <span class="tk-com">// kill switches change now</span>
     }
 
-    /// Sign in or out. The old user&#x27;s values must not reach the new user.
-    func switchUser(_ newKey: String?) async {
+    <span class="tk-com">/// Sign in or out. The old user's values must not reach the new user.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">switchUser</span>(_ newKey: <span class="tk-ty">String</span>?) <span class="tk-kw">async</span> {
         userKey = newKey
-        let saved = await disk.read()
-        session = (saved?.userKey == newKey ? saved : nil) ?? .empty(newKey)
+        <span class="tk-kw">let</span> saved = <span class="tk-kw">await</span> disk.<span class="tk-fn">read</span>()
+        session = (saved?.userKey == newKey ? saved : <span class="tk-kw">nil</span>) ?? .<span class="tk-fn">empty</span>(newKey)
         lastFetchAt = session.fetchedAt
-        live = session.values.filter { killKeys.contains($0.key) }
-        await refresh()
+        live = session.values.filter { killKeys.<span class="tk-fn">contains</span>($<span class="tk-num">0</span>.key) }
+        <span class="tk-kw">await</span> <span class="tk-fn">refresh</span>()
     }
 }
 
-@MainActor
-struct FlagView {
-    fileprivate let values: [String: Bool]
-    fileprivate let store: FlagStore
+<span class="tk-ann">@MainActor</span>
+<span class="tk-kw">struct</span> <span class="tk-ty">FlagView</span> {
+    <span class="tk-kw">fileprivate</span> <span class="tk-kw">let</span> values: [<span class="tk-ty">String</span>: <span class="tk-ty">Bool</span>]
+    <span class="tk-kw">fileprivate</span> <span class="tk-kw">let</span> store: <span class="tk-ty">FlagStore</span>
 
-    func isOn(_ flag: Flag) -&gt; Bool {
-        flag.killSwitch ? store.liveValue(flag): (values[flag.key] ?? flag.defaultValue)
+    <span class="tk-kw">func</span> <span class="tk-fn">isOn</span>(_ flag: <span class="tk-ty">Flag</span>) -&gt; <span class="tk-ty">Bool</span> {
+        flag.killSwitch ? store.<span class="tk-fn">liveValue</span>(flag): (values[flag.key] ?? flag.defaultValue)
     }
 }</code></pre>
-<pre tabindex="0"><code>import Foundation
+<pre tabindex="0"><code><span class="tk-kw">import</span> <span class="tk-ty">Foundation</span>
 
-/// One key holds the whole snapshot, so a reader never sees half of it.
-/// UserDefaults is thread-safe. It writes to disk later, so a very recent write can be lost if the app is killed.
-struct UserDefaultsFlagDisk: FlagDisk, @unchecked Sendable {
-    var defaults: UserDefaults = .standard
-    private let snapshotKey = &quot;flags.snapshot.v1&quot;            // change the number if FlagSnapshot changes
-    private let unfinishedKey = &quot;flags.unfinishedStarts&quot;
+<span class="tk-com">/// One key holds the whole snapshot, so a reader never sees half of it.</span>
+<span class="tk-com">/// UserDefaults is thread-safe. It writes to disk later, so a very recent write can be lost if the app is killed.</span>
+<span class="tk-kw">struct</span> <span class="tk-ty">UserDefaultsFlagDisk</span>: <span class="tk-ty">FlagDisk</span>, <span class="tk-ann">@unchecked</span> <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">var</span> defaults: <span class="tk-ty">UserDefaults</span> = .standard
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> snapshotKey = <span class="tk-str">"flags.snapshot.v1"</span>            <span class="tk-com">// change the number if FlagSnapshot changes</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> unfinishedKey = <span class="tk-str">"flags.unfinishedStarts"</span>
 
-    func read() async -&gt; FlagSnapshot? {
-        guard let data = defaults.data(forKey: snapshotKey) else { return nil }
-        return try? JSONDecoder().decode(FlagSnapshot.self, from: data)
+    <span class="tk-kw">func</span> <span class="tk-fn">read</span>() <span class="tk-kw">async</span> -&gt; <span class="tk-ty">FlagSnapshot</span>? {
+        <span class="tk-kw">guard</span> <span class="tk-kw">let</span> <span class="tk-kw">data</span> = defaults.<span class="tk-kw">data</span>(forKey: snapshotKey) <span class="tk-kw">else</span> { <span class="tk-kw">return</span> <span class="tk-kw">nil</span> }
+        <span class="tk-kw">return</span> <span class="tk-kw">try</span>? <span class="tk-ty">JSONDecoder</span>().<span class="tk-fn">decode</span>(<span class="tk-ty">FlagSnapshot</span>.<span class="tk-kw">self</span>, from: <span class="tk-kw">data</span>)
     }
-    func write(_ snapshot: FlagSnapshot) async {
-        if let data = try? JSONEncoder().encode(snapshot) { defaults.set(data, forKey: snapshotKey) }
+    <span class="tk-kw">func</span> <span class="tk-fn">write</span>(_ snapshot: <span class="tk-ty">FlagSnapshot</span>) <span class="tk-kw">async</span> {
+        <span class="tk-kw">if</span> <span class="tk-kw">let</span> <span class="tk-kw">data</span> = <span class="tk-kw">try</span>? <span class="tk-ty">JSONEncoder</span>().<span class="tk-fn">encode</span>(snapshot) { defaults.<span class="tk-kw">set</span>(<span class="tk-kw">data</span>, forKey: snapshotKey) }
     }
-    func clear() async { defaults.removeObject(forKey: snapshotKey) }
-    func unfinishedStarts() async -&gt; Int { defaults.integer(forKey: unfinishedKey) }
-    func setUnfinishedStarts(_ n: Int) async { defaults.set(n, forKey: unfinishedKey) }
+    <span class="tk-kw">func</span> <span class="tk-fn">clear</span>() <span class="tk-kw">async</span> { defaults.<span class="tk-fn">removeObject</span>(forKey: snapshotKey) }
+    <span class="tk-kw">func</span> <span class="tk-fn">unfinishedStarts</span>() <span class="tk-kw">async</span> -&gt; <span class="tk-ty">Int</span> { defaults.<span class="tk-fn">integer</span>(forKey: unfinishedKey) }
+    <span class="tk-kw">func</span> <span class="tk-fn">setUnfinishedStarts</span>(_ n: <span class="tk-ty">Int</span>) <span class="tk-kw">async</span> { defaults.<span class="tk-kw">set</span>(n, forKey: unfinishedKey) }
 }</code></pre>
-<pre tabindex="0"><code>import SwiftUI
+<pre tabindex="0"><code><span class="tk-kw">import</span> <span class="tk-ty">SwiftUI</span>
 
-struct RootView: View {
-    let store: FlagStore
-    @State private var ready = false
-    @Environment(\.scenePhase) private var scenePhase
+<span class="tk-kw">struct</span> <span class="tk-ty">RootView</span>: <span class="tk-ty">View</span> {
+    <span class="tk-kw">let</span> store: <span class="tk-ty">FlagStore</span>
+    <span class="tk-ann">@State</span> <span class="tk-kw">private</span> <span class="tk-kw">var</span> ready = <span class="tk-kw">false</span>
+    <span class="tk-ann">@Environment</span>(\.scenePhase) <span class="tk-kw">private</span> <span class="tk-kw">var</span> scenePhase
 
-    var body: some View {
-        Group {
-            if ready { CheckoutScreen(store: store) } else { Color.clear }     // the local read takes a few milliseconds
+    <span class="tk-kw">var</span> body: <span class="tk-kw">some</span> <span class="tk-ty">View</span> {
+        <span class="tk-ty">Group</span> {
+            <span class="tk-kw">if</span> ready { <span class="tk-ty">CheckoutScreen</span>(store: store) } <span class="tk-kw">else</span> { <span class="tk-ty">Color</span>.clear }     <span class="tk-com">// the local read takes a few milliseconds</span>
         }
         .task {
-            await store.start(userKey: nil)                    // local disk only
-            ready = true
-            await store.refreshIfStale()                       // cold start: fetch only if the saved copy is old
-            try? await Task.sleep(for: .seconds(5))
-            await store.startFinished()
+            <span class="tk-kw">await</span> store.<span class="tk-fn">start</span>(userKey: <span class="tk-kw">nil</span>)                    <span class="tk-com">// local disk only</span>
+            ready = <span class="tk-kw">true</span>
+            <span class="tk-kw">await</span> store.<span class="tk-fn">refreshIfStale</span>()                       <span class="tk-com">// cold start: fetch only if the saved copy is old</span>
+            <span class="tk-kw">try</span>? <span class="tk-kw">await</span> <span class="tk-ty">Task</span>.<span class="tk-fn">sleep</span>(<span class="tk-kw">for</span>: .<span class="tk-fn">seconds</span>(<span class="tk-num">5</span>))
+            <span class="tk-kw">await</span> store.<span class="tk-fn">startFinished</span>()
         }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await store.refreshIfStale() } }    // back in the foreground
+        .<span class="tk-fn">onChange</span>(of: scenePhase) { _, phase <span class="tk-kw">in</span>
+            <span class="tk-kw">if</span> phase == .active { <span class="tk-ty">Task</span> { <span class="tk-kw">await</span> store.<span class="tk-fn">refreshIfStale</span>() } }    <span class="tk-com">// back in the foreground</span>
         }
     }
 }
 
-struct CheckoutScreen: View {
-    @State private var flags: FlagView
+<span class="tk-kw">struct</span> <span class="tk-ty">CheckoutScreen</span>: <span class="tk-ty">View</span> {
+    <span class="tk-ann">@State</span> <span class="tk-kw">private</span> <span class="tk-kw">var</span> flags: <span class="tk-ty">FlagView</span>
 
-    init(store: FlagStore) {
-        _flags = State(initialValue: store.view())             // one view, taken when the screen opens
+    <span class="tk-kw">init</span>(store: <span class="tk-ty">FlagStore</span>) {
+        _flags = <span class="tk-ty">State</span>(initialValue: store.<span class="tk-fn">view</span>())             <span class="tk-com">// one view, taken when the screen opens</span>
     }
 
-    var body: some View {
-        Text(flags.isOn(Flags.newCheckout) ? &quot;New checkout&quot; : &quot;Checkout&quot;)
+    <span class="tk-kw">var</span> body: <span class="tk-kw">some</span> <span class="tk-ty">View</span> {
+        <span class="tk-ty">Text</span>(flags.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout) ? <span class="tk-str">"New checkout"</span> : <span class="tk-str">"Checkout"</span>)
     }
 }</code></pre>
 <p>The Firebase adapter below was not compiled, because the Firebase iOS SDK was not on this machine. I took each call from the Firebase Swift reference: <code>fetch()</code> and <code>activate()</code> as async throwing calls, <code>allKeys(from:)</code> with <code>.remote</code>, <code>configValue(forKey:)</code> and <code>setCustomSignals(_:)</code> and <code>addOnConfigUpdateListener</code> (<a href="https://firebase.google.com/docs/reference/swift/firebaseremoteconfig/api/reference/Classes/RemoteConfig">Firebase Swift reference</a>). Compile it before you ship it.</p>
-<pre tabindex="0"><code>import FirebaseRemoteConfig
+<pre tabindex="0"><code><span class="tk-kw">import</span> <span class="tk-ty">FirebaseRemoteConfig</span>
 
-// Not compiled for this guide: the Firebase iOS SDK was not on this machine.
-struct FirebaseFlagSource: FlagSource {
-    func fetch(userKey: String?) async -&gt; [String: Bool]? {
-        let rc = RemoteConfig.remoteConfig()
-        do {
-            _ = try await rc.fetch()                           // respects minimumFetchInterval
-            _ = try await rc.activate()                        // moves Firebase&#x27;s own copy forward. Screens read FlagStore.
-            // Keep only values that came from the server. For the rest, the Flag default in code applies.
-            let remote = Set(rc.allKeys(from: .remote))
-            return Dictionary(uniqueKeysWithValues: Flags.all.filter { remote.contains($0.key) }
-                .map { ($0.key, rc.configValue(forKey: $0.key).boolValue) })
-        } catch {
-            return nil                                         // throttled, offline, timeout
+<span class="tk-com">// Not compiled for this guide: the Firebase iOS SDK was not on this machine.</span>
+<span class="tk-kw">struct</span> <span class="tk-ty">FirebaseFlagSource</span>: <span class="tk-ty">FlagSource</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">fetch</span>(userKey: <span class="tk-ty">String</span>?) <span class="tk-kw">async</span> -&gt; [<span class="tk-ty">String</span>: <span class="tk-ty">Bool</span>]? {
+        <span class="tk-kw">let</span> rc = <span class="tk-ty">RemoteConfig</span>.<span class="tk-fn">remoteConfig</span>()
+        <span class="tk-kw">do</span> {
+            _ = <span class="tk-kw">try</span> <span class="tk-kw">await</span> rc.<span class="tk-fn">fetch</span>()                           <span class="tk-com">// respects minimumFetchInterval</span>
+            _ = <span class="tk-kw">try</span> <span class="tk-kw">await</span> rc.<span class="tk-fn">activate</span>()                        <span class="tk-com">// moves Firebase's own copy forward. Screens read FlagStore.</span>
+            <span class="tk-com">// Keep only values that came from the server. For the rest, the Flag default in code applies.</span>
+            <span class="tk-kw">let</span> remote = <span class="tk-ty">Set</span>(rc.<span class="tk-fn">allKeys</span>(from: .remote))
+            <span class="tk-kw">return</span> <span class="tk-ty">Dictionary</span>(uniqueKeysWithValues: <span class="tk-ty">Flags</span>.all.filter { remote.<span class="tk-fn">contains</span>($<span class="tk-num">0</span>.key) }
+                .map { ($<span class="tk-num">0</span>.key, rc.<span class="tk-fn">configValue</span>(forKey: $<span class="tk-num">0</span>.key).boolValue) })
+        } <span class="tk-kw">catch</span> {
+            <span class="tk-kw">return</span> <span class="tk-kw">nil</span>                                         <span class="tk-com">// throttled, offline, timeout</span>
         }
     }
 
-    /// Send a rollout bucket that follows the account, not the install. A console rule can say bucket &lt; 1000.
-    func setBucket(accountID: String?) async {
-        let bucket = accountID.map { Bucket.of(stableID: $0, flagKey: &quot;all&quot;) } ?? -1
-        try? await RemoteConfig.remoteConfig().setCustomSignals([&quot;rollout_bucket&quot;: .integer(bucket)])
+    <span class="tk-com">/// Send a rollout bucket that follows the account, not the install. A console rule can say bucket &lt; 1000.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">setBucket</span>(accountID: <span class="tk-ty">String</span>?) <span class="tk-kw">async</span> {
+        <span class="tk-kw">let</span> bucket = accountID.map { <span class="tk-ty">Bucket</span>.<span class="tk-fn">of</span>(stableID: $<span class="tk-num">0</span>, flagKey: <span class="tk-str">"all"</span>) } ?? -<span class="tk-num">1</span>
+        <span class="tk-kw">try</span>? <span class="tk-kw">await</span> <span class="tk-ty">RemoteConfig</span>.<span class="tk-fn">remoteConfig</span>().<span class="tk-fn">setCustomSignals</span>([<span class="tk-str">"rollout_bucket"</span>: .<span class="tk-fn">integer</span>(bucket)])
     }
 
-    /// Live kill switch. Real-time updates run only while the app is in the foreground.
-    func onKillSwitchChanged(_ action: @escaping @Sendable () -&gt; Void) -&gt; ConfigUpdateListenerRegistration {
-        let kill = Set(Flags.all.filter(\.killSwitch).map(\.key))
-        return RemoteConfig.remoteConfig().addOnConfigUpdateListener { update, error in
-            guard let update, error == nil, !update.updatedKeys.isDisjoint(with: kill) else { return }
-            action()      // the store then calls refresh()
+    <span class="tk-com">/// Live kill switch. Real-time updates run only while the app is in the foreground.</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">onKillSwitchChanged</span>(_ action: <span class="tk-ann">@escaping</span> <span class="tk-ann">@Sendable</span> () -&gt; <span class="tk-ty">Void</span>) -&gt; <span class="tk-ty">ConfigUpdateListenerRegistration</span> {
+        <span class="tk-kw">let</span> kill = <span class="tk-ty">Set</span>(<span class="tk-ty">Flags</span>.all.<span class="tk-fn">filter</span>(\.killSwitch).<span class="tk-fn">map</span>(\.key))
+        <span class="tk-kw">return</span> <span class="tk-ty">RemoteConfig</span>.<span class="tk-fn">remoteConfig</span>().addOnConfigUpdateListener { update, error <span class="tk-kw">in</span>
+            <span class="tk-kw">guard</span> <span class="tk-kw">let</span> update, error == <span class="tk-kw">nil</span>, !update.updatedKeys.<span class="tk-fn">isDisjoint</span>(with: kill) <span class="tk-kw">else</span> { <span class="tk-kw">return</span> }
+            <span class="tk-fn">action</span>()      <span class="tk-com">// the store then calls refresh()</span>
         }
     }
 }</code></pre>
 <p>The Swift tests use the same cases as the Kotlin ones. They ran as a small macOS program, and all checks passed.</p>
-<pre tabindex="0"><code>import Foundation
+<pre tabindex="0"><code><span class="tk-kw">import</span> <span class="tk-ty">Foundation</span>
 
-final class Counter: @unchecked Sendable { var n = 0 }
-final class FakeSource: FlagSource, @unchecked Sendable {
-    var result: [String: Bool]?
-    let calls = Counter()
-    init(_ r: [String: Bool]? = nil) { result = r }
-    func fetch(userKey: String?) async -&gt; [String: Bool]? { calls.n += 1; return result }
+<span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">Counter</span>: <span class="tk-ann">@unchecked</span> <span class="tk-ty">Sendable</span> { <span class="tk-kw">var</span> n = <span class="tk-num">0</span> }
+<span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">FakeSource</span>: <span class="tk-ty">FlagSource</span>, <span class="tk-ann">@unchecked</span> <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">var</span> result: [<span class="tk-ty">String</span>: <span class="tk-ty">Bool</span>]?
+    <span class="tk-kw">let</span> calls = <span class="tk-ty">Counter</span>()
+    <span class="tk-kw">init</span>(_ r: [<span class="tk-ty">String</span>: <span class="tk-ty">Bool</span>]? = <span class="tk-kw">nil</span>) { result = r }
+    <span class="tk-kw">func</span> <span class="tk-fn">fetch</span>(userKey: <span class="tk-ty">String</span>?) <span class="tk-kw">async</span> -&gt; [<span class="tk-ty">String</span>: <span class="tk-ty">Bool</span>]? { calls.n += <span class="tk-num">1</span>; <span class="tk-kw">return</span> result }
 }
-actor FakeDisk: FlagDisk {
-    var snapshot: FlagSnapshot?
-    var unfinished = 0
-    init(_ s: FlagSnapshot? = nil, unfinished: Int = 0) { snapshot = s; self.unfinished = unfinished }
-    func read() -&gt; FlagSnapshot? { snapshot }
-    func write(_ s: FlagSnapshot) { snapshot = s }
-    func clear() { snapshot = nil }
-    func unfinishedStarts() -&gt; Int { unfinished }
-    func setUnfinishedStarts(_ n: Int) { unfinished = n }
-    func current() -&gt; FlagSnapshot? { snapshot }
-    func unfinishedNow() -&gt; Int { unfinished }
+<span class="tk-kw">actor</span> <span class="tk-ty">FakeDisk</span>: <span class="tk-ty">FlagDisk</span> {
+    <span class="tk-kw">var</span> snapshot: <span class="tk-ty">FlagSnapshot</span>?
+    <span class="tk-kw">var</span> unfinished = <span class="tk-num">0</span>
+    <span class="tk-kw">init</span>(_ s: <span class="tk-ty">FlagSnapshot</span>? = <span class="tk-kw">nil</span>, unfinished: <span class="tk-ty">Int</span> = <span class="tk-num">0</span>) { snapshot = s; <span class="tk-kw">self</span>.unfinished = unfinished }
+    <span class="tk-kw">func</span> <span class="tk-fn">read</span>() -&gt; <span class="tk-ty">FlagSnapshot</span>? { snapshot }
+    <span class="tk-kw">func</span> <span class="tk-fn">write</span>(_ s: <span class="tk-ty">FlagSnapshot</span>) { snapshot = s }
+    <span class="tk-kw">func</span> <span class="tk-fn">clear</span>() { snapshot = <span class="tk-kw">nil</span> }
+    <span class="tk-kw">func</span> <span class="tk-fn">unfinishedStarts</span>() -&gt; <span class="tk-ty">Int</span> { unfinished }
+    <span class="tk-kw">func</span> <span class="tk-fn">setUnfinishedStarts</span>(_ n: <span class="tk-ty">Int</span>) { unfinished = n }
+    <span class="tk-kw">func</span> <span class="tk-fn">current</span>() -&gt; <span class="tk-ty">FlagSnapshot</span>? { snapshot }
+    <span class="tk-kw">func</span> <span class="tk-fn">unfinishedNow</span>() -&gt; <span class="tk-ty">Int</span> { unfinished }
 }
 
-var failures = 0, checks = 0
-@MainActor func check(_ ok: Bool, _ what: String) { checks += 1; if !ok { failures += 1; print(&quot;FAIL:&quot;, what) } }
+<span class="tk-kw">var</span> failures = <span class="tk-num">0</span>, checks = <span class="tk-num">0</span>
+<span class="tk-ann">@MainActor</span> <span class="tk-kw">func</span> <span class="tk-fn">check</span>(_ ok: <span class="tk-ty">Bool</span>, _ what: <span class="tk-ty">String</span>) { checks += <span class="tk-num">1</span>; <span class="tk-kw">if</span> !ok { failures += <span class="tk-num">1</span>; <span class="tk-fn">print</span>(<span class="tk-str">"FAIL:"</span>, what) } }
 
-@MainActor func run() async {
-    let clock: TimeInterval = 1_000_000
-    let saved = FlagSnapshot(userKey: &quot;u1&quot;, fetchedAt: 500_000, values: [&quot;new_checkout&quot;: true, &quot;chat_media_enabled&quot;: true])
-    func make(_ src: FlagSource, _ disk: FlagDisk) -&gt; FlagStore { FlagStore(source: src, disk: disk, now: { clock }) }
+<span class="tk-ann">@MainActor</span> <span class="tk-kw">func</span> <span class="tk-fn">run</span>() <span class="tk-kw">async</span> {
+    <span class="tk-kw">let</span> clock: <span class="tk-ty">TimeInterval</span> = <span class="tk-num">1_000_000</span>
+    <span class="tk-kw">let</span> saved = <span class="tk-ty">FlagSnapshot</span>(userKey: <span class="tk-str">"u1"</span>, fetchedAt: <span class="tk-num">500_000</span>, values: [<span class="tk-str">"new_checkout"</span>: <span class="tk-kw">true</span>, <span class="tk-str">"chat_media_enabled"</span>: <span class="tk-kw">true</span>])
+    <span class="tk-kw">func</span> <span class="tk-fn">make</span>(_ src: <span class="tk-ty">FlagSource</span>, _ disk: <span class="tk-ty">FlagDisk</span>) -&gt; <span class="tk-ty">FlagStore</span> { <span class="tk-ty">FlagStore</span>(source: src, disk: disk, now: { clock }) }
 
-    do {   // first launch offline uses code defaults
-        let s = make(FakeSource(nil), FakeDisk()); await s.start(userKey: &quot;u1&quot;)
-        let v = s.view()
-        check(!v.isOn(Flags.newCheckout), &quot;default false&quot;); check(v.isOn(Flags.chatMedia), &quot;default true&quot;)
+    <span class="tk-kw">do</span> {   <span class="tk-com">// first launch offline uses code defaults</span>
+        <span class="tk-kw">let</span> s = <span class="tk-fn">make</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-kw">nil</span>), <span class="tk-ty">FakeDisk</span>()); <span class="tk-kw">await</span> s.<span class="tk-fn">start</span>(userKey: <span class="tk-str">"u1"</span>)
+        <span class="tk-kw">let</span> v = s.<span class="tk-fn">view</span>()
+        <span class="tk-fn">check</span>(!v.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"default false"</span>); <span class="tk-fn">check</span>(v.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.chatMedia), <span class="tk-str">"default true"</span>)
     }
-    do {   // saved values apply at start; new ones wait for the next session
-        let disk = FakeDisk(saved)
-        let s = make(FakeSource([&quot;new_checkout&quot;: false, &quot;chat_media_enabled&quot;: true]), disk)
-        await s.start(userKey: &quot;u1&quot;)
-        let screen = s.view()
-        check(screen.isOn(Flags.newCheckout), &quot;saved value&quot;)
-        await s.refresh()
-        check(screen.isOn(Flags.newCheckout), &quot;no flicker&quot;); check(s.view().isOn(Flags.newCheckout), &quot;same session, same answer&quot;)
-        check(await disk.current()?.values[&quot;new_checkout&quot;] == false, &quot;next start sees false&quot;)
+    <span class="tk-kw">do</span> {   <span class="tk-com">// saved values apply at start; new ones wait for the next session</span>
+        <span class="tk-kw">let</span> disk = <span class="tk-ty">FakeDisk</span>(saved)
+        <span class="tk-kw">let</span> s = <span class="tk-fn">make</span>(<span class="tk-ty">FakeSource</span>([<span class="tk-str">"new_checkout"</span>: <span class="tk-kw">false</span>, <span class="tk-str">"chat_media_enabled"</span>: <span class="tk-kw">true</span>]), disk)
+        <span class="tk-kw">await</span> s.<span class="tk-fn">start</span>(userKey: <span class="tk-str">"u1"</span>)
+        <span class="tk-kw">let</span> screen = s.<span class="tk-fn">view</span>()
+        <span class="tk-fn">check</span>(screen.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"saved value"</span>)
+        <span class="tk-kw">await</span> s.<span class="tk-fn">refresh</span>()
+        <span class="tk-fn">check</span>(screen.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"no flicker"</span>); <span class="tk-fn">check</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"same session, same answer"</span>)
+        <span class="tk-fn">check</span>(<span class="tk-kw">await</span> disk.<span class="tk-fn">current</span>()?.values[<span class="tk-str">"new_checkout"</span>] == <span class="tk-kw">false</span>, <span class="tk-str">"next start sees false"</span>)
     }
-    do {   // kill switch changes now
-        let s = make(FakeSource([&quot;chat_media_enabled&quot;: false]), FakeDisk(saved)); await s.start(userKey: &quot;u1&quot;)
-        let screen = s.view(); check(screen.isOn(Flags.chatMedia), &quot;on before&quot;)
-        await s.refresh(); check(!screen.isOn(Flags.chatMedia), &quot;kill switch applied now&quot;)
+    <span class="tk-kw">do</span> {   <span class="tk-com">// kill switch changes now</span>
+        <span class="tk-kw">let</span> s = <span class="tk-fn">make</span>(<span class="tk-ty">FakeSource</span>([<span class="tk-str">"chat_media_enabled"</span>: <span class="tk-kw">false</span>]), <span class="tk-ty">FakeDisk</span>(saved)); <span class="tk-kw">await</span> s.<span class="tk-fn">start</span>(userKey: <span class="tk-str">"u1"</span>)
+        <span class="tk-kw">let</span> screen = s.<span class="tk-fn">view</span>(); <span class="tk-fn">check</span>(screen.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.chatMedia), <span class="tk-str">"on before"</span>)
+        <span class="tk-kw">await</span> s.<span class="tk-fn">refresh</span>(); <span class="tk-fn">check</span>(!screen.<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.chatMedia), <span class="tk-str">"kill switch applied now"</span>)
     }
-    do {   // failed fetch keeps last values
-        let disk = FakeDisk(saved); let s = make(FakeSource(nil), disk); await s.start(userKey: &quot;u1&quot;); await s.refresh()
-        check(await disk.current() == saved, &quot;disk unchanged&quot;); check(s.view().isOn(Flags.newCheckout), &quot;still on&quot;)
+    <span class="tk-kw">do</span> {   <span class="tk-com">// failed fetch keeps last values</span>
+        <span class="tk-kw">let</span> disk = <span class="tk-ty">FakeDisk</span>(saved); <span class="tk-kw">let</span> s = <span class="tk-fn">make</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-kw">nil</span>), disk); <span class="tk-kw">await</span> s.<span class="tk-fn">start</span>(userKey: <span class="tk-str">"u1"</span>); <span class="tk-kw">await</span> s.<span class="tk-fn">refresh</span>()
+        <span class="tk-fn">check</span>(<span class="tk-kw">await</span> disk.<span class="tk-fn">current</span>() == saved, <span class="tk-str">"disk unchanged"</span>); <span class="tk-fn">check</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"still on"</span>)
     }
-    do {   // other users&#x27; values are never shown
-        let s = make(FakeSource(nil), FakeDisk(saved)); await s.start(userKey: &quot;u2&quot;)
-        check(!s.view().isOn(Flags.newCheckout), &quot;u2 sees defaults&quot;)
-        await s.switchUser(&quot;u1&quot;); check(s.view().isOn(Flags.newCheckout), &quot;u1 sees u1&quot;)
-        await s.switchUser(nil); check(!s.view().isOn(Flags.newCheckout), &quot;signed out sees defaults&quot;)
+    <span class="tk-kw">do</span> {   <span class="tk-com">// other users' values are never shown</span>
+        <span class="tk-kw">let</span> s = <span class="tk-fn">make</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-kw">nil</span>), <span class="tk-ty">FakeDisk</span>(saved)); <span class="tk-kw">await</span> s.<span class="tk-fn">start</span>(userKey: <span class="tk-str">"u2"</span>)
+        <span class="tk-fn">check</span>(!s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"u2 sees defaults"</span>)
+        <span class="tk-kw">await</span> s.<span class="tk-fn">switchUser</span>(<span class="tk-str">"u1"</span>); <span class="tk-fn">check</span>(s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"u1 sees u1"</span>)
+        <span class="tk-kw">await</span> s.<span class="tk-fn">switchUser</span>(<span class="tk-kw">nil</span>); <span class="tk-fn">check</span>(!s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"signed out sees defaults"</span>)
     }
-    do {   // two unfinished starts mean safe mode
-        let disk = FakeDisk(saved, unfinished: 2); let s = make(FakeSource(nil), disk); await s.start(userKey: &quot;u1&quot;)
-        check(!s.view().isOn(Flags.newCheckout), &quot;safe mode&quot;); check(await disk.current() == nil, &quot;snapshot cleared&quot;)
-        await s.startFinished(); check(await disk.unfinishedNow() == 0, &quot;counter reset&quot;)
+    <span class="tk-kw">do</span> {   <span class="tk-com">// two unfinished starts mean safe mode</span>
+        <span class="tk-kw">let</span> disk = <span class="tk-ty">FakeDisk</span>(saved, unfinished: <span class="tk-num">2</span>); <span class="tk-kw">let</span> s = <span class="tk-fn">make</span>(<span class="tk-ty">FakeSource</span>(<span class="tk-kw">nil</span>), disk); <span class="tk-kw">await</span> s.<span class="tk-fn">start</span>(userKey: <span class="tk-str">"u1"</span>)
+        <span class="tk-fn">check</span>(!s.<span class="tk-fn">view</span>().<span class="tk-fn">isOn</span>(<span class="tk-ty">Flags</span>.newCheckout), <span class="tk-str">"safe mode"</span>); <span class="tk-fn">check</span>(<span class="tk-kw">await</span> disk.<span class="tk-fn">current</span>() == <span class="tk-kw">nil</span>, <span class="tk-str">"snapshot cleared"</span>)
+        <span class="tk-kw">await</span> s.<span class="tk-fn">startFinished</span>(); <span class="tk-fn">check</span>(<span class="tk-kw">await</span> disk.<span class="tk-fn">unfinishedNow</span>() == <span class="tk-num">0</span>, <span class="tk-str">"counter reset"</span>)
     }
-    do {   // clock moved back still fetches; a fresh snapshot does not
-        let a = FakeSource([&quot;new_checkout&quot;: true])
-        var future = saved; future.fetchedAt = clock + 9_999_999
-        let s1 = make(a, FakeDisk(future)); await s1.start(userKey: &quot;u1&quot;); await s1.refreshIfStale()
-        check(a.calls.n == 1, &quot;clock back fetches&quot;)
-        let b = FakeSource([&quot;new_checkout&quot;: true])
-        var fresh = saved; fresh.fetchedAt = clock - 60
-        let s2 = make(b, FakeDisk(fresh)); await s2.start(userKey: &quot;u1&quot;); await s2.refreshIfStale()
-        check(b.calls.n == 0, &quot;fresh is not fetched again&quot;)
+    <span class="tk-kw">do</span> {   <span class="tk-com">// clock moved back still fetches; a fresh snapshot does not</span>
+        <span class="tk-kw">let</span> a = <span class="tk-ty">FakeSource</span>([<span class="tk-str">"new_checkout"</span>: <span class="tk-kw">true</span>])
+        <span class="tk-kw">var</span> future = saved; future.fetchedAt = clock + <span class="tk-num">9_999_999</span>
+        <span class="tk-kw">let</span> s1 = <span class="tk-fn">make</span>(a, <span class="tk-ty">FakeDisk</span>(future)); <span class="tk-kw">await</span> s1.<span class="tk-fn">start</span>(userKey: <span class="tk-str">"u1"</span>); <span class="tk-kw">await</span> s1.<span class="tk-fn">refreshIfStale</span>()
+        <span class="tk-fn">check</span>(a.calls.n == <span class="tk-num">1</span>, <span class="tk-str">"clock back fetches"</span>)
+        <span class="tk-kw">let</span> b = <span class="tk-ty">FakeSource</span>([<span class="tk-str">"new_checkout"</span>: <span class="tk-kw">true</span>])
+        <span class="tk-kw">var</span> fresh = saved; fresh.fetchedAt = clock - <span class="tk-num">60</span>
+        <span class="tk-kw">let</span> s2 = <span class="tk-fn">make</span>(b, <span class="tk-ty">FakeDisk</span>(fresh)); <span class="tk-kw">await</span> s2.<span class="tk-fn">start</span>(userKey: <span class="tk-str">"u1"</span>); <span class="tk-kw">await</span> s2.<span class="tk-fn">refreshIfStale</span>()
+        <span class="tk-fn">check</span>(b.calls.n == <span class="tk-num">0</span>, <span class="tk-str">"fresh is not fetched again"</span>)
     }
-    do {   // flags past their date
-        check(Flags.expired(on: Flags.day(2026, 10, 14)).isEmpty, &quot;none expired today&quot;)
-        check(Flags.expired(on: Flags.day(2027, 3, 2)).count == 1, &quot;one expired later&quot;)
+    <span class="tk-kw">do</span> {   <span class="tk-com">// flags past their date</span>
+        <span class="tk-fn">check</span>(<span class="tk-ty">Flags</span>.<span class="tk-fn">expired</span>(on: <span class="tk-ty">Flags</span>.<span class="tk-fn">day</span>(<span class="tk-num">2026</span>, <span class="tk-num">10</span>, <span class="tk-num">14</span>)).isEmpty, <span class="tk-str">"none expired today"</span>)
+        <span class="tk-fn">check</span>(<span class="tk-ty">Flags</span>.<span class="tk-fn">expired</span>(on: <span class="tk-ty">Flags</span>.<span class="tk-fn">day</span>(<span class="tk-num">2027</span>, <span class="tk-num">3</span>, <span class="tk-num">2</span>)).count == <span class="tk-num">1</span>, <span class="tk-str">"one expired later"</span>)
     }
-    do {   // buckets
-        check(Bucket.of(stableID: &quot;acct-42&quot;, flagKey: &quot;new_checkout&quot;) == Bucket.of(stableID: &quot;acct-42&quot;, flagKey: &quot;new_checkout&quot;), &quot;stable&quot;)
-        let ids = (1...20_000).map { &quot;acct-\($0)&quot; }
-        let ten = Set(ids.filter { Bucket.isIn(stableID: $0, flagKey: &quot;new_checkout&quot;, basisPoints: 1_000) })
-        let twenty = Set(ids.filter { Bucket.isIn(stableID: $0, flagKey: &quot;new_checkout&quot;, basisPoints: 2_000) })
-        check(ten.isSubset(of: twenty), &quot;bigger percentage only adds people&quot;); check((1_800...2_200).contains(ten.count), &quot;about ten percent: \(ten.count)&quot;)
-        let a = Set(ids.filter { Bucket.isIn(stableID: $0, flagKey: &quot;flag_a&quot;, basisPoints: 1_000) })
-        let b = Set(ids.filter { Bucket.isIn(stableID: $0, flagKey: &quot;flag_b&quot;, basisPoints: 1_000) })
-        check(a.intersection(b).count &lt; 400, &quot;flags are independent: \(a.intersection(b).count)&quot;)
-        print(&quot;bucket acct-42/new_checkout =&quot;, Bucket.of(stableID: &quot;acct-42&quot;, flagKey: &quot;new_checkout&quot;))
+    <span class="tk-kw">do</span> {   <span class="tk-com">// buckets</span>
+        <span class="tk-fn">check</span>(<span class="tk-ty">Bucket</span>.<span class="tk-fn">of</span>(stableID: <span class="tk-str">"acct-42"</span>, flagKey: <span class="tk-str">"new_checkout"</span>) == <span class="tk-ty">Bucket</span>.<span class="tk-fn">of</span>(stableID: <span class="tk-str">"acct-42"</span>, flagKey: <span class="tk-str">"new_checkout"</span>), <span class="tk-str">"stable"</span>)
+        <span class="tk-kw">let</span> ids = (<span class="tk-num">1</span>...<span class="tk-num">20_000</span>).map { <span class="tk-str">"acct-\($0)"</span> }
+        <span class="tk-kw">let</span> ten = <span class="tk-ty">Set</span>(ids.filter { <span class="tk-ty">Bucket</span>.<span class="tk-fn">isIn</span>(stableID: $<span class="tk-num">0</span>, flagKey: <span class="tk-str">"new_checkout"</span>, basisPoints: <span class="tk-num">1_000</span>) })
+        <span class="tk-kw">let</span> twenty = <span class="tk-ty">Set</span>(ids.filter { <span class="tk-ty">Bucket</span>.<span class="tk-fn">isIn</span>(stableID: $<span class="tk-num">0</span>, flagKey: <span class="tk-str">"new_checkout"</span>, basisPoints: <span class="tk-num">2_000</span>) })
+        <span class="tk-fn">check</span>(ten.<span class="tk-fn">isSubset</span>(of: twenty), <span class="tk-str">"bigger percentage only adds people"</span>); <span class="tk-fn">check</span>((<span class="tk-num">1_800</span>...<span class="tk-num">2_200</span>).<span class="tk-fn">contains</span>(ten.count), <span class="tk-str">"about ten percent: \(ten.count)"</span>)
+        <span class="tk-kw">let</span> a = <span class="tk-ty">Set</span>(ids.filter { <span class="tk-ty">Bucket</span>.<span class="tk-fn">isIn</span>(stableID: $<span class="tk-num">0</span>, flagKey: <span class="tk-str">"flag_a"</span>, basisPoints: <span class="tk-num">1_000</span>) })
+        <span class="tk-kw">let</span> b = <span class="tk-ty">Set</span>(ids.filter { <span class="tk-ty">Bucket</span>.<span class="tk-fn">isIn</span>(stableID: $<span class="tk-num">0</span>, flagKey: <span class="tk-str">"flag_b"</span>, basisPoints: <span class="tk-num">1_000</span>) })
+        <span class="tk-fn">check</span>(a.<span class="tk-fn">intersection</span>(b).count &lt; <span class="tk-num">400</span>, <span class="tk-str">"flags are independent: \(a.intersection(b).count)"</span>)
+        <span class="tk-fn">print</span>(<span class="tk-str">"bucket acct-42/new_checkout ="</span>, <span class="tk-ty">Bucket</span>.<span class="tk-fn">of</span>(stableID: <span class="tk-str">"acct-42"</span>, flagKey: <span class="tk-str">"new_checkout"</span>))
     }
 }
-await run()
-print(&quot;\(checks) checks, \(failures) failures&quot;)
-exit(failures == 0 ? 0 : 1)</code></pre>
+<span class="tk-kw">await</span> <span class="tk-fn">run</span>()
+<span class="tk-fn">print</span>(<span class="tk-str">"\(checks) checks, \(failures) failures"</span>)
+<span class="tk-fn">exit</span>(failures == <span class="tk-num">0</span> ? <span class="tk-num">0</span> : <span class="tk-num">1</span>)</code></pre>
 <h2 id="13-more-practice-prompts">13. More practice prompts</h2>
 <ol><li>How do you show a screen that depends on a flag before the first fetch? (Use the saved copy or the default. Never a spinner for the network.)</li><li>How would you let support see which flags one user has? (Log the flag version and the bucket, not the user's attributes.)</li><li>How do you know a flag is safe to remove? (Zero reads in the last release, the rollout at 100 percent, and the old code path deleted.)</li><li>How would you move from Firebase to another vendor? (The store and the flag list stay. Only the source adapter changes. OpenFeature offers a standard provider interface (<a href="https://openfeature.dev/docs/reference/concepts/provider/">OpenFeature providers</a>).)</li></ol>
 <h2 id="further-reading-official-docs">Further reading (official docs)</h2>

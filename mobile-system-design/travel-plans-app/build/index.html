@@ -18,55 +18,55 @@
 <h2 id="1-local-schema-room">1. Local schema (Room)</h2>
 <p>The local tables are:</p>
 <ul><li><code>trip</code></li><li><code>itinerary_item</code>, with <code>sortKey</code>, the time fields, <code>serverRev</code>, a <code>deletedAt</code> <a class="gl" href="/glossary/#tombstone" title="A row that says an item was deleted.">tombstone</a> and a <code>dirty</code> flag</li><li><code>op_outbox(opId, tripId, itemId, field, value, baseRev, createdSeq)</code>, one row per waiting field change, ordered by a local counter</li><li><code>media</code>, the upload queue, in the style of <a href="/mobile-system-design/photo-file-sync/">photo and file sync</a></li><li><code>sync_state(scope, cursor)</code></li></ul>
-<pre tabindex="0"><code>@Entity(
-    tableName = &quot;itinerary_item&quot;,
-    indices = [Index(&quot;tripId&quot;, &quot;sortKey&quot;, &quot;itemId&quot;)],   // order by sortKey, break ties by itemId
+<pre tabindex="0"><code><span class="tk-ann">@Entity</span>(
+    tableName = <span class="tk-str">"itinerary_item"</span>,
+    indices = [<span class="tk-ty">Index</span>(<span class="tk-str">"tripId"</span>, <span class="tk-str">"sortKey"</span>, <span class="tk-str">"itemId"</span>)],   <span class="tk-com">// order by sortKey, break ties by itemId</span>
 )
-data class ItineraryItemEntity(
-    @PrimaryKey val itemId: String,                  // client-generated UUID
-    val tripId: String,
-    val title: String,
-    val sortKey: String,                             // fractional index
-    val startLocal: String,                          // what the person meant, e.g. &quot;2027-06-10T10:00&quot;
-    val startZoneId: String,                         // IANA id, e.g. &quot;Europe/Lisbon&quot;
-    val startInstant: Long,                          // epoch millis; a cache computed from the two fields above
-    val serverRev: Long,                             // last revision the server confirmed
-    val deletedAt: Long? = null,                     // tombstone: hidden in the UI, kept until the server confirms
-    @ColumnInfo(defaultValue = &quot;0&quot;) val dirty: Boolean = false,
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">ItineraryItemEntity</span>(
+    <span class="tk-ann">@PrimaryKey</span> <span class="tk-kw">val</span> itemId: <span class="tk-ty">String</span>,                  <span class="tk-com">// client-generated UUID</span>
+    <span class="tk-kw">val</span> tripId: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> title: <span class="tk-ty">String</span>,
+    <span class="tk-kw">val</span> sortKey: <span class="tk-ty">String</span>,                             <span class="tk-com">// fractional index</span>
+    <span class="tk-kw">val</span> startLocal: <span class="tk-ty">String</span>,                          <span class="tk-com">// what the person meant, e.g. "2027-06-10T10:00"</span>
+    <span class="tk-kw">val</span> startZoneId: <span class="tk-ty">String</span>,                         <span class="tk-com">// IANA id, e.g. "Europe/Lisbon"</span>
+    <span class="tk-kw">val</span> startInstant: <span class="tk-ty">Long</span>,                          <span class="tk-com">// epoch millis; a cache computed from the two fields above</span>
+    <span class="tk-kw">val</span> serverRev: <span class="tk-ty">Long</span>,                             <span class="tk-com">// last revision the server confirmed</span>
+    <span class="tk-kw">val</span> deletedAt: <span class="tk-ty">Long</span>? = <span class="tk-kw">null</span>,                     <span class="tk-com">// tombstone: hidden in the UI, kept until the server confirms</span>
+    <span class="tk-ann">@ColumnInfo</span>(defaultValue = <span class="tk-str">"0"</span>) <span class="tk-kw">val</span> dirty: <span class="tk-ty">Boolean</span> = <span class="tk-kw">false</span>,
 )</code></pre>
 <p>I show the entity itself to keep the snippet short. In a larger app, I would map it to a UI model. <code>itemId</code> is made on the device. So creating an item offline needs no round trip, and a retried create does no harm. The chat case does the same with <code>clientId</code>.</p>
 <p>The entity stores what the person meant (<code>startLocal</code> plus <code>startZoneId</code>). <code>startInstant</code> is a cache that you compute again from them, for sorting and flight length. It is not the truth. I did not compile this version.</p>
 <h2 id="2-rest">2. REST</h2>
-<pre tabindex="0"><code>GET  /v1/trips/{id}/changes?cursor=&lt;opaque&gt;  → { changes[], nextCursor, hasMore } or 410 (cursor too old)
-GET  /v1/trips/{id}                          → full snapshot + cursor (bootstrap and resync)
-POST /v1/trips/{id}/ops   { opId, ops[] }    → per-op result: applied | conflict(field, serverValue) | rejected</code></pre>
+<pre tabindex="0"><code><span class="tk-ty">GET</span>  /v1/trips/{id}/changes?cursor=&lt;opaque&gt;  → { changes[], nextCursor, hasMore } or <span class="tk-num">410</span> (cursor too old)
+<span class="tk-ty">GET</span>  /v1/trips/{id}                          → full snapshot + cursor (bootstrap and resync)
+<span class="tk-ty">POST</span> /v1/trips/{id}/ops   { opId, ops[] }    → per-op result: applied | <span class="tk-fn">conflict</span>(field, serverValue) | rejected</code></pre>
 <p>Every write carries an <code>opId</code>. So a retry after a lost response changes nothing on the server. The server picks the revision and the cursor. They are not the <code>seq</code> of the chat case.</p>
 <p>A <code>410</code> on the changes call means the cursor is too old. The client then fetches the <a class="gl" href="/glossary/#snapshot" title="A copy of the data as it was at one moment.">snapshot</a> (section 7).</p>
 <h2 id="3-merging-edits-the-rule">3. Merging edits: the rule</h2>
 <p>Two companions are on a plane. One renames "Lunch" to "Lunch at Time Out Market". The other changes the time of the same item and adds a note. Both edits must survive.</p>
 <p>Whole-item last write wins loses one of them. The Android guide names last write wins as the simple option. It also says that conflict resolution often needs versioning, with the network as the <a class="gl" href="/glossary/#source-of-truth" title="The one copy of the data that the app trusts.">source of truth</a>. So the flow is:</p>
 <ol><li>A local edit writes the value into Room. It also adds one <code>op_outbox</code> row for that field. The row carries the <code>baseRev</code> the person was looking at.</li><li><code>PushChangesWorker</code> posts the waiting ops for the trip, in order.</li><li>The server applies an op if the field has not changed since <code>baseRev</code>. If the field changed to another value, the server keeps its value and reports a conflict for that field.</li><li>The client clears the applied ops. For a conflict, it shows the server value and keeps the rejected value in view ("Alex changed this to ... Keep mine?").</li><li>The next pull brings every accepted change, and revisions make all devices agree.</li></ol>
-<pre tabindex="0"><code>// Sketch of the server rule: reject only a field that changed since the editor&#x27;s base revision
-data class Field(val value: String?, val rev: Long)
-data class Edit(val name: String, val value: String?, val baseRev: Long)
-data class MergeResult(val fields: Map&lt;String, Field&gt;, val conflicts: List&lt;String&gt;)
+<pre tabindex="0"><code><span class="tk-com">// Sketch of the server rule: reject only a field that changed since the editor's base revision</span>
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">Field</span>(<span class="tk-kw">val</span> <span class="tk-kw">value</span>: <span class="tk-ty">String</span>?, <span class="tk-kw">val</span> rev: <span class="tk-ty">Long</span>)
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">Edit</span>(<span class="tk-kw">val</span> name: <span class="tk-ty">String</span>, <span class="tk-kw">val</span> <span class="tk-kw">value</span>: <span class="tk-ty">String</span>?, <span class="tk-kw">val</span> baseRev: <span class="tk-ty">Long</span>)
+<span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">MergeResult</span>(<span class="tk-kw">val</span> fields: <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Field</span>&gt;, <span class="tk-kw">val</span> conflicts: <span class="tk-ty">List</span>&lt;<span class="tk-ty">String</span>&gt;)
 
-fun mergeEdits(current: Map&lt;String, Field&gt;, edits: List&lt;Edit&gt;, newRev: Long): MergeResult {
-    val out = current.toMutableMap()
-    val conflicts = mutableListOf&lt;String&gt;()
-    for (e in edits) {
-        val cur = current[e.name]
-        if (cur != null &amp;&amp; cur.rev &gt; e.baseRev &amp;&amp; cur.value != e.value) conflicts += e.name
-        else out[e.name] = Field(e.value, newRev)
+<span class="tk-kw">fun</span> <span class="tk-fn">mergeEdits</span>(current: <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Field</span>&gt;, edits: <span class="tk-ty">List</span>&lt;<span class="tk-ty">Edit</span>&gt;, newRev: <span class="tk-ty">Long</span>): <span class="tk-ty">MergeResult</span> {
+    <span class="tk-kw">val</span> <span class="tk-kw">out</span> = current.<span class="tk-fn">toMutableMap</span>()
+    <span class="tk-kw">val</span> conflicts = mutableListOf&lt;<span class="tk-ty">String</span>&gt;()
+    <span class="tk-kw">for</span> (e <span class="tk-kw">in</span> edits) {
+        <span class="tk-kw">val</span> cur = current[e.name]
+        <span class="tk-kw">if</span> (cur != <span class="tk-kw">null</span> &amp;&amp; cur.rev &gt; e.baseRev &amp;&amp; cur.<span class="tk-kw">value</span> != e.<span class="tk-kw">value</span>) conflicts += e.name
+        <span class="tk-kw">else</span> <span class="tk-kw">out</span>[e.name] = <span class="tk-ty">Field</span>(e.<span class="tk-kw">value</span>, newRev)
     }
-    return MergeResult(out, conflicts)
+    <span class="tk-kw">return</span> <span class="tk-ty">MergeResult</span>(<span class="tk-kw">out</span>, conflicts)
 }</code></pre>
 <p>This code runs on the server in the real system. It is a sketch of the rule.</p>
 <p><strong>One case to handle: your own earlier edit.</strong> The sketch compares each edit's <code>baseRev</code> with the revision stored before the batch. Suppose one person edits the same field twice offline, and the two ops travel in two requests. The second op sees the revision made by the first op. It would look like a conflict with the person's own change. Two client rules fix this:</p>
 <ul><li>Before sending, merge the waiting ops for one field into one op. Keep the first <code>baseRev</code> and the last value.</li><li>When the server accepts an op, set the <code>baseRev</code> of later waiting ops for that field to the new revision.</li></ul>
-<pre tabindex="0"><code>fun coalesce(ops: List&lt;Edit&gt;): List&lt;Edit&gt; =
-    ops.groupBy { it.name }.map { (_, same) ->
-        Edit(same.first().name, same.last().value, same.first().baseRev)
+<pre tabindex="0"><code><span class="tk-kw">fun</span> <span class="tk-fn">coalesce</span>(ops: <span class="tk-ty">List</span>&lt;<span class="tk-ty">Edit</span>&gt;): <span class="tk-ty">List</span>&lt;<span class="tk-ty">Edit</span>&gt; =
+    ops.groupBy { <span class="tk-kw">it</span>.name }.map { (_, same) -&gt;
+        <span class="tk-ty">Edit</span>(same.<span class="tk-fn">first</span>().name, same.<span class="tk-fn">last</span>().<span class="tk-kw">value</span>, same.<span class="tk-fn">first</span>().baseRev)
     }</code></pre>
 <p>I did not compile this. Write the two-request test first: two edits to one field, sent in two requests, must give no conflict.</p>
 <p>Per-field merge treats a field as one value. So two people typing in one long note still conflict. A <a class="gl" href="/glossary/#crdt" title="A data type that merges edits from many devices by itself.">CRDT</a> (a data type that merges edits by itself) can merge that. But both platforms must then follow its protocol exactly and keep its history.</p>
@@ -76,26 +76,26 @@ fun mergeEdits(current: Map&lt;String, Field&gt;, edits: List&lt;Edit&gt;, newRe
 <h2 id="4-order-keys">4. Order keys</h2>
 <p>With integer positions, an insert at the top rewrites every row after it. Two offline inserts at position 3 also collide. Give each item a <code>sortKey</code>, a string that sorts between its neighbours. Sort by <code>(sortKey, itemId)</code>. A move or an insert then writes one row.</p>
 <p>The interview page sorts a day by time first. The key decides only the items with no time, and ties.</p>
-<pre tabindex="0"><code>private const val DIGITS = &quot;0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&quot;
+<pre tabindex="0"><code><span class="tk-kw">private</span> <span class="tk-kw">const</span> <span class="tk-kw">val</span> <span class="tk-ty">DIGITS</span> = <span class="tk-str">"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"</span>
 
-fun keyBetween(a: String?, b: String?): String {
-    require(a == null || b == null || a &lt; b) { &quot;a must sort before b&quot; }
-    return mid(a ?: &quot;&quot;, b)
+<span class="tk-kw">fun</span> <span class="tk-fn">keyBetween</span>(a: <span class="tk-ty">String</span>?, b: <span class="tk-ty">String</span>?): <span class="tk-ty">String</span> {
+    <span class="tk-fn">require</span>(a == <span class="tk-kw">null</span> || b == <span class="tk-kw">null</span> || a &lt; b) { <span class="tk-str">"a must sort before b"</span> }
+    <span class="tk-kw">return</span> <span class="tk-fn">mid</span>(a ?: <span class="tk-str">""</span>, b)
 }
 
-// Keys never end in &#x27;0&#x27;, so there is always room between two distinct keys.
-private fun mid(a: String, b: String?): String {
-    if (b != null) {
-        var n = 0
-        while (n &lt; b.length &amp;&amp; (if (n &lt; a.length) a[n] else &#x27;0&#x27;) == b[n]) n++
-        if (n &gt; 0) return b.substring(0, n) + mid(a.drop(n), b.drop(n))
+<span class="tk-com">// Keys never end in '0', so there is always room between two distinct keys.</span>
+<span class="tk-kw">private</span> <span class="tk-kw">fun</span> <span class="tk-fn">mid</span>(a: <span class="tk-ty">String</span>, b: <span class="tk-ty">String</span>?): <span class="tk-ty">String</span> {
+    <span class="tk-kw">if</span> (b != <span class="tk-kw">null</span>) {
+        <span class="tk-kw">var</span> n = <span class="tk-num">0</span>
+        <span class="tk-kw">while</span> (n &lt; b.length &amp;&amp; (<span class="tk-kw">if</span> (n &lt; a.length) a[n] <span class="tk-kw">else</span> <span class="tk-str">'0'</span>) == b[n]) n++
+        <span class="tk-kw">if</span> (n &gt; <span class="tk-num">0</span>) <span class="tk-kw">return</span> b.<span class="tk-fn">substring</span>(<span class="tk-num">0</span>, n) + <span class="tk-fn">mid</span>(a.<span class="tk-fn">drop</span>(n), b.<span class="tk-fn">drop</span>(n))
     }
-    val da = if (a.isEmpty()) 0 else DIGITS.indexOf(a[0])
-    val db = if (b == null) DIGITS.length else DIGITS.indexOf(b[0])
-    return when {
-        db - da &gt; 1 -&gt; DIGITS[(da + db + 1) / 2].toString()
-        b != null &amp;&amp; b.length &gt; 1 -&gt; b.substring(0, 1)
-        else -&gt; DIGITS[da] + mid(a.drop(1), null)
+    <span class="tk-kw">val</span> da = <span class="tk-kw">if</span> (a.<span class="tk-fn">isEmpty</span>()) <span class="tk-num">0</span> <span class="tk-kw">else</span> <span class="tk-ty">DIGITS</span>.<span class="tk-fn">indexOf</span>(a[<span class="tk-num">0</span>])
+    <span class="tk-kw">val</span> db = <span class="tk-kw">if</span> (b == <span class="tk-kw">null</span>) <span class="tk-ty">DIGITS</span>.length <span class="tk-kw">else</span> <span class="tk-ty">DIGITS</span>.<span class="tk-fn">indexOf</span>(b[<span class="tk-num">0</span>])
+    <span class="tk-kw">return</span> <span class="tk-kw">when</span> {
+        db - da &gt; <span class="tk-num">1</span> -&gt; <span class="tk-ty">DIGITS</span>[(da + db + <span class="tk-num">1</span>) / <span class="tk-num">2</span>].<span class="tk-fn">toString</span>()
+        b != <span class="tk-kw">null</span> &amp;&amp; b.length &gt; <span class="tk-num">1</span> -&gt; b.<span class="tk-fn">substring</span>(<span class="tk-num">0</span>, <span class="tk-num">1</span>)
+        <span class="tk-kw">else</span> -&gt; <span class="tk-ty">DIGITS</span>[da] + <span class="tk-fn">mid</span>(a.<span class="tk-fn">drop</span>(<span class="tk-num">1</span>), <span class="tk-kw">null</span>)
     }
 }</code></pre>
 <ul><li><strong>Concurrent inserts can produce the same key.</strong> The <code>(sortKey, itemId)</code> tie-break is the same on every device, so the order is the same everywhere.</li><li><strong>Keys grow</strong> when people insert again and again at one spot. For human edits this is rare. Rebalancing a day rewrites many rows and can meet a concurrent move. I leave it as an open item.</li><li><strong>Runs of inserts at one spot can interleave</strong> with another person's run. I accept this.</li></ul>
@@ -107,13 +107,13 @@ private fun mid(a: String, b: String?): String {
 <h2 id="6-time-zones">6. Time zones</h2>
 <p>A trip crosses zones, so what does "10:00" mean? Store a local date and time plus an IANA zone ID such as <code>Europe/Lisbon</code>. Never store a fixed offset like <code>+01:00</code>, and never a display name. Apple says the same: values such as <code>America/Los_Angeles</code> are IDs, not names (<a href="https://developer.apple.com/documentation/foundation/timezone">TimeZone</a>).</p>
 <p>The instant is derived from those two values. An instant alone loses the place the user meant. Then the UI cannot show "10:00 in Lisbon" to a companion in New York.</p>
-<pre tabindex="0"><code>data class ItineraryTime(val local: LocalDateTime, val zoneId: String) {
-    // The stored value is local + zoneId. The instant is derived from it.
-    val instant: Instant get() = local.atZone(ZoneId.of(zoneId)).toInstant()
+<pre tabindex="0"><code><span class="tk-kw">data</span> <span class="tk-kw">class</span> <span class="tk-ty">ItineraryTime</span>(<span class="tk-kw">val</span> local: <span class="tk-ty">LocalDateTime</span>, <span class="tk-kw">val</span> zoneId: <span class="tk-ty">String</span>) {
+    <span class="tk-com">// The stored value is local + zoneId. The instant is derived from it.</span>
+    <span class="tk-kw">val</span> instant: <span class="tk-ty">Instant</span> <span class="tk-kw">get</span>() = local.<span class="tk-fn">atZone</span>(<span class="tk-ty">ZoneId</span>.<span class="tk-fn">of</span>(zoneId)).<span class="tk-fn">toInstant</span>()
 }
 
-fun flightDuration(dep: ItineraryTime, arr: ItineraryTime): Duration =
-    Duration.between(dep.instant, arr.instant)</code></pre>
+<span class="tk-kw">fun</span> <span class="tk-fn">flightDuration</span>(dep: <span class="tk-ty">ItineraryTime</span>, arr: <span class="tk-ty">ItineraryTime</span>): <span class="tk-ty">Duration</span> =
+    <span class="tk-ty">Duration</span>.<span class="tk-fn">between</span>(dep.instant, arr.instant)</code></pre>
 <p>The stored value is the local date and time plus the zone ID. The instant is computed from them each time, or cached in <code>startInstant</code>. If a zone rule changes, you recompute the cache and the local time stays what the person typed.</p>
 <ul><li><strong>Display in the item's own zone</strong>, with a switch for the viewer's zone.</li><li><strong>Duration is arithmetic on instants.</strong> Lisbon 10:00 to New York 13:00 on 10 June 2027 is eight hours with today's rules. Lisbon is UTC+1 and New York is UTC-4. Subtracting wall-clock times gives three.</li><li><strong>Group by the item's local date.</strong> For example, a 23:30 item in Tokyo belongs to that Tokyo day for every viewer.</li><li><strong>An unknown zone ID.</strong> <code>ZoneId.of</code> throws for an ID that this phone does not know, for example a new ID on an old phone. Catch it and show the stored local time with the ID. The Swift model falls back to GMT. I did not compile this handling.</li><li><strong>Take the zone from the place</strong>, not from the device. The device zone is wrong when you plan a trip from home.</li><li><strong>Gaps and overlaps.</strong> A local time may not exist (clocks go forward) or may happen twice (clocks go back). <code>ZonedDateTime</code> moves a time in a gap forward by the length of the gap. In an overlap, it keeps the earlier offset unless you ask for the later one (<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/ZonedDateTime.html">Java SE 17</a>).</li><li><strong>Rules change.</strong> A government can change a zone rule after you store an instant. RFC 9557 names the case of a future local time whose instant changes, and says it is outside its scope (<a href="https://www.rfc-editor.org/rfc/rfc9557.html">RFC 9557</a>). Android updates zone rules through a system module, and phones get an update at different times (<a href="https://source.android.com/docs/core/permissions/timezone-rules">Android</a>). That is why the local value is the truth.</li></ul>
 <h2 id="7-the-sync-cursor">7. The sync cursor</h2>
@@ -136,27 +136,27 @@ fun flightDuration(dep: ItineraryTime, arr: ItineraryTime): Duration =
 <p>Same design, different primitives. SwiftData (iOS 17 and later) or Core Data (or GRDB) replaces Room. SwiftUI watches it with <code>@Query</code>. A background <code>URLSession</code> replaces the upload worker.</p>
 <p>What really differs:</p>
 <ul><li><strong>You drain the outbox yourself.</strong> There is no WorkManager equivalent. Start a drain on edit, on foreground, on network return (<code>NWPathMonitor</code>) and on push. If the user force-quits, do not count on a relaunch. Queued edits may wait for the next launch. I did not confirm this in the pages I read. The edits are in the database and the server ignores repeated <code>opId</code>s, so nothing is lost.</li><li><strong>The system owns background transfers.</strong> Apple's background <code>URLSession</code> runs in a separate process. It supports download tasks and upload tasks from a file. It does not support data tasks or uploads from memory, so write each photo to a file and use <code>uploadTask(with:fromFile:)</code>. If the system ended the app, it relaunches the app. Create the session again with the same identifier. Use one session. Apple documents a growing delay for new background download tasks. I assume uploads match.</li><li><strong><code>BGProcessingTask</code> is a bonus, not a plan.</strong> It runs only when the device is idle, and it can be interrupted. It needs the <code>processing</code> background mode, the task identifier listed in <code>BGTaskSchedulerPermittedIdentifiers</code> in Info.plist, and a handler registered before launch finishes. Set <code>requiresNetworkConnectivity</code>, and do the cheap work on launch and foreground.</li><li><strong><code>BGContinuedProcessingTask</code> (iOS 26)</strong> starts in the foreground and may continue after. The person can cancel it, and the system can end it at once. Save the offset. The page I read does not name uploads.</li><li><strong><code>CKSyncEngine</code> (iOS 17)</strong> syncs local records with CloudKit. It fits only when every companion uses Apple's cloud. A trip shared with Android phones needs your own server and outbox. That is my reading.</li><li><strong>SwiftData upsert.</strong> Apple documents <code>@Attribute(.unique)</code> as keeping a value unique across instances. Test upsert-on-save on your target OS before you rely on it.</li></ul>
-<pre tabindex="0"><code>@Model
-final class ItineraryItem {
-    @Attribute(.unique) var itemId: String      // client-generated UUID
-    var tripId: String
-    var title: String
-    var sortKey: String                         // fractional index
-    var startLocal: String                      // what the person meant, e.g. &quot;2027-06-10T10:00&quot;
-    var startZoneId: String                     // IANA id, e.g. &quot;Europe/Lisbon&quot;
-    var startInstant: Date                      // cache, computed from the two fields above
-    var serverRev: Int64
-    var deletedAt: Date?                        // tombstone
-    var dirty: Bool
+<pre tabindex="0"><code><span class="tk-ann">@Model</span>
+<span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">ItineraryItem</span> {
+    <span class="tk-ann">@Attribute</span>(.unique) <span class="tk-kw">var</span> itemId: <span class="tk-ty">String</span>      <span class="tk-com">// client-generated UUID</span>
+    <span class="tk-kw">var</span> tripId: <span class="tk-ty">String</span>
+    <span class="tk-kw">var</span> title: <span class="tk-ty">String</span>
+    <span class="tk-kw">var</span> sortKey: <span class="tk-ty">String</span>                         <span class="tk-com">// fractional index</span>
+    <span class="tk-kw">var</span> startLocal: <span class="tk-ty">String</span>                      <span class="tk-com">// what the person meant, e.g. "2027-06-10T10:00"</span>
+    <span class="tk-kw">var</span> startZoneId: <span class="tk-ty">String</span>                     <span class="tk-com">// IANA id, e.g. "Europe/Lisbon"</span>
+    <span class="tk-kw">var</span> startInstant: <span class="tk-ty">Date</span>                      <span class="tk-com">// cache, computed from the two fields above</span>
+    <span class="tk-kw">var</span> serverRev: <span class="tk-ty">Int64</span>
+    <span class="tk-kw">var</span> deletedAt: <span class="tk-ty">Date</span>?                        <span class="tk-com">// tombstone</span>
+    <span class="tk-kw">var</span> dirty: <span class="tk-ty">Bool</span>
 
-    init(itemId: String, tripId: String, title: String, sortKey: String,
-         startLocal: String, startZoneId: String, startInstant: Date) {
-        self.itemId = itemId; self.tripId = tripId; self.title = title; self.sortKey = sortKey
-        self.startLocal = startLocal; self.startZoneId = startZoneId; self.startInstant = startInstant
-        self.serverRev = 0; self.deletedAt = nil; self.dirty = true
+    <span class="tk-kw">init</span>(itemId: <span class="tk-ty">String</span>, tripId: <span class="tk-ty">String</span>, title: <span class="tk-ty">String</span>, sortKey: <span class="tk-ty">String</span>,
+         startLocal: <span class="tk-ty">String</span>, startZoneId: <span class="tk-ty">String</span>, startInstant: <span class="tk-ty">Date</span>) {
+        <span class="tk-kw">self</span>.itemId = itemId; <span class="tk-kw">self</span>.tripId = tripId; <span class="tk-kw">self</span>.title = title; <span class="tk-kw">self</span>.sortKey = sortKey
+        <span class="tk-kw">self</span>.startLocal = startLocal; <span class="tk-kw">self</span>.startZoneId = startZoneId; <span class="tk-kw">self</span>.startInstant = startInstant
+        <span class="tk-kw">self</span>.serverRev = <span class="tk-num">0</span>; <span class="tk-kw">self</span>.deletedAt = <span class="tk-kw">nil</span>; <span class="tk-kw">self</span>.dirty = <span class="tk-kw">true</span>
     }
 
-    var startZone: TimeZone { TimeZone(identifier: startZoneId) ?? .gmt }
+    <span class="tk-kw">var</span> startZone: <span class="tk-ty">TimeZone</span> { <span class="tk-ty">TimeZone</span>(identifier: startZoneId) ?? .gmt }
 }</code></pre>
 <p>The fractional-key logic and the merge rule are plain value code, and they port to Swift line by line. Port the unit test with them: random inserts stay sorted, strictly between their neighbours, and never end in the lowest digit.</p>
 <h2 id="12-more-practice-prompts">12. More practice prompts</h2>

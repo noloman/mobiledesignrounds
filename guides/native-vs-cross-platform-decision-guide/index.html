@@ -79,69 +79,69 @@
 <p>For a model of a measured adoption decision, use the Uber Android team's Kotlin build study as a template. It ran many experiments across configurations. It surveyed engineers. It gave guidance with caveats, not a flat yes or no. (Reported by Uber Engineering, 30 Apr 2019) I did not fetch this study again for this guide. For the same measurement shape, see our <a href="/guides/staff-mobile-loop-guide/">staff mobile loop guide</a>, section 4.</p>
 <h2 id="10-a-fill-in-adr-template">10. A fill-in ADR template</h2>
 <p>Copy this, replace each bracket, and keep it in the repository next to the code. It is free to use and adapt.</p>
-<pre tabindex="0"><code># ADR-[number]: [Short title of the decision]
+<pre tabindex="0"><code># <span class="tk-ty">ADR</span>-[number]: [<span class="tk-ty">Short</span> title of the decision]
 
-Status: [Proposed | Accepted | Superseded by ADR-[n]]
-Date: [YYYY-MM-DD]        Review date: [YYYY-MM-DD]
-Owner: [one named person]        Deciders: [names]
+<span class="tk-ty">Status</span>: [<span class="tk-ty">Proposed</span> | <span class="tk-ty">Accepted</span> | <span class="tk-ty">Superseded</span> <span class="tk-kw">by</span> <span class="tk-ty">ADR</span>-[n]]
+<span class="tk-ty">Date</span>: [<span class="tk-ty">YYYY</span>-<span class="tk-ty">MM</span>-<span class="tk-ty">DD</span>]        <span class="tk-ty">Review</span> date: [<span class="tk-ty">YYYY</span>-<span class="tk-ty">MM</span>-<span class="tk-ty">DD</span>]
+<span class="tk-ty">Owner</span>: [one named person]        <span class="tk-ty">Deciders</span>: [names]
 
-## Context
-- Product and users: [what the apps do, platforms, rough size]
-- Team shape: [engineers per platform, hiring plan, skills]
-- Current stack: [native / cross-platform / mixed, versions]
-- Pressure: [what triggered the decision]
+## <span class="tk-ty">Context</span>
+- <span class="tk-ty">Product</span> and users: [what the apps <span class="tk-kw">do</span>, platforms, rough size]
+- <span class="tk-ty">Team</span> shape: [engineers per platform, hiring plan, skills]
+- <span class="tk-ty">Current</span> stack: [native / cross-platform / mixed, versions]
+- <span class="tk-ty">Pressure</span>: [what triggered the decision]
 
-## Decision
-We will [the call] for [scope] for the next [N] years.
+## <span class="tk-ty">Decision</span>
+<span class="tk-ty">We</span> will [the call] <span class="tk-kw">for</span> [scope] <span class="tk-kw">for</span> the next [<span class="tk-ty">N</span>] years.
 
-## Alternatives considered
-1. [Option A]: [one-line summary, why not]
-2. [Option B]: [one-line summary, why not]
-3. Do nothing / hybrid: [what it costs]
+## <span class="tk-ty">Alternatives</span> considered
+<span class="tk-num">1</span>. [<span class="tk-ty">Option</span> <span class="tk-ty">A</span>]: [one-line summary, why not]
+<span class="tk-num">2</span>. [<span class="tk-ty">Option</span> <span class="tk-ty">B</span>]: [one-line summary, why not]
+<span class="tk-num">3</span>. <span class="tk-ty">Do</span> nothing / hybrid: [what <span class="tk-kw">it</span> costs]
 
-## Criteria and weights (set before scoring)
-| Criterion | Weight (1-5) | Why this weight |
+## <span class="tk-ty">Criteria</span> and weights (<span class="tk-kw">set</span> before scoring)
+| <span class="tk-ty">Criterion</span> | <span class="tk-ty">Weight</span> (<span class="tk-num">1</span>-<span class="tk-num">5</span>) | <span class="tk-ty">Why</span> <span class="tk-kw">this</span> weight |
 |---|---|---|
 | [e.g. platform-feature lag] | [n] | [reason] |
 
-## Key assumption (the one that would change this)
-Assumption: [statement]
-Evidence today: [number or fact, date, source]
-Trigger to reopen: [metric or event]
+## <span class="tk-ty">Key</span> assumption (the one that would change <span class="tk-kw">this</span>)
+<span class="tk-ty">Assumption</span>: [statement]
+<span class="tk-ty">Evidence</span> today: [number or fact, date, source]
+<span class="tk-ty">Trigger</span> to reopen: [metric or event]
 
-## Migration path
-Greenfield or brownfield: [choice and why]
-First scope (smallest real app or module): [what]
-Expected duration: [weeks], checkpoints at [25% / 50% / 75%]
+## <span class="tk-ty">Migration</span> path
+<span class="tk-ty">Greenfield</span> or brownfield: [choice and why]
+<span class="tk-ty">First</span> scope (smallest real app or module): [what]
+<span class="tk-ty">Expected</span> duration: [weeks], checkpoints at [<span class="tk-num">25</span>% / <span class="tk-num">50</span>% / <span class="tk-num">75</span>%]
 
-## Parity and testing
-Shared behavior spec: [where it lives]
-Accepted platform differences: [list]
-Instrumentation parity: [event names reviewed by whom]
+## <span class="tk-ty">Parity</span> and testing
+<span class="tk-ty">Shared</span> behavior spec: [<span class="tk-kw">where</span> <span class="tk-kw">it</span> lives]
+<span class="tk-ty">Accepted</span> platform differences: [list]
+<span class="tk-ty">Instrumentation</span> parity: [event names reviewed <span class="tk-kw">by</span> whom]
 
-## Libraries and ownership
-| Library | Users | Owner after change | Sunset date | Exit path |
+## <span class="tk-ty">Libraries</span> and ownership
+| <span class="tk-ty">Library</span> | <span class="tk-ty">Users</span> | <span class="tk-ty">Owner</span> after change | <span class="tk-ty">Sunset</span> date | <span class="tk-ty">Exit</span> path |
 |---|---|---|---|---|
 | [name] | [count or list] | [person] | [date] | [fork / transfer / archive] |
 
-## Rollout and rollback
-Rollout: [flags, cohorts, store staged rollout settings]
-Old clients: [versions that must keep working, until when]
-Rollback ladder: [steps and the date after which each is no longer available]
+## <span class="tk-ty">Rollout</span> and rollback
+<span class="tk-ty">Rollout</span>: [flags, cohorts, store staged rollout settings]
+<span class="tk-ty">Old</span> clients: [versions that must keep working, until <span class="tk-kw">when</span>]
+<span class="tk-ty">Rollback</span> ladder: [steps and the date after which each <span class="tk-kw">is</span> no longer available]
 
-## Measures and guardrails
-Success metric: [definition, baseline, target, date]
-Guardrails: [crash-free, ANR/hangs, cold start, jank, size, conversion] with tolerances
-Stop rule: [exact condition and who calls it]
+## <span class="tk-ty">Measures</span> and guardrails
+<span class="tk-ty">Success</span> metric: [definition, baseline, target, date]
+<span class="tk-ty">Guardrails</span>: [crash-free, <span class="tk-ty">ANR</span>/hangs, cold start, jank, size, conversion] with tolerances
+<span class="tk-ty">Stop</span> rule: [exact condition and who calls <span class="tk-kw">it</span>]
 
-## Consequences
-Good: [list]
-Bad: [list]
-What we are choosing not to know yet: [list]
+## <span class="tk-ty">Consequences</span>
+<span class="tk-ty">Good</span>: [list]
+<span class="tk-ty">Bad</span>: [list]
+<span class="tk-ty">What</span> we are choosing not to know yet: [list]
 
-## Communication
-Execs: [one-paragraph summary and the ask]
-Engineers: [where to discuss, who decides]</code></pre>
+## <span class="tk-ty">Communication</span>
+<span class="tk-ty">Execs</span>: [one-paragraph summary and the ask]
+<span class="tk-ty">Engineers</span>: [<span class="tk-kw">where</span> to discuss, who decides]</code></pre>
 <h2 id="11-android-and-ios-specifics">11. Android and iOS specifics</h2>
 <ul><li><strong>Android.</strong> Google documents Android Studio support and a migration route for adding KMP to an existing app. It also lists the Jetpack libraries with KMP support. Check which platforms your library version covers. (Source: developer.android.com/kotlin/multiplatform, 13 Oct 2026)</li><li><strong>iOS.</strong> Shared Kotlin reaches Swift through a generated framework. So the API that Swift developers see is part of your design. I did not read the Apple and JetBrains interop docs for this guide. The <a href="https://kotlinlang.org/docs/multiplatform/multiplatform-compatibility-guide.html">Kotlin compatibility page</a> lists Xcode 26.4 in its newest row. This is a reminder that toolchain versions are a cost that comes back again and again. (Source: kotlinlang.org compatibility guide, 13 Oct 2026)</li><li><strong>Stores.</strong> Apple pauses a phased release for up to 30 days in total. Google lets you pause and set the percentage by hand (section 8).</li></ul>
 <h2 id="12-a-spoken-outline-of-a-staff-answer">12. A spoken outline of a staff answer</h2>

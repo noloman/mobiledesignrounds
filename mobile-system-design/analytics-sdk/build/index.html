@@ -18,18 +18,18 @@
 <p>The sketches are simplified. The sketches were not run in a real app. <a class="gl" href="/glossary/#workmanager" title="Android&#x27;s tool for background work that must run later.">WorkManager</a> (Android's scheduler for work that survives restarts) and the storage layer are not part of them.</p>
 <h2 id="1-the-public-api-and-the-stored-event">1. The public API and the stored event</h2>
 <p>Keep the public surface small. Every public method is a contract for years.</p>
-<pre tabindex="0"><code>// Sketch: public surface (Kotlin)
-class Analytics private constructor(/* internal wiring */) {
-    companion object {
-        fun init(context: Context, config: AnalyticsConfig): Analytics   // cheap; no I/O; keeps only applicationContext
+<pre tabindex="0"><code><span class="tk-com">// Sketch: public surface (Kotlin)</span>
+<span class="tk-kw">class</span> <span class="tk-ty">Analytics</span> <span class="tk-kw">private</span> <span class="tk-kw">constructor</span>(<span class="tk-com">/* internal wiring */</span>) {
+    <span class="tk-kw">companion</span> <span class="tk-kw">object</span> {
+        <span class="tk-kw">fun</span> <span class="tk-kw">init</span>(context: <span class="tk-ty">Context</span>, config: <span class="tk-ty">AnalyticsConfig</span>): <span class="tk-ty">Analytics</span>   <span class="tk-com">// cheap; no I/O; keeps only applicationContext</span>
     }
-    fun track(name: String, properties: Map&lt;String, Any?&gt; = emptyMap())   // main-safe, non-suspend
-    fun screen(name: String)
-    fun identify(userId: String, traits: Map&lt;String, Any?&gt; = emptyMap())
-    fun flush()                       // a request, returns immediately
-    fun reset()                       // new anonymous ID, clear user ID
-    fun setConsent(consent: Consent)  // GRANTED, DENIED, UNKNOWN (default)
-    fun optOut()                      // stop collecting, drop the queue
+    <span class="tk-kw">fun</span> <span class="tk-fn">track</span>(name: <span class="tk-ty">String</span>, properties: <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Any</span>?&gt; = <span class="tk-fn">emptyMap</span>())   <span class="tk-com">// main-safe, non-suspend</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">screen</span>(name: <span class="tk-ty">String</span>)
+    <span class="tk-kw">fun</span> <span class="tk-fn">identify</span>(userId: <span class="tk-ty">String</span>, traits: <span class="tk-ty">Map</span>&lt;<span class="tk-ty">String</span>, <span class="tk-ty">Any</span>?&gt; = <span class="tk-fn">emptyMap</span>())
+    <span class="tk-kw">fun</span> <span class="tk-fn">flush</span>()                       <span class="tk-com">// a request, returns immediately</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">reset</span>()                       <span class="tk-com">// new anonymous ID, clear user ID</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">setConsent</span>(consent: <span class="tk-ty">Consent</span>)  <span class="tk-com">// GRANTED, DENIED, UNKNOWN (default)</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">optOut</span>()                      <span class="tk-com">// stop collecting, drop the queue</span>
 }</code></pre>
 <p>Choices to defend:</p>
 <ul><li><strong>No return value to wait on.</strong> <code>track</code> returns <code>Unit</code>. A flush that you can wait for lives in the test module.</li><li><strong>Properties are a restricted map.</strong> The Kotlin type is <code>Map&lt;String, Any?&gt;</code>, so the compiler accepts anything. Validation lets through only strings, numbers, booleans, null, and bounded nested maps and lists. It rejects the rest at the boundary. The Swift <code>PropertyValue</code> enum makes the same list a type.</li></ul>
@@ -43,52 +43,52 @@ class Analytics private constructor(/* internal wiring */) {
 <p>For an SDK, the better default is explicit start. The host calls <code>Analytics.init</code>, and the SDK includes no provider. An SDK that collects data before consent is a privacy bug, not a convenience.</p>
 <h2 id="3-the-write-path-and-the-flush">3. The write path and the flush</h2>
 <p>Use SQLite directly, or <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> (Android's database library) as an internal detail. Use one table for events and one for batches.</p>
-<pre tabindex="0"><code>// Sketch: write path and flush (Kotlin, simplified)
-internal class Engine(
-    scope: CoroutineScope,                 // SDK-owned external scope; injected single-threaded dispatcher + SupervisorJob
-    private val store: EventStore,
-    private val uploader: Uploader,
-    private val policy: FlushPolicy,
+<pre tabindex="0"><code><span class="tk-com">// Sketch: write path and flush (Kotlin, simplified)</span>
+<span class="tk-kw">internal</span> <span class="tk-kw">class</span> <span class="tk-ty">Engine</span>(
+    scope: <span class="tk-ty">CoroutineScope</span>,                 <span class="tk-com">// SDK-owned external scope; injected single-threaded dispatcher + SupervisorJob</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> store: <span class="tk-ty">EventStore</span>,
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> uploader: <span class="tk-ty">Uploader</span>,
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> policy: <span class="tk-ty">FlushPolicy</span>,
 ) {
-    private val dropped = AtomicLong()        // inbox overflow, one of the drop counters
-    private val internalErrors = AtomicLong() // bugs of ours that we swallowed
-    private val inbox = Channel&lt;Event&gt;(
-        capacity = 1_000,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        onUndeliveredElement = { dropped.incrementAndGet() },
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> dropped = <span class="tk-ty">AtomicLong</span>()        <span class="tk-com">// inbox overflow, one of the drop counters</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> internalErrors = <span class="tk-ty">AtomicLong</span>() <span class="tk-com">// bugs of ours that we swallowed</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> inbox = <span class="tk-ty">Channel</span>&lt;<span class="tk-ty">Event</span>&gt;(
+        capacity = <span class="tk-num">1_000</span>,
+        onBufferOverflow = <span class="tk-ty">BufferOverflow</span>.<span class="tk-ty">DROP_OLDEST</span>,
+        onUndeliveredElement = { dropped.<span class="tk-fn">incrementAndGet</span>() },
     )
-    private val flushRequests = Channel&lt;Unit&gt;(Channel.CONFLATED)
-    private val flushLock = Mutex()
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> flushRequests = <span class="tk-ty">Channel</span>&lt;<span class="tk-ty">Unit</span>&gt;(<span class="tk-ty">Channel</span>.<span class="tk-ty">CONFLATED</span>)
+    <span class="tk-kw">private</span> <span class="tk-kw">val</span> flushLock = <span class="tk-ty">Mutex</span>()
 
-    init {
-        val guarded = scope + CoroutineExceptionHandler { _, _ -&gt; internalErrors.incrementAndGet() }
-        guarded.launch {                      // the writer: appends only, never waits on the network
-            for (event in inbox) guard {
-                store.append(event)
-                if (store.pendingCount() &gt;= policy.flushAt) requestFlush()   // COUNT(*) per event; keep a counter in real code
+    <span class="tk-kw">init</span> {
+        <span class="tk-kw">val</span> guarded = scope + <span class="tk-ty">CoroutineExceptionHandler</span> { _, _ -&gt; internalErrors.<span class="tk-fn">incrementAndGet</span>() }
+        guarded.launch {                      <span class="tk-com">// the writer: appends only, never waits on the network</span>
+            <span class="tk-kw">for</span> (event <span class="tk-kw">in</span> inbox) <span class="tk-kw">guard</span> {
+                store.<span class="tk-fn">append</span>(event)
+                <span class="tk-kw">if</span> (store.<span class="tk-fn">pendingCount</span>() &gt;= policy.flushAt) <span class="tk-fn">requestFlush</span>()   <span class="tk-com">// COUNT(*) per event; keep a counter in real code</span>
             }
         }
-        guarded.launch {                      // the uploader: one flush at a time
-            for (request in flushRequests) guard { flushOnce() }
+        guarded.launch {                      <span class="tk-com">// the uploader: one flush at a time</span>
+            <span class="tk-kw">for</span> (request <span class="tk-kw">in</span> flushRequests) <span class="tk-kw">guard</span> { <span class="tk-fn">flushOnce</span>() }
         }
     }
 
-    fun enqueue(event: Event) { inbox.trySend(event) }   // never suspends, never throws
-    fun requestFlush() { flushRequests.trySend(Unit) }   // timer, background and flush() land here
+    <span class="tk-kw">fun</span> <span class="tk-fn">enqueue</span>(event: <span class="tk-ty">Event</span>) { inbox.<span class="tk-fn">trySend</span>(event) }   <span class="tk-com">// never suspends, never throws</span>
+    <span class="tk-kw">fun</span> <span class="tk-fn">requestFlush</span>() { flushRequests.<span class="tk-fn">trySend</span>(<span class="tk-ty">Unit</span>) }   <span class="tk-com">// timer, background and flush() land here</span>
 
-    // WorkManager calls this too, so the lock covers both callers
-    suspend fun flushOnce() = flushLock.withLock {
-        val batch = store.leaseBatch(policy.maxBatchSize) ?: return@withLock   // reuses an open lease first
-        when (uploader.send(batch)) {                                          // enum SendResult
-            SendResult.OK, SendResult.REJECTED -&gt; store.delete(batch.id)       // REJECTED: a permanent 4xx other than 408 and 429
-            SendResult.RETRY -&gt; store.release(batch.id)                        // same batch next time
+    <span class="tk-com">// WorkManager calls this too, so the lock covers both callers</span>
+    <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-fn">flushOnce</span>() = flushLock.withLock {
+        <span class="tk-kw">val</span> batch = store.<span class="tk-fn">leaseBatch</span>(policy.maxBatchSize) ?: <span class="tk-kw">return</span><span class="tk-ann">@withLock</span>   <span class="tk-com">// reuses an open lease first</span>
+        <span class="tk-kw">when</span> (uploader.<span class="tk-fn">send</span>(batch)) {                                          <span class="tk-com">// enum SendResult</span>
+            <span class="tk-ty">SendResult</span>.<span class="tk-ty">OK</span>, <span class="tk-ty">SendResult</span>.<span class="tk-ty">REJECTED</span> -&gt; store.<span class="tk-fn">delete</span>(batch.id)       <span class="tk-com">// REJECTED: a permanent 4xx other than 408 and 429</span>
+            <span class="tk-ty">SendResult</span>.<span class="tk-ty">RETRY</span> -&gt; store.<span class="tk-fn">release</span>(batch.id)                        <span class="tk-com">// same batch next time</span>
         }
     }
 
-    private suspend fun guard(block: suspend () -&gt; Unit) {
-        try { block() }
-        catch (e: CancellationException) { throw e }
-        catch (e: Exception) { internalErrors.incrementAndGet() }
+    <span class="tk-kw">private</span> <span class="tk-kw">suspend</span> <span class="tk-kw">fun</span> <span class="tk-kw">guard</span>(block: <span class="tk-kw">suspend</span> () -&gt; <span class="tk-ty">Unit</span>) {
+        <span class="tk-kw">try</span> { <span class="tk-fn">block</span>() }
+        <span class="tk-kw">catch</span> (e: <span class="tk-ty">CancellationException</span>) { <span class="tk-kw">throw</span> e }
+        <span class="tk-kw">catch</span> (e: <span class="tk-ty">Exception</span>) { internalErrors.<span class="tk-fn">incrementAndGet</span>() }
     }
 }</code></pre>
 <p>Three choices in that sketch fix problems in my first draft:</p>
@@ -143,77 +143,77 @@ internal class Engine(
 <h2 id="11-doing-it-on-ios">11. Doing it on iOS</h2>
 <p>The architecture carries over. The differences are lifecycle, background time and the privacy manifest.</p>
 <div class="tw" tabindex="0" role="region" aria-label="Table 5, scrollable"><table><thead><tr><th>Concern</th><th>Android</th><th>iOS</th></tr></thead><tbody><tr><td>Worker isolation</td><td>Single-threaded dispatcher + <code>Channel</code></td><td><code>actor</code> + <code>AsyncStream</code></td></tr><tr><td>Durable store</td><td>SQLite or Room</td><td>Plain SQLite or files. I avoid Core Data in an SDK, because its model and container can clash with the host's</td></tr><tr><td>Retry after process death</td><td>WorkManager</td><td>Next launch or foreground; optionally a background <code>URLSession</code> upload</td></tr><tr><td>Finish at backgrounding</td><td>Short flush on lifecycle stop</td><td><code>beginBackgroundTask</code></td></tr><tr><td>Network</td><td>Injected client</td><td><code>URLSession</code>, optionally <code>waitsForConnectivity</code> (it only applies while a connection is being established, and background sessions ignore it)</td></tr><tr><td>Consent surface</td><td><code>AD_ID</code> manifest permission and the user's ad-ID reset or opt-out (no prompt)</td><td><code>ATTrackingManager</code> prompt, owned by the host app</td></tr><tr><td>Disclosure</td><td>Data safety form</td><td>Privacy manifest and App Privacy details</td></tr></tbody></table></div>
-<pre tabindex="0"><code>// Sketch: iOS facade (Swift 5.9+ for AsyncStream.makeStream; makeStream is back-deployed to iOS 13, OSAllocatedUnfairLock needs iOS 16)
-public enum PropertyValue: Sendable {
-    case string(String), number(Double), bool(Bool), null
-    indirect case array([PropertyValue])
-    indirect case object([String: PropertyValue])
+<pre tabindex="0"><code><span class="tk-com">// Sketch: iOS facade (Swift 5.9+ for AsyncStream.makeStream; makeStream is back-deployed to iOS 13, OSAllocatedUnfairLock needs iOS 16)</span>
+<span class="tk-kw">public</span> <span class="tk-kw">enum</span> <span class="tk-ty">PropertyValue</span>: <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">case</span> <span class="tk-fn">string</span>(<span class="tk-ty">String</span>), <span class="tk-fn">number</span>(<span class="tk-ty">Double</span>), <span class="tk-fn">bool</span>(<span class="tk-ty">Bool</span>), <span class="tk-kw">null</span>
+    indirect <span class="tk-kw">case</span> <span class="tk-fn">array</span>([<span class="tk-ty">PropertyValue</span>])
+    indirect <span class="tk-kw">case</span> <span class="tk-kw">object</span>([<span class="tk-ty">String</span>: <span class="tk-ty">PropertyValue</span>])
 }
 
-struct Event: Sendable {
-    let id: String, name: String, clientTime: Date   // the real one also carries localSeq, identity and sessionId
-    let properties: [String: PropertyValue]
+<span class="tk-kw">struct</span> <span class="tk-ty">Event</span>: <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">let</span> id: <span class="tk-ty">String</span>, name: <span class="tk-ty">String</span>, clientTime: <span class="tk-ty">Date</span>   <span class="tk-com">// the real one also carries localSeq, identity and sessionId</span>
+    <span class="tk-kw">let</span> properties: [<span class="tk-ty">String</span>: <span class="tk-ty">PropertyValue</span>]
 }
 
-public final class Analytics: Sendable {
-    private let inbox: AsyncStream&lt;Event&gt;.Continuation
-    private let dropped = OSAllocatedUnfairLock(initialState: 0)   // drop counter, by reason in the real one
+<span class="tk-kw">public</span> <span class="tk-kw">final</span> <span class="tk-kw">class</span> <span class="tk-ty">Analytics</span>: <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> inbox: <span class="tk-ty">AsyncStream</span>&lt;<span class="tk-ty">Event</span>&gt;.<span class="tk-ty">Continuation</span>
+    <span class="tk-kw">private</span> <span class="tk-kw">let</span> dropped = <span class="tk-ty">OSAllocatedUnfairLock</span>(initialState: <span class="tk-num">0</span>)   <span class="tk-com">// drop counter, by reason in the real one</span>
 
-    public init(config: AnalyticsConfig) {
-        let (stream, continuation) = AsyncStream.makeStream(
-            of: Event.self, bufferingPolicy: .bufferingNewest(1_000))   // drops the oldest event when full; same choice as the Android inbox
-        self.inbox = continuation
-        let engine = Engine(config: config)
-        Task.detached(priority: .utility) { await engine.run(stream) }
+    <span class="tk-kw">public</span> <span class="tk-kw">init</span>(config: <span class="tk-ty">AnalyticsConfig</span>) {
+        <span class="tk-kw">let</span> (stream, continuation) = <span class="tk-ty">AsyncStream</span>.<span class="tk-fn">makeStream</span>(
+            of: <span class="tk-ty">Event</span>.<span class="tk-kw">self</span>, bufferingPolicy: .<span class="tk-fn">bufferingNewest</span>(<span class="tk-num">1_000</span>))   <span class="tk-com">// drops the oldest event when full; same choice as the Android inbox</span>
+        <span class="tk-kw">self</span>.inbox = continuation
+        <span class="tk-kw">let</span> engine = <span class="tk-ty">Engine</span>(config: config)
+        <span class="tk-ty">Task</span>.<span class="tk-fn">detached</span>(priority: .utility) { <span class="tk-kw">await</span> engine.<span class="tk-fn">run</span>(stream) }
     }
 
-    deinit { inbox.finish() }   // ends the stream, so the engine task ends too
+    deinit { inbox.<span class="tk-fn">finish</span>() }   <span class="tk-com">// ends the stream, so the engine task ends too</span>
 
-    public func track(_ name: String, properties: [String: PropertyValue] = [:]) {
-        let event = Event(id: UUID().uuidString, name: name,
-                          clientTime: Date(), properties: properties)
-        if case .dropped = inbox.yield(event) { dropped.withLock { $0 += 1 } }   // sync, ordered
+    <span class="tk-kw">public</span> <span class="tk-kw">func</span> <span class="tk-fn">track</span>(_ name: <span class="tk-ty">String</span>, properties: [<span class="tk-ty">String</span>: <span class="tk-ty">PropertyValue</span>] = [:]) {
+        <span class="tk-kw">let</span> event = <span class="tk-ty">Event</span>(id: <span class="tk-ty">UUID</span>().uuidString, name: name,
+                          clientTime: <span class="tk-ty">Date</span>(), properties: properties)
+        <span class="tk-kw">if</span> <span class="tk-kw">case</span> .dropped = inbox.<span class="tk-fn">yield</span>(event) { dropped.withLock { $<span class="tk-num">0</span> += <span class="tk-num">1</span> } }   <span class="tk-com">// sync, ordered</span>
     }
 }
 
-actor Engine {
-    init(config: AnalyticsConfig) { /* store opened lazily */ }
-    func run(_ events: AsyncStream&lt;Event&gt;) async {
-        for await event in events { /* append to SQLite, maybe flush */ }
+<span class="tk-kw">actor</span> <span class="tk-ty">Engine</span> {
+    <span class="tk-kw">init</span>(config: <span class="tk-ty">AnalyticsConfig</span>) { <span class="tk-com">/* store opened lazily */</span> }
+    <span class="tk-kw">func</span> <span class="tk-fn">run</span>(_ events: <span class="tk-ty">AsyncStream</span>&lt;<span class="tk-ty">Event</span>&gt;) <span class="tk-kw">async</span> {
+        <span class="tk-kw">for</span> <span class="tk-kw">await</span> event <span class="tk-kw">in</span> events { <span class="tk-com">/* append to SQLite, maybe flush */</span> }
     }
 }</code></pre>
 <p>The fixed batch and the background flush look like this on iOS. It is a sketch that was not compiled. <code>UIApplication.shared</code> is not available in app extensions, so an SDK used there needs another path.</p>
-<pre tabindex="0"><code>// Sketch: fixed batch and background flush on iOS (not compiled).
-struct Batch: Sendable { let id: String; let events: [Event] }
-enum SendResult { case ok, rejected, retry }
+<pre tabindex="0"><code><span class="tk-com">// Sketch: fixed batch and background flush on iOS (not compiled).</span>
+<span class="tk-kw">struct</span> <span class="tk-ty">Batch</span>: <span class="tk-ty">Sendable</span> { <span class="tk-kw">let</span> id: <span class="tk-ty">String</span>; <span class="tk-kw">let</span> events: [<span class="tk-ty">Event</span>] }
+<span class="tk-kw">enum</span> <span class="tk-ty">SendResult</span> { <span class="tk-kw">case</span> ok, rejected, retry }
 
-protocol EventStore: Sendable {
-    func leaseBatch(max: Int) async -&gt; Batch?   // reuses an open batch first, like the Kotlin store
-    func delete(_ id: String) async
-    func release(_ id: String) async
+<span class="tk-kw">protocol</span> <span class="tk-ty">EventStore</span>: <span class="tk-ty">Sendable</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">leaseBatch</span>(max: <span class="tk-ty">Int</span>) <span class="tk-kw">async</span> -&gt; <span class="tk-ty">Batch</span>?   <span class="tk-com">// reuses an open batch first, like the Kotlin store</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">delete</span>(_ id: <span class="tk-ty">String</span>) <span class="tk-kw">async</span>
+    <span class="tk-kw">func</span> <span class="tk-fn">release</span>(_ id: <span class="tk-ty">String</span>) <span class="tk-kw">async</span>
 }
 
-extension Engine {
-    func flushOnce(store: EventStore, send: (Batch) async -&gt; SendResult) async {
-        guard let batch = await store.leaseBatch(max: 50) else { return }
-        switch await send(batch) {
-        case .ok, .rejected: await store.delete(batch.id)   // rejected: a permanent 4xx other than 408 and 429
-        case .retry:         await store.release(batch.id)  // same batch next time
+<span class="tk-kw">extension</span> <span class="tk-ty">Engine</span> {
+    <span class="tk-kw">func</span> <span class="tk-fn">flushOnce</span>(store: <span class="tk-ty">EventStore</span>, send: (<span class="tk-ty">Batch</span>) <span class="tk-kw">async</span> -&gt; <span class="tk-ty">SendResult</span>) <span class="tk-kw">async</span> {
+        <span class="tk-kw">guard</span> <span class="tk-kw">let</span> batch = <span class="tk-kw">await</span> store.<span class="tk-fn">leaseBatch</span>(max: <span class="tk-num">50</span>) <span class="tk-kw">else</span> { <span class="tk-kw">return</span> }
+        <span class="tk-kw">switch</span> <span class="tk-kw">await</span> <span class="tk-fn">send</span>(batch) {
+        <span class="tk-kw">case</span> .ok, .rejected: <span class="tk-kw">await</span> store.<span class="tk-fn">delete</span>(batch.id)   <span class="tk-com">// rejected: a permanent 4xx other than 408 and 429</span>
+        <span class="tk-kw">case</span> .retry:         <span class="tk-kw">await</span> store.<span class="tk-fn">release</span>(batch.id)  <span class="tk-com">// same batch next time</span>
         }
     }
 }
 
-// The SDK has no SwiftUI scene, so it listens for the notification.
-// Keep the final flush small and end the task early.
-NotificationCenter.default.addObserver(
-    forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { _ in
-    var task = UIBackgroundTaskIdentifier.invalid
-    task = UIApplication.shared.beginBackgroundTask(withName: "analytics-flush") {
-        UIApplication.shared.endBackgroundTask(task)       // time ran out
+<span class="tk-com">// The SDK has no SwiftUI scene, so it listens for the notification.</span>
+<span class="tk-com">// Keep the final flush small and end the task early.</span>
+<span class="tk-ty">NotificationCenter</span>.default.<span class="tk-fn">addObserver</span>(
+    forName: <span class="tk-ty">UIApplication</span>.didEnterBackgroundNotification, <span class="tk-kw">object</span>: <span class="tk-kw">nil</span>, queue: .main) { _ <span class="tk-kw">in</span>
+    <span class="tk-kw">var</span> task = <span class="tk-ty">UIBackgroundTaskIdentifier</span>.invalid
+    task = <span class="tk-ty">UIApplication</span>.shared.<span class="tk-fn">beginBackgroundTask</span>(withName: <span class="tk-str">"analytics-flush"</span>) {
+        <span class="tk-ty">UIApplication</span>.shared.<span class="tk-fn">endBackgroundTask</span>(task)       <span class="tk-com">// time ran out</span>
     }
-    Task {
-        // await engine.flushOnce(store: store, send: uploader.send)
-        UIApplication.shared.endBackgroundTask(task)
+    <span class="tk-ty">Task</span> {
+        <span class="tk-com">// await engine.flushOnce(store: store, send: uploader.send)</span>
+        <span class="tk-ty">UIApplication</span>.shared.<span class="tk-fn">endBackgroundTask</span>(task)
     }
 }</code></pre>
 <p>The sketch is shortened. The real <code>Event</code> also carries <code>localSeq</code>, the identity and <code>sessionId</code>, and the drop counter is kept by reason. What is different on iOS:</p>
