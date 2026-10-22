@@ -53,7 +53,7 @@ dependencies {
   ]
 }</code></pre>
 <p>The DTOs, the unknown-type fallback and the mapping to the app model. A newer server can send a type this version does not know. <code>polymorphicDefaultDeserializer</code> turns it into <code>UnknownDto</code>, and the mapper drops it. <code>ignoreUnknownKeys</code> covers new fields on known types.</p>
-<pre tabindex="0"><code>// ---- Wire format -------------------------------------------------------------------------
+<pre tabindex="0"><code>// Wire format
 
 @Serializable
 data class FeedDto(val serverTimeMs: Long, val items: List&lt;ItemDto&gt;)
@@ -316,7 +316,7 @@ interface NotificationsApi {
     suspend fun respond(requestId: String, action: RequestAction): String
 }
 
-// ---- Repository --------------------------------------------------------------------------
+// Repository
 
 class DefaultNotificationsRepository(
     private val api: NotificationsApi,
@@ -594,7 +594,7 @@ private fun rememberMinuteNow(clock: ServerClock): State&lt;Long&gt; {
 <li>Avatars have <code>contentDescription = null</code>, because the text names the people.</li>
 <li><code>AgeText</code> is its own function. It is the only place in a row that reads the minute clock.</li>
 </ul>
-<pre tabindex="0"><code>// ---- Photo activity ------------------------------------------------------------------------
+<pre tabindex="0"><code>// Photo activity
 
 @Composable
 fun PhotoActivityRow(
@@ -665,7 +665,7 @@ private fun AgeText(createdAtMs: Long, now: State&lt;Long&gt;) {
     )
 }
 
-// ---- Friend request ------------------------------------------------------------------------
+// Friend request
 
 @Composable
 fun FriendRequestRow(
@@ -700,7 +700,7 @@ fun FriendRequestRow(
         }
     }
 }</code></pre>
-<pre tabindex="0"><code>// ---- States --------------------------------------------------------------------------------
+<pre tabindex="0"><code>// States
 
 @Composable
 private fun LoadingPlaceholder() {
