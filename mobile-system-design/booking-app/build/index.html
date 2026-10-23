@@ -21,15 +21,31 @@
 <div class="tw" tabindex="0" role="region" aria-label="Table 1, scrollable"><table><thead><tr><th>Where</th><th>Name</th><th>What it is</th></tr></thead><tbody><tr><td>HTTP header</td><td><code>Idempotency-Key</code></td><td>The key as the server sees it</td></tr><tr><td>Room column</td><td><code>idempotencyKey</code></td><td>The key, stored before the first send</td></tr><tr><td>Kotlin <code>BookingApi.confirm</code></td><td><code>key</code></td><td>The same value, passed as a header</td></tr><tr><td>Swift <code>PayDelegate</code></td><td><code>attemptKey</code> and <code>idempotencyKey</code></td><td>The same value, property and parameter</td></tr></tbody></table></div>
 <p>From here on, "the key" means this idempotency key.</p>
 <h2 id="2-rest">2. REST</h2>
-<pre tabindex="0"><code><span class="tk-ty">GET</span>  /v1/places/suggest?q=lis
-<span class="tk-ty">GET</span>  /v1/offers?placeId=..&amp;dates=..&amp;cursor=..   → items + nextCursor (opaque), each with quoteId, price, quotedAt
-<span class="tk-ty">GET</span>  /v1/offers?bbox=..&amp;dates=..                (map viewport)
-<span class="tk-ty">POST</span> /v1/holds     { offerId, quoteId }     <span class="tk-ty">Idempotency</span>-<span class="tk-ty">Key</span> → { holdId, expiresInMs, price }
-<span class="tk-ty">POST</span> /v1/bookings  { holdId, paymentToken } <span class="tk-ty">Idempotency</span>-<span class="tk-ty">Key</span> → { bookingId, state, version, nextAction? }
-<span class="tk-ty">GET</span>  /v1/bookings/{id}
-<span class="tk-ty">GET</span>  /v1/bookings?attempt=&lt;idempotencyKey&gt;      (recovery lookup)
-<span class="tk-ty">POST</span> /v1/attempts/{idempotencyKey}/close  → booking, or <span class="tk-str">"closed"</span> (later requests with <span class="tk-kw">this</span> key are refused)
-<span class="tk-ty">GET</span>  /v1/holds/{holdId}                 → { state, expiresInMs }</code></pre>
+<pre tabindex="0"><code><span class="tk-kw">GET</span>  /v1/places/suggest?q=lis
+
+<span class="tk-kw">GET</span>  /v1/offers?placeId=..&amp;dates=..&amp;cursor=..
+     → <span class="tk-num">200</span> { items: [{ offerId, quoteId, price, quotedAt }], nextCursor }   <span class="tk-com">// cursor is opaque</span>
+
+<span class="tk-kw">GET</span>  /v1/offers?bbox=..&amp;dates=..                      <span class="tk-com">// map viewport</span>
+
+<span class="tk-kw">POST</span> /v1/holds
+     <span class="tk-ty">Idempotency-Key</span>: &lt;attemptId&gt;
+     { offerId, quoteId }
+     → <span class="tk-num">201</span> { holdId, expiresInMs, price }
+     → <span class="tk-num">409</span> { error: <span class="tk-str">"price_changed"</span>, price }
+
+<span class="tk-kw">POST</span> /v1/bookings
+     <span class="tk-ty">Idempotency-Key</span>: &lt;attemptId&gt;
+     { holdId, paymentToken }
+     → <span class="tk-num">200</span> { bookingId, state, version, nextAction? }          <span class="tk-com">// a repeat returns the same answer</span>
+
+<span class="tk-kw">GET</span>  /v1/bookings/{id}
+<span class="tk-kw">GET</span>  /v1/bookings?attempt=&lt;attemptId&gt;                       <span class="tk-com">// recovery lookup after a restart</span>
+<span class="tk-kw">GET</span>  /v1/holds/{holdId}
+     → <span class="tk-num">200</span> { state, expiresInMs }
+
+<span class="tk-kw">POST</span> /v1/attempts/{attemptId}/close
+     → <span class="tk-num">200</span> { booking } or { closed: true }                     <span class="tk-com">// later requests with this key are refused</span></code></pre>
 <p>A <a class="gl" href="/glossary/#cursor" title="A saved place in a list.">cursor</a> is a saved position in a list. The server gives the cursor to the client, and the client does not read it ("opaque"). A quote is a price offer with an ID (<code>quoteId</code>) and a time (<code>quotedAt</code>).</p>
 <p>The server returns <code>expiresInMs</code>, a duration that it computes when it sends the response. It does not send only an absolute end time. A duration does not depend on the clock of the device.</p>
 <h2 id="3-states-quotes-dates-and-money">3. States, quotes, dates and money</h2>

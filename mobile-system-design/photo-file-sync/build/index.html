@@ -44,15 +44,15 @@
 )</code></pre>
 <p>A block is a fixed-size piece of a file. The server's <code>missing</code> list (the blocks it does not have) is the truth about what is stored. A block is <code>UPLOADED</code> only after the server confirmed it. Treat anything the server did not confirm as unsent.</p>
 <h2 id="2-rest-sketch">2. REST (sketch)</h2>
-<pre tabindex="0"><code><span class="tk-ty">POST</span> /v1/files/{id}/uploads         body: { size, blockHashes: [...] }
-     → { sessionUri, missing: [<span class="tk-num">3</span>, <span class="tk-num">4</span>, <span class="tk-num">9</span>] }          (blocks the server does not have)
-<span class="tk-ty">PUT</span>  &lt;sessionUri&gt;?block=<span class="tk-num">3</span>   <span class="tk-ty">Content</span>-<span class="tk-ty">Range</span>: bytes <span class="tk-num">12582912</span>-<span class="tk-num">16777215</span>/<span class="tk-num">52428800</span>
-     <span class="tk-ty">X</span>-<span class="tk-ty">Block</span>-<span class="tk-ty">Hash</span>: &lt;sha256&gt;   → <span class="tk-num">200</span> { stored: <span class="tk-kw">true</span> } | <span class="tk-num">422</span> (hash mismatch, resend)
-<span class="tk-ty">POST</span> /v1/files/{id}/uploads  again with the same body        (after a failure: returns the current missing list)
-<span class="tk-ty">POST</span> /v1/files/{id}/commit          body: { baseVersion, blockHashes }
+<pre tabindex="0"><code><span class="tk-kw">POST</span> /v1/files/{id}/uploads         body: { size, blockHashes: [...] }
+     → { sessionUri, missing: [3, 4, 9] }          (blocks the server does not have)
+<span class="tk-kw">PUT</span>  &lt;sessionUri&gt;?block=3   <span class="tk-ty">Content-Range</span>: bytes 12582912-16777215/52428800
+     <span class="tk-ty">X-Block-Hash</span>: &lt;sha256&gt;   → <span class="tk-num">200</span> { stored: true } | <span class="tk-num">422</span> (hash mismatch, resend)
+<span class="tk-kw">POST</span> /v1/files/{id}/uploads  again with the same body        (after a failure: returns the current missing list)
+<span class="tk-kw">POST</span> /v1/files/{id}/commit          body: { baseVersion, blockHashes }
      → <span class="tk-num">200</span> { version } | <span class="tk-num">409</span> { currentVersion }     (conflict)
-                                                   (a retry with the same block list returns the version <span class="tk-kw">it</span> already created)
-<span class="tk-ty">GET</span>  /v1/changes?cursor=&lt;opaque&gt;                   (what changed <span class="tk-kw">in</span> the cloud; the server returns the next cursor)</code></pre>
+                                                   (a retry with the same block list returns the version it already created)
+<span class="tk-kw">GET</span>  /v1/changes?cursor=&lt;opaque&gt;                   (what changed in the cloud; the server returns the next cursor)</code></pre>
 <p>The session borrows from Google's <a class="gl" href="/glossary/#resumable-upload" title="An upload that can continue after a break.">resumable upload</a> model (a session URI, chunks with <code>Content-Range</code>) and from the <a href="https://tus.io/protocols/resumable-upload">tus protocol</a> (an open resumable-upload protocol). I changed one thing.</p>
 <p>Drive's resumable upload and core tus both take one continuous stream of bytes. After a failure they ask the server for its offset (a byte count). tus has a separate concatenation extension for parallel parts. This model cannot skip blocks the server already has.</p>
 <p>So in my sketch each block is its own <code>PUT</code> into the session. The server owns the <code>missing</code> list instead of an offset. That is my design, not Google's or tus's behavior. Whichever shape you pick, say why: the server, not the client, decides what is stored.</p>
