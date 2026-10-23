@@ -29,10 +29,10 @@
 <p><code>serverTime</code> drives the "last updated" label. The server assigns <code>seq</code> for each symbol. In this design it is contiguous (it has no missing numbers), so the client can find a gap by counting. It is a promise from my gateway to each client. An exchange feed does not give you this.</p>
 <p>Chat's <code>seq</code> is different. Gaps are allowed there, and a <a class="gl" href="/glossary/#cursor" title="A saved place in a list.">cursor</a> sync (a request for everything after a saved position) repairs them. The analytics page uses a client-side counter with the same name. See the <a href="/mobile-system-design/chat-app/">chat case study</a>.</p>
 <h2 id="2-rest-and-websocket-messages">2. REST and WebSocket messages</h2>
-<pre tabindex="0"><code><span class="tk-ty">GET</span>  /v1/quotes?symbols=<span class="tk-ty">AAPL</span>,<span class="tk-ty">MSFT</span>      → [{ symbol, price, seq, serverTime, marketState }]   (snapshot)
-<span class="tk-ty">GET</span>  /v1/symbols/{s}/history?range=1<span class="tk-ty">D</span>&amp;points=<span class="tk-num">300</span>   → { <span class="tk-kw">open</span>, points: [[t, price], ...] }
-<span class="tk-ty">PUT</span>  /v1/watchlist/{symbol}                          (idempotent)
-<span class="tk-ty">POST</span> /v1/alerts   { symbol, condition, price, clientId }   (idempotent on clientId)</code></pre>
+<pre tabindex="0"><code><span class="tk-kw">GET</span>  /v1/quotes?symbols=AAPL,MSFT      → [{ symbol, price, seq, serverTime, marketState }]   (snapshot)
+<span class="tk-kw">GET</span>  /v1/symbols/{s}/history?range=1D&amp;points=300   → { open, points: [[t, price], ...] }
+<span class="tk-kw">PUT</span>  /v1/watchlist/{symbol}                          (idempotent)
+<span class="tk-kw">POST</span> /v1/alerts   { symbol, condition, price, clientId }   (idempotent on clientId)</code></pre>
 <pre tabindex="0"><code>client → server:  subscribe { symbols }, unsubscribe { symbols }
 server → client:  snapshot { symbol, price, seq, ts }
                   tick     { symbol, price, seq, ts }

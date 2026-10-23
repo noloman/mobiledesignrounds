@@ -36,6 +36,32 @@ XML = re.compile(r'''
 ''', re.X | re.S)
 
 
+HTTP = re.compile(r'''
+ (?P<com>//[^\n]*)
+|(?P<str>"(?:\\.|[^"\\\n])*")
+|(?P<kw>^[ \t]*(?:GET|POST|PUT|PATCH|DELETE|HEAD)\b)
+|(?P<ty>\b[A-Z][A-Za-z]*(?:-[A-Za-z0-9]+)+\b)
+|(?P<num>(?:(?<=\u2192\s)|(?<=\|\s)|^)[1-5]\d\d\b)
+''', re.X | re.M)
+
+HTTP_START = re.compile(r'\s*(?:GET|POST|PUT|PATCH|DELETE|HEAD)\s')
+
+
+def http(t):
+    out, pos = [], 0
+    for m in HTTP.finditer(t):
+        out.append(esc(t[pos:m.start()]))
+        pos = m.end()
+        g = m.group()
+        if m.lastgroup == 'kw':
+            ws = g[:len(g) - len(g.lstrip())]
+            out.append(ws + span('kw', g.lstrip()))
+        else:
+            out.append(span(m.lastgroup, g))
+    out.append(esc(t[pos:]))
+    return ''.join(out)
+
+
 def esc(s):
     return html.escape(s, quote=False)
 
@@ -77,6 +103,8 @@ def simple(t, rx, cls):
 
 
 def highlight(text):
+    if HTTP_START.match(text):
+        return http(text)
     first = text.lstrip()[:1]
     if first in '{[':
         return simple(text, JSON, {'key': 'ann', 'kw': 'kw'})
@@ -90,6 +118,9 @@ PRE = re.compile(r'(<pre[^>]*><code[^>]*>)(.*?)(</code></pre>)', re.S)
 
 def fix(m):
     body = m.group(2)
+    plain = html.unescape(re.sub(r'<[^>]+>', '', body))
+    if HTTP_START.match(plain):
+        return m.group(1) + http(plain) + m.group(3)
     if '<span' in body or '<a ' in body:
         return m.group(0)
     return m.group(1) + highlight(html.unescape(body)) + m.group(3)

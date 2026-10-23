@@ -51,10 +51,10 @@
 <p>The SDK makes <code>installId</code> itself. It is never a push address. Store it where backups do not copy it: on Android in <code>noBackupFilesDir</code> or with a backup rule that excludes it, and on iOS in a file marked as excluded from backup. A restore on a new phone then makes a new <code>installId</code>. If a backup copied it, two phones would share one row and overwrite each other.</p>
 <p>The SDK uses <a class="gl" href="/glossary/#workmanager" title="Android&#x27;s tool for background work that must run later.">WorkManager</a> (the Android tool for work that must run reliably, even after a restart) for the upload. It must not start WorkManager itself or demand a custom worker factory. The <a class="gl" href="/glossary/#host-app" title="The app that contains an SDK.">host app</a> may already set up WorkManager, and on-demand start-up removes the default starter. So workers take what they need from the SDK's own internal objects, not from <code>@HiltWorker</code>.</p>
 <h2 id="2-server-calls">2. Server calls</h2>
-<pre tabindex="0"><code><span class="tk-ty">PUT</span>    /v1/devices/{installId}   { platform, pushAddress, addressKind, environment, userId, enabled, topics, sdkVersion, locale, tz }
-<span class="tk-ty">DELETE</span> /v1/devices/{installId}
-<span class="tk-ty">POST</span>   /v1/events                [ { messageId, type: delivered|opened, ts } ]
-<span class="tk-ty">GET</span>    /v1/inbox?since=&lt;cursor&gt;  (the sync path; the cursor <span class="tk-kw">is</span> an opaque string the server returns)</code></pre>
+<pre tabindex="0"><code><span class="tk-kw">PUT</span>    /v1/devices/{installId}   { platform, pushAddress, addressKind, environment, userId, enabled, topics, sdkVersion, locale, tz }
+<span class="tk-kw">DELETE</span> /v1/devices/{installId}
+<span class="tk-kw">POST</span>   /v1/events                [ { messageId, type: delivered|opened, ts } ]
+<span class="tk-kw">GET</span>    /v1/inbox?since=&lt;cursor&gt;  (the sync path; the cursor is an opaque string the server returns)</code></pre>
 <p>The retry rule is the same one the <a href="/mobile-system-design/chat-app/">chat app</a> uses:</p>
 <ul><li>Network errors, 408, 429 and 5xx are temporary. The SDK retries them and follows <code>Retry-After</code> when it is present.</li><li>Any other 4xx code is permanent. The SDK stops and reports it.</li></ul>
 <h2 id="3-the-push-address-lifecycle">3. The push address lifecycle</h2>

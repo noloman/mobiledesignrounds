@@ -51,10 +51,10 @@
 }</code></pre>
 <ul><li>In this design, the sync cursor is simply the last <code>seq</code> the device has seen. I call it <code>after_seq</code> here. Other cases use an opaque cursor (a value the app does not read) for the same idea.</li></ul>
 <h2 id="2-rest">2. REST</h2>
-<pre tabindex="0"><code><span class="tk-ty">POST</span> /v1/conversations/{id}/messages      body: { clientId, body }
+<pre tabindex="0"><code><span class="tk-kw">POST</span> /v1/conversations/{id}/messages      body: { clientId, body }
      → <span class="tk-num">200</span> { serverId, seq, createdAt }   (idempotent on clientId)
-<span class="tk-ty">GET</span>  /v1/conversations/{id}/messages?after_seq=<span class="tk-num">123</span>&amp;limit=<span class="tk-num">50</span>
-<span class="tk-ty">GET</span>  /v1/sync?since=&lt;cursor&gt;              (conversation list changes; used on cold start)</code></pre>
+<span class="tk-kw">GET</span>  /v1/conversations/{id}/messages?after_seq=123&amp;limit=50
+<span class="tk-kw">GET</span>  /v1/sync?since=&lt;cursor&gt;              (conversation list changes; used on cold start)</code></pre>
 <h2 id="3-websocket-events">3. WebSocket events</h2>
 <pre tabindex="0"><code>server → client:  message.new, message.status, conversation.updated
 client → server:  <span class="tk-fn">ack</span>(seq), typing   (send itself goes via <span class="tk-ty">REST</span>/<span class="tk-ty">Worker</span> <span class="tk-kw">for</span> retry guarantees)</code></pre>

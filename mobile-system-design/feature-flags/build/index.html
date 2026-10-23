@@ -47,10 +47,10 @@
 }</code></pre>
 <h2 id="2-the-contract">2. The contract</h2>
 <p>This is my design, not a vendor API. The phone sends the least it can. The server evaluates the rules and returns only answers.</p>
-<pre tabindex="0"><code><span class="tk-ty">POST</span> /v1/flags/evaluate
-     body: { platform, appVersion, accountId | <span class="tk-kw">null</span>, installId }
-     → <span class="tk-num">200</span> { version, flags: { <span class="tk-str">"new_checkout"</span>: <span class="tk-kw">true</span>, <span class="tk-str">"chat_media_enabled"</span>: <span class="tk-kw">true</span> } }
-     → <span class="tk-num">304</span> <span class="tk-kw">when</span> the client sends <span class="tk-ty">If</span>-<span class="tk-ty">None</span>-<span class="tk-ty">Match</span> with the last version</code></pre>
+<pre tabindex="0"><code><span class="tk-kw">POST</span> /v1/flags/evaluate
+     body: { platform, appVersion, accountId | null, installId }
+     → <span class="tk-num">200</span> { version, flags: { <span class="tk-str">"new_checkout"</span>: true, <span class="tk-str">"chat_media_enabled"</span>: true } }
+     → <span class="tk-num">304</span> when the client sends <span class="tk-ty">If-None-Match</span> with the last version</code></pre>
 <ul><li>Unknown keys are ignored by the app. A missing key means "use the default in the code".</li><li>Rules stay on the server. Unleash advises against evaluation on the client, because it exposes flag configuration and context. It suggests sending the context to an evaluation server and caching the results (<a href="https://docs.getunleash.io/guides/feature-flag-best-practices">Unleash best practices</a>).</li><li>LaunchDarkly mobile <a class="gl" href="/glossary/#sdk" title="Software development kit.">SDKs</a> use the same shape. The SDK gets values for one context (<a href="https://launchdarkly.com/docs/sdk/concepts/client-side-server-side">LaunchDarkly SDK types</a>).</li><li>Do not put secrets in flag values. Firebase says users can read any default or fetched value (<a href="https://firebase.google.com/docs/remote-config/android/get-started">Firebase get started</a>).</li></ul>
 <h2 id="3-rollout-buckets">3. Rollout buckets</h2>
 <p>The bucket is a number from 0 to 9,999. It comes from a <a class="gl" href="/glossary/#hash" title="A short code made from the bytes of a file.">hash</a> of the flag key and a stable ID. The same account and flag always give the same bucket. A bigger percentage only adds buckets, so the first group stays in.</p>

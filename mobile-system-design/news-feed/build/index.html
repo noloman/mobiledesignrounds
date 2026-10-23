@@ -40,10 +40,10 @@
 )</code></pre>
 <p>Updating a post changes only <code>posts</code>. The list order comes from <code>feed_items.position</code>, which changes only when the app stores a page.</p>
 <h3 id="rest">REST</h3>
-<pre tabindex="0"><code><span class="tk-ty">GET</span>  /v1/feed?cursor=&lt;opaque&gt;&amp;limit=<span class="tk-num">20</span>     → { items: [...], nextCursor: <span class="tk-str">"..."</span> | <span class="tk-kw">null</span> }
-<span class="tk-ty">GET</span>  /v1/feed/head?since=&lt;newestPostId&gt;    → { newCount: <span class="tk-num">3</span> }       (head check <span class="tk-kw">for</span> the <span class="tk-str">"New posts"</span> pill, not the paging cursor)
-<span class="tk-ty">PUT</span>  /v1/posts/{id}/like                   → { likeCount, likedByMe: <span class="tk-kw">true</span> }   (idempotent)
-<span class="tk-ty">DELETE</span> /v1/posts/{id}/like                 → { likeCount, likedByMe: <span class="tk-kw">false</span> }  (idempotent)</code></pre>
+<pre tabindex="0"><code><span class="tk-kw">GET</span>  /v1/feed?cursor=&lt;opaque&gt;&amp;limit=20     → { items: [...], nextCursor: <span class="tk-str">"..."</span> | null }
+<span class="tk-kw">GET</span>  /v1/feed/head?since=&lt;newestPostId&gt;    → { newCount: 3 }       (head check for the <span class="tk-str">"New posts"</span> pill, not the paging cursor)
+<span class="tk-kw">PUT</span>  /v1/posts/{id}/like                   → { likeCount, likedByMe: true }   (idempotent)
+<span class="tk-kw">DELETE</span> /v1/posts/{id}/like                 → { likeCount, likedByMe: false }  (idempotent)</code></pre>
 <p>Two details I would make sure to say:</p>
 <ul><li><strong><a class="gl" href="/glossary/#cursor" title="A saved place in a list.">Cursors</a>, not offsets.</strong> A cursor is a saved place in the list that the server gives the app. The app never reads it. If new posts arrive between page requests, offset <a class="gl" href="/glossary/#paging" title="Loading a long list in small parts.">paging</a> skips or repeats items. A cursor points to a fixed place, so a new post at the top does not move page 2. The app only stores <code>nextCursor</code> and sends it back.</li></ul>
 <p>  - A cursor does not stop a re-rank from repeating posts.   - For a ranked feed, the server has to keep the ranked list fixed behind the cursor, or the app has to remove repeats by post ID.   - I would ask which one the backend does, and remove repeats anyway.</p>
