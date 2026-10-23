@@ -55,6 +55,9 @@
      → <span class="tk-num">200</span> { serverId, seq, createdAt }   (idempotent on clientId)
 <span class="tk-kw">GET</span>  /v1/conversations/{id}/messages?after_seq=123&amp;limit=50
 <span class="tk-kw">GET</span>  /v1/sync?since=&lt;cursor&gt;              (conversation list changes; used on cold start)</code></pre>
+<p><strong>How to read the snippet.</strong> Each block is one call: the method and path, then the headers, then the JSON body (the data the app sends) in braces. A line that starts with <code>→</code> is a reply from the server. Text after <code>//</code> is a comment. These are sketches for this guide, not a vendor API.</p>
+<div class="tw" tabindex="0" role="region" aria-label="Calls in this guide, scrollable"><table class="calls"><thead><tr><th>Call</th><th>What it is for</th><th>When the app makes it</th></tr></thead><tbody><tr><td><code>POST /v1/conversations/{id}/messages</code></td><td>Send a message. The server answers with its own <code>serverId</code>, a <code>seq</code> (the order number) and a time.</td><td>When the user taps send, from a background worker. The <code>clientId</code> is made once and reused on every retry, so a lost reply cannot create a second message.</td></tr><tr><td><code>GET …/messages?after_seq=…</code></td><td>Get messages after a known <code>seq</code>.</td><td>When a conversation opens and after a reconnect, to fill gaps.</td></tr><tr><td><code>GET /v1/sync?since=…</code></td><td>Which conversations changed since the saved cursor.</td><td>On a cold start, before the socket is open.</td></tr></tbody></table></div>
+
 <h2 id="3-websocket-events">3. WebSocket events</h2>
 <pre tabindex="0"><code>server → client:  message.new, message.status, conversation.updated
 client → server:  <span class="tk-fn">ack</span>(seq), typing   (send itself goes via <span class="tk-ty">REST</span>/<span class="tk-ty">Worker</span> <span class="tk-kw">for</span> retry guarantees)</code></pre>
