@@ -15,7 +15,7 @@
 <article class="prose"><p>This is the implementation material behind the <a href="/mobile-system-design/news-feed/">news feed interview case</a>. It covers:</p>
 <ul><li>the tables and the REST shape</li><li>the mediator (the code that fetches pages and fills the database) and the loader code</li><li>the like flow in full</li><li>freshness, images, failure handling and the iOS differences</li></ul>
 <p>None of it belongs in a 45-minute round (the length I assume). I draw it only if asked.</p>
-<p>The snippets use <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> 2.x (<code>androidx.room</code>). The official Room guide may show a newer major version with different APIs, such as the transaction helper. The design is the same either way.</p>
+<p>The snippets use <a class="gl" href="/glossary/#room" title="Android&#x27;s library for the database on the phone.">Room</a> 3.0 (<code>androidx.room3</code>, current stable 3.0.3, from the <a href="https://developer.android.com/training/data-storage/room">Room guide</a> and the <a href="https://developer.android.com/training/data-storage/room/migration-2-to-3">2.x to 3.0 migration guide</a>). Room 3 needs KSP (no KAPT) and a <code>SQLiteDriver</code> on the builder. The transaction helper is <code>withWriteTransaction</code> in Room 3; Room 2.x calls it <code>withTransaction</code>. I did not compile these snippets against Room 3. The design is the same in Room 2.x (<code>androidx.room</code>).</p>
 <h2 id="1-data-model-and-api">1. Data model and API</h2>
 <h3 id="the-key-modeling-decision-separate-posts-from-feed-order">The key modeling decision: separate posts from feed order</h3>
 <p>The server ranks the feed, so the same post can move between refreshes. Suppose you store the order on the post row itself, or sort by <code>createdAt</code>. Then an update to one post can change the order of the list, and the user sees posts jump.</p>
@@ -73,7 +73,7 @@
         }
         <span class="tk-kw">return</span> <span class="tk-kw">try</span> {
             <span class="tk-kw">val</span> page = api.<span class="tk-fn">feed</span>(cursor, limit = <span class="tk-num">20</span>)
-            db.withTransaction {
+            db.withWriteTransaction {
                 <span class="tk-kw">if</span> (loadType == <span class="tk-ty">LoadType</span>.<span class="tk-ty">REFRESH</span>) db.<span class="tk-fn">feedDao</span>().<span class="tk-fn">clearFeed</span>(<span class="tk-str">"home"</span>)   <span class="tk-com">// after the network succeeded</span>
                 db.<span class="tk-fn">postDao</span>().<span class="tk-fn">upsertKeepingLocalIntent</span>(page.items)
                 <span class="tk-kw">val</span> start = <span class="tk-kw">if</span> (loadType == <span class="tk-ty">LoadType</span>.<span class="tk-ty">REFRESH</span>) <span class="tk-num">0</span> <span class="tk-kw">else</span> (db.<span class="tk-fn">feedDao</span>().<span class="tk-fn">lastPosition</span>(<span class="tk-str">"home"</span>) ?: -<span class="tk-num">1</span>) + <span class="tk-num">1</span>
