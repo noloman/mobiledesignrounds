@@ -4,9 +4,16 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-10-20T00:00:00Z</updated>
+<updated>2026-10-26T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
+<entry>
+<title>Follow-up round: the token expires while the user uploads</title>
+<link href="https://mobiledesignrounds.com/follow-up/upload-token-expires/"/>
+<id>https://mobiledesignrounds.com/follow-up/upload-token-expires/</id>
+<updated>2026-10-26T00:00:00Z</updated>
+<summary>A photo backup upload is halfway done and the access token expires. What does the app do with the work already done?</summary>
+</entry>
 <entry>
 <title>Follow-up round: the user changes the phone clock</title>
 <link href="https://mobiledesignrounds.com/follow-up/offer-countdown/"/>
