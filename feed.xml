@@ -4,9 +4,16 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-10-26T00:00:00Z</updated>
+<updated>2026-11-02T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
+<entry>
+<title>Follow-up round: two updates arrive in the wrong order</title>
+<link href="https://mobiledesignrounds.com/follow-up/out-of-order-ticks/"/>
+<id>https://mobiledesignrounds.com/follow-up/out-of-order-ticks/</id>
+<updated>2026-11-02T00:00:00Z</updated>
+<summary>A live ticker gets price 102 before price 101. What does the user see, and why is a snapshot better than replay?</summary>
+</entry>
 <entry>
 <title>Follow-up round: the token expires while the user uploads</title>
 <link href="https://mobiledesignrounds.com/follow-up/upload-token-expires/"/>
