@@ -4,9 +4,16 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-11-02T00:00:00Z</updated>
+<updated>2026-11-09T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
+<entry>
+<title>Follow-up round: the user paid and the app died</title>
+<link href="https://mobiledesignrounds.com/follow-up/paid-then-app-died/"/>
+<id>https://mobiledesignrounds.com/follow-up/paid-then-app-died/</id>
+<updated>2026-11-09T00:00:00Z</updated>
+<summary>The user paid in Google Play, then the app was killed before it unlocked anything. What happens when they open it again?</summary>
+</entry>
 <entry>
 <title>Follow-up round: two updates arrive in the wrong order</title>
 <link href="https://mobiledesignrounds.com/follow-up/out-of-order-ticks/"/>
