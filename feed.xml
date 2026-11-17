@@ -4,9 +4,16 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-11-09T00:00:00Z</updated>
+<updated>2026-11-17T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
+<entry>
+<title>Follow-up round: a new feature crashes for 5% of users</title>
+<link href="https://mobiledesignrounds.com/follow-up/feature-crashes-kill-switch/"/>
+<id>https://mobiledesignrounds.com/follow-up/feature-crashes-kill-switch/</id>
+<updated>2026-11-17T00:00:00Z</updated>
+<summary>A new feature crashes for 5% of users. How does the off switch reach them, even when the app crashes at launch?</summary>
+</entry>
 <entry>
 <title>Follow-up round: the user paid and the app died</title>
 <link href="https://mobiledesignrounds.com/follow-up/paid-then-app-died/"/>
