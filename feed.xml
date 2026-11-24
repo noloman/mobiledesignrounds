@@ -4,9 +4,16 @@
 <link href="https://mobiledesignrounds.com/feed.xml" rel="self"/>
 <link href="https://mobiledesignrounds.com/"/>
 <id>https://mobiledesignrounds.com/</id>
-<updated>2026-11-17T00:00:00Z</updated>
+<updated>2026-11-24T00:00:00Z</updated>
 <author><name>Manuel Lorenzo</name></author>
 <subtitle>Mobile system design case studies for Android and iOS engineers</subtitle>
+<entry>
+<title>Follow-up round: the app is killed halfway through a download</title>
+<link href="https://mobiledesignrounds.com/follow-up/download-killed-halfway/"/>
+<id>https://mobiledesignrounds.com/follow-up/download-killed-halfway/</id>
+<updated>2026-11-24T00:00:00Z</updated>
+<summary>A film download for a flight is killed halfway and the user taps Download again. What happens, and what about the license?</summary>
+</entry>
 <entry>
 <title>Follow-up round: a new feature crashes for 5% of users</title>
 <link href="https://mobiledesignrounds.com/follow-up/feature-crashes-kill-switch/"/>
